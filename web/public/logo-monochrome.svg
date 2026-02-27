@@ -1,0 +1,51 @@
+<svg width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 咖啡杯圖標 - 單色版本 -->
+  <g id="coffee-icon">
+    <!-- 杯子主體 -->
+    <path d="M20 20 L26 45 C26.5 47 27.5 48 29 48 L41 48 C42.5 48 43.5 47 44 45 L50 20 Z"
+          stroke="currentColor"
+          stroke-width="2"
+          fill="none"
+          stroke-linejoin="round"/>
+
+    <!-- 杯口 -->
+    <line x1="18" y1="20" x2="52" y2="20"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"/>
+
+    <!-- 咖啡蒸氣 -->
+    <path d="M28 12 Q30 10 32 12"
+          stroke="currentColor"
+          stroke-width="1.5"
+          fill="none"
+          stroke-linecap="round"
+          opacity="0.6"/>
+    <path d="M35 14 Q37 12 39 14"
+          stroke="currentColor"
+          stroke-width="1.5"
+          fill="none"
+          stroke-linecap="round"
+          opacity="0.6"/>
+  </g>
+
+  <!-- 品牌文字 -->
+  <g id="brand-text">
+    <!-- 品皇咖啡 -->
+    <text x="65" y="32"
+          font-family="Noto Sans TC, PingFang TC, sans-serif"
+          font-size="20"
+          font-weight="600"
+          fill="currentColor"
+          letter-spacing="1">品皇咖啡</text>
+
+    <!-- PIN HUANG COFFEE -->
+    <text x="65" y="48"
+          font-family="Montserrat, sans-serif"
+          font-size="10"
+          font-weight="400"
+          fill="currentColor"
+          letter-spacing="2"
+          opacity="0.7">PIN HUANG COFFEE</text>
+  </g>
+</svg>

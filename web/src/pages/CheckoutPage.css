@@ -1,0 +1,949 @@
+/**
+ * CheckoutPage.css
+ * 品皇咖啡結帳頁面樣式
+ */
+
+.checkout-page {
+  font-family: var(--font-family-base);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-primary);
+  min-height: 100vh;
+}
+
+/* ==================== Breadcrumb ==================== */
+
+.breadcrumb {
+  padding: var(--spacing-6) 0;
+  background-color: var(--color-bg-primary);
+}
+
+.breadcrumb .container {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-primary-800);
+}
+
+.breadcrumb a {
+  color: var(--color-primary-800);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.breadcrumb a:hover {
+  color: var(--color-primary-500);
+  text-decoration: underline;
+}
+
+.breadcrumb .separator {
+  color: var(--color-text-tertiary);
+  margin: 0 var(--spacing-2);
+}
+
+.breadcrumb .current {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ==================== Page Header ==================== */
+
+.page-header {
+  background-color: var(--color-bg-secondary);
+  padding: var(--spacing-16) 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><circle cx="50" cy="50" r="40" fill="%23d4a574" opacity="0.05"/></svg>');
+  background-size: 100px 100px;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.page-header .container {
+  position: relative;
+  z-index: 1;
+}
+
+.page-title {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-5xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-2) 0;
+}
+
+.page-title-en {
+  font-family: var(--font-family-heading);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-primary-800);
+  letter-spacing: var(--letter-spacing-wider);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+/* ==================== Progress Indicator ==================== */
+
+.progress-section {
+  padding: var(--spacing-10) 0;
+  background-color: var(--color-bg-primary);
+}
+
+.progress-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-2);
+  flex: 0 0 auto;
+}
+
+.step-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-family-heading);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  transition: var(--transition-base);
+}
+
+.progress-step.completed .step-circle {
+  background-color: #10b981;
+  color: #ffffff;
+}
+
+.progress-step.active .step-circle {
+  background-color: var(--color-primary-500);
+  color: #ffffff;
+  border: 4px solid var(--color-bg-secondary);
+  box-shadow: 0 0 0 2px var(--color-primary-500);
+}
+
+.progress-step:not(.completed):not(.active) .step-circle {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-primary-800);
+}
+
+.step-label {
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family-base);
+  color: var(--color-primary-800);
+  white-space: nowrap;
+}
+
+.progress-step.active .step-label {
+  color: var(--color-primary-500);
+  font-weight: var(--font-weight-bold);
+}
+
+.progress-line {
+  flex: 1;
+  height: 3px;
+  background-color: var(--color-bg-secondary);
+  margin: 0 var(--spacing-2);
+  max-width: 120px;
+  transition: var(--transition-base);
+}
+
+.progress-line.completed {
+  background-color: #10b981;
+}
+
+/* ==================== Checkout Content ==================== */
+
+.checkout-content-section {
+  padding: var(--spacing-12) 0;
+}
+
+.checkout-layout {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: var(--spacing-8);
+  align-items: start;
+}
+
+/* ==================== Checkout Form (左側) ==================== */
+
+.checkout-form {
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-8);
+}
+
+.form-section {
+  margin-bottom: var(--spacing-8);
+}
+
+.form-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-title {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  border-bottom: 2px solid var(--color-border-secondary);
+  padding-bottom: var(--spacing-3);
+  margin: 0 0 var(--spacing-6) 0;
+}
+
+.subsection-title {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-4) 0;
+}
+
+/* 表單欄位 */
+.form-field {
+  margin-bottom: var(--spacing-4);
+}
+
+.form-field label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-2);
+}
+
+.form-field .required {
+  color: var(--color-error);
+  margin-left: 2px;
+}
+
+.form-field input[type="text"],
+.form-field input[type="tel"],
+.form-field input[type="email"],
+.form-field input[type="password"],
+.form-field select,
+.form-field textarea {
+  width: 100%;
+  padding: var(--spacing-3) var(--spacing-4);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  background-color: #ffffff;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-lg);
+  transition: var(--transition-fast);
+  outline: none;
+}
+
+.form-field input::placeholder,
+.form-field textarea::placeholder {
+  color: #bbb;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+  border: 2px solid var(--color-primary-500);
+  box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.1);
+}
+
+.form-field input.error,
+.form-field select.error,
+.form-field textarea.error {
+  border: 2px solid var(--color-error);
+}
+
+.error-message {
+  font-size: var(--font-size-xs);
+  color: var(--color-error);
+  margin-top: var(--spacing-1);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--spacing-4);
+}
+
+.char-count {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  text-align: right;
+  margin-top: var(--spacing-1);
+}
+
+/* Checkbox Field */
+.form-field.checkbox-field label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-weight: var(--font-weight-normal);
+  cursor: pointer;
+}
+
+.form-field.checkbox-field input[type="checkbox"] {
+  width: auto;
+  cursor: pointer;
+}
+
+/* ==================== Radio Group ==================== */
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.radio-card {
+  display: block;
+  background-color: #ffffff;
+  border: 2px solid var(--color-border-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-5);
+  cursor: pointer;
+  transition: var(--transition-base);
+}
+
+.radio-card:hover {
+  border-color: var(--color-primary-500);
+  box-shadow: 0 2px 8px rgba(212, 165, 116, 0.15);
+}
+
+.radio-card.checked {
+  border-color: var(--color-primary-500);
+  background-color: var(--color-primary-50);
+}
+
+.radio-card input[type="radio"] {
+  margin-right: var(--spacing-3);
+  cursor: pointer;
+}
+
+.radio-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+}
+
+.radio-label {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  flex: 1;
+}
+
+.radio-fee {
+  font-family: var(--font-family-heading);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary-500);
+}
+
+.radio-fee.free {
+  color: #10b981;
+}
+
+.radio-info {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.security-badge {
+  font-size: var(--font-size-sm);
+  color: #10b981;
+}
+
+/* Simple Radio Group (發票) */
+.radio-group.simple {
+  gap: var(--spacing-2);
+}
+
+.radio-group.simple label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  padding: var(--spacing-2) 0;
+}
+
+.radio-group.simple input[type="radio"] {
+  cursor: pointer;
+}
+
+/* ==================== 超商取貨門市選擇 ==================== */
+
+.store-selection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  margin-top: var(--spacing-3);
+  padding: var(--spacing-4);
+  background-color: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+}
+
+.store-selection select {
+  flex: 1;
+}
+
+.btn-select-store {
+  padding: var(--spacing-3) var(--spacing-4);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-inverse);
+  background-color: var(--color-primary-500);
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: var(--transition-base);
+}
+
+.btn-select-store:hover:not(:disabled) {
+  background-color: var(--color-primary-600);
+}
+
+.btn-select-store:disabled {
+  background-color: var(--color-gray-300);
+  cursor: not-allowed;
+}
+
+/* ==================== 信用卡表單 ==================== */
+
+.credit-card-form {
+  margin-top: var(--spacing-4);
+  padding: var(--spacing-4);
+  background-color: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+}
+
+.expiry-inputs {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.expiry-inputs select {
+  flex: 1;
+}
+
+.expiry-inputs span {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+}
+
+.cvv-input-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  position: relative;
+}
+
+.cvv-input-group input {
+  flex: 1;
+  max-width: 120px;
+}
+
+.cvv-help {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-primary);
+  color: var(--color-primary-500);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cvv-help:hover {
+  background-color: var(--color-primary-100);
+  border-color: var(--color-primary-500);
+}
+
+.cvv-tooltip {
+  position: absolute;
+  bottom: calc(100% + var(--spacing-2));
+  right: 0;
+  background-color: var(--color-text-primary);
+  color: #ffffff;
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+  box-shadow: var(--shadow-lg);
+  z-index: 10;
+}
+
+.cvv-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  right: var(--spacing-3);
+  border: 6px solid transparent;
+  border-top-color: var(--color-text-primary);
+}
+
+/* ==================== 發票資訊展開 ==================== */
+
+.invoice-company,
+.invoice-donate {
+  margin-top: var(--spacing-4);
+  padding: var(--spacing-4);
+  background-color: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+}
+
+/* ==================== 提交區域 ==================== */
+
+.submit-section {
+  margin-top: var(--spacing-8);
+  padding-top: var(--spacing-6);
+  border-top: 2px solid var(--color-border-secondary);
+}
+
+.agree-terms {
+  margin-bottom: var(--spacing-4);
+}
+
+.agree-terms label {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.agree-terms label.error {
+  color: var(--color-error);
+}
+
+.agree-terms input[type="checkbox"] {
+  margin-top: 3px;
+  cursor: pointer;
+}
+
+.agree-terms a {
+  color: var(--color-primary-500);
+  text-decoration: underline;
+}
+
+.agree-terms a:hover {
+  color: var(--color-primary-600);
+}
+
+.btn-submit {
+  width: 100%;
+  padding: var(--spacing-5) var(--spacing-6);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-inverse);
+  background-color: var(--color-primary-500);
+  border: none;
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  transition: var(--transition-base);
+}
+
+.btn-submit:hover:not(:disabled) {
+  background-color: var(--color-primary-600);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.btn-submit:disabled {
+  background-color: var(--color-border-secondary);
+  color: var(--color-text-tertiary);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.trust-badges {
+  text-align: center;
+  font-size: var(--font-size-xs);
+  color: var(--color-primary-800);
+  margin-top: var(--spacing-3);
+}
+
+/* ==================== Order Summary (右側) ==================== */
+
+.order-summary {
+  position: relative;
+}
+
+.summary-sticky {
+  position: sticky;
+  top: var(--spacing-8);
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-6);
+}
+
+.summary-title {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-2) 0;
+}
+
+.summary-title-en {
+  font-family: var(--font-family-heading);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-primary-800);
+  letter-spacing: var(--letter-spacing-wider);
+  text-transform: uppercase;
+  margin: 0 0 var(--spacing-6) 0;
+}
+
+.summary-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-4);
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+}
+
+.summary-item img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+}
+
+.summary-item .item-info {
+  flex: 1;
+}
+
+.summary-item .item-name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-1);
+}
+
+.summary-item .item-quantity {
+  font-size: var(--font-size-xs);
+  color: var(--color-primary-800);
+}
+
+.summary-item .item-price {
+  font-family: var(--font-family-heading);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.summary-divider {
+  height: 1px;
+  background-color: var(--color-border-primary);
+  margin: var(--spacing-4) 0;
+}
+
+.summary-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.summary-row span:last-child {
+  font-family: var(--font-family-heading);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.summary-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-2);
+  padding-top: var(--spacing-4);
+}
+
+.summary-total span:first-child {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.summary-total span:last-child {
+  font-family: var(--font-family-heading);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary-500);
+}
+
+.btn-back-to-cart {
+  width: 100%;
+  padding: var(--spacing-3) var(--spacing-4);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary-500);
+  background-color: transparent;
+  border: 2px solid var(--color-primary-500);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: var(--transition-base);
+  margin-top: var(--spacing-6);
+}
+
+.btn-back-to-cart:hover {
+  background-color: var(--color-primary-50);
+  transform: translateY(-2px);
+}
+
+/* ==================== Security & Trust ==================== */
+
+.security-section {
+  padding: var(--spacing-8) 0;
+  background-color: var(--color-bg-secondary);
+  text-align: center;
+}
+
+.security-badges {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-6);
+  margin-bottom: var(--spacing-3);
+  flex-wrap: wrap;
+}
+
+.security-badges span {
+  font-size: var(--font-size-sm);
+  color: var(--color-primary-800);
+}
+
+.security-info {
+  font-size: var(--font-size-xs);
+  color: var(--color-primary-800);
+}
+
+/* ==================== Toast Notification ==================== */
+
+.checkout-toast {
+  position: fixed;
+  top: var(--spacing-6);
+  right: var(--spacing-6);
+  padding: var(--spacing-4) var(--spacing-6);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  z-index: 9999;
+  animation: slideInRight 0.3s ease;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  min-width: 300px;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.checkout-toast.fade-out {
+  animation: fadeOut 0.3s ease forwards;
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+.checkout-toast-success {
+  background-color: #10b981;
+  color: #ffffff;
+}
+
+.checkout-toast-error {
+  background-color: var(--color-error);
+  color: #ffffff;
+}
+
+.checkout-toast-warning {
+  background-color: var(--color-warning);
+  color: var(--color-text-primary);
+}
+
+.checkout-toast-info {
+  background-color: var(--color-primary-500);
+  color: #ffffff;
+}
+
+/* ==================== RWD 響應式設計 ==================== */
+
+/* Tablet (768px - 1023px) */
+@media (max-width: 1023px) {
+  .checkout-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .order-summary {
+    order: -1;
+  }
+
+  .summary-sticky {
+    position: static;
+  }
+
+  .progress-indicator {
+    flex-wrap: wrap;
+  }
+
+  .progress-line {
+    max-width: 60px;
+  }
+
+  .step-label {
+    font-size: var(--font-size-xs);
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile (< 768px) */
+@media (max-width: 767px) {
+  .page-header {
+    padding: var(--spacing-10) 0;
+  }
+
+  .page-title {
+    font-size: var(--font-size-3xl);
+  }
+
+  .progress-section {
+    padding: var(--spacing-6) 0;
+  }
+
+  .step-circle {
+    width: 32px;
+    height: 32px;
+    font-size: var(--font-size-sm);
+  }
+
+  .step-label {
+    font-size: 10px;
+  }
+
+  .progress-line {
+    max-width: 40px;
+    margin: 0 var(--spacing-1);
+  }
+
+  .checkout-form {
+    padding: var(--spacing-6);
+  }
+
+  .form-section {
+    margin-bottom: var(--spacing-6);
+  }
+
+  .section-title {
+    font-size: var(--font-size-lg);
+  }
+
+  .radio-card {
+    padding: var(--spacing-4);
+  }
+
+  .radio-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-1);
+  }
+
+  .radio-fee {
+    font-size: var(--font-size-base);
+  }
+
+  .store-selection {
+    flex-direction: column;
+  }
+
+  .checkout-toast {
+    left: var(--spacing-4);
+    right: var(--spacing-4);
+    top: var(--spacing-4);
+    min-width: auto;
+  }
+
+  .summary-title {
+    font-size: var(--font-size-xl);
+  }
+
+  .btn-submit {
+    font-size: var(--font-size-base);
+    padding: var(--spacing-4) var(--spacing-5);
+  }
+
+  .security-badges {
+    flex-direction: column;
+    gap: var(--spacing-2);
+  }
+}
+
+/* Very Small Mobile (< 480px) */
+@media (max-width: 479px) {
+  .page-title {
+    font-size: var(--font-size-2xl);
+  }
+
+  .checkout-form {
+    padding: var(--spacing-4);
+  }
+
+  .summary-sticky {
+    padding: var(--spacing-4);
+  }
+}

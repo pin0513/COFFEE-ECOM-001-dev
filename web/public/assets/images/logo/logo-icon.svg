@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 品皇咖啡 Logo Icon - 僅圖標版本 -->
+
+  <!-- 外框圓形（可選） -->
+  <circle cx="30" cy="30" r="28" stroke="#d4a574" stroke-width="1" fill="none" opacity="0.3"/>
+
+  <!-- 咖啡豆圖標 -->
+  <g id="coffee-bean-icon">
+    <!-- 外圈咖啡豆 -->
+    <ellipse cx="30" cy="30" rx="14" ry="18" fill="#d4a574" transform="rotate(-15 30 30)"/>
+
+    <!-- 咖啡豆中線 -->
+    <path d="M 20 30 Q 30 26, 40 30" stroke="#6b4423" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+    <!-- 咖啡豆內部曲線 -->
+    <path d="M 22 30 Q 30 34, 38 30" stroke="#6b4423" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.6"/>
+
+    <!-- 咖啡豆高光 -->
+    <ellipse cx="25" cy="22" rx="4" ry="6" fill="#f5ede3" opacity="0.3" transform="rotate(-20 25 22)"/>
+  </g>
+
+  <!-- 品牌縮寫（可選） -->
+  <text x="30" y="50" font-family="Montserrat, sans-serif" font-size="6" font-weight="600" fill="#8c6236" text-anchor="middle" letter-spacing="0.5">
+    PH
+  </text>
+</svg>

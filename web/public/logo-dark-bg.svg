@@ -1,0 +1,50 @@
+<svg width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 咖啡杯圖標 - 極簡設計 -->
+  <g id="coffee-icon">
+    <!-- 杯子主體 -->
+    <path d="M20 20 L26 45 C26.5 47 27.5 48 29 48 L41 48 C42.5 48 43.5 47 44 45 L50 20 Z"
+          stroke="#d4a574"
+          stroke-width="2"
+          fill="none"
+          stroke-linejoin="round"/>
+
+    <!-- 杯口 -->
+    <line x1="18" y1="20" x2="52" y2="20"
+          stroke="#d4a574"
+          stroke-width="2"
+          stroke-linecap="round"/>
+
+    <!-- 咖啡蒸氣 - 簡約曲線 -->
+    <path d="M28 12 Q30 10 32 12"
+          stroke="#d4a574"
+          stroke-width="1.5"
+          fill="none"
+          stroke-linecap="round"
+          opacity="0.7"/>
+    <path d="M35 14 Q37 12 39 14"
+          stroke="#d4a574"
+          stroke-width="1.5"
+          fill="none"
+          stroke-linecap="round"
+          opacity="0.7"/>
+  </g>
+
+  <!-- 品牌文字 -->
+  <g id="brand-text">
+    <!-- 品皇咖啡 中文字 -->
+    <text x="65" y="32"
+          font-family="Noto Sans TC, PingFang TC, sans-serif"
+          font-size="20"
+          font-weight="600"
+          fill="#ffffff"
+          letter-spacing="1">品皇咖啡</text>
+
+    <!-- Pin Huang Coffee 英文字 -->
+    <text x="65" y="48"
+          font-family="Montserrat, sans-serif"
+          font-size="10"
+          font-weight="400"
+          fill="#d4a574"
+          letter-spacing="2">PIN HUANG COFFEE</text>
+  </g>
+</svg>

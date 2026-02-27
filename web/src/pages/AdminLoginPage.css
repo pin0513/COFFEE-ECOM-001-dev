@@ -1,0 +1,497 @@
+/**
+ * AdminLoginPage.css
+ * 品皇咖啡後台登入頁樣式
+ */
+
+.admin-login-page {
+  font-family: var(--font-family-base);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg-secondary);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 背景紋理 */
+.admin-login-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><circle cx="50" cy="50" r="40" fill="%23d4a574" opacity="0.03"/></svg>');
+  background-size: 100px 100px;
+  pointer-events: none;
+}
+
+/* ==================== Login Container ==================== */
+
+.login-container {
+  position: relative;
+  z-index: 1;
+  padding: var(--spacing-6);
+}
+
+.login-card {
+  width: 400px;
+  max-width: 100%;
+  background-color: #ffffff;
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 10px 40px rgba(140, 98, 54, 0.15);
+  padding: var(--spacing-12) var(--spacing-10);
+  text-align: center;
+}
+
+/* ==================== Logo ==================== */
+
+.logo {
+  margin-bottom: var(--spacing-6);
+}
+
+.logo img {
+  width: 80px;
+  height: auto;
+}
+
+/* ==================== Title ==================== */
+
+.login-title {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-2) 0;
+}
+
+.login-subtitle {
+  font-family: var(--font-family-heading);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-primary-800);
+  letter-spacing: var(--letter-spacing-wider);
+  text-transform: uppercase;
+  margin: 0 0 var(--spacing-8) 0;
+}
+
+.divider {
+  height: 1px;
+  background-color: var(--color-border-secondary);
+  margin: var(--spacing-8) 0;
+}
+
+/* ==================== Error Message（卡片內） ==================== */
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  background-color: #fef2f2;
+  color: #ef4444;
+  border-left: 4px solid #ef4444;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-3) var(--spacing-4);
+  margin-bottom: var(--spacing-6);
+  font-size: var(--font-size-sm);
+  text-align: left;
+}
+
+.error-icon {
+  flex-shrink: 0;
+  font-size: var(--font-size-lg);
+}
+
+/* ==================== Form ==================== */
+
+.form-group {
+  margin-bottom: var(--spacing-5);
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-2);
+}
+
+.form-group input[type='text'],
+.form-group input[type='password'] {
+  width: 100%;
+  padding: var(--spacing-4);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--radius-lg);
+  outline: none;
+  transition: all var(--transition-fast);
+}
+
+.form-group input[type='text']:focus,
+.form-group input[type='password']:focus {
+  background-color: #ffffff;
+  border: 2px solid var(--color-primary-500);
+  box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.1);
+  padding: calc(var(--spacing-4) - 1px);
+}
+
+.form-group input[type='text'].error,
+.form-group input[type='password'].error {
+  border-color: #ef4444;
+}
+
+.form-group input[type='text'].error:focus,
+.form-group input[type='password'].error:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.form-group input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.field-error {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: #ef4444;
+  margin-top: var(--spacing-2);
+}
+
+/* ==================== Password Field（帶顯示/隱藏按鈕） ==================== */
+
+.password-field {
+  position: relative;
+}
+
+.password-field input {
+  padding-right: var(--spacing-12);
+}
+
+.toggle-password {
+  position: absolute;
+  right: var(--spacing-3);
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--color-primary-800);
+  font-size: var(--font-size-xl);
+  cursor: pointer;
+  padding: var(--spacing-1);
+  transition: color var(--transition-fast);
+}
+
+.toggle-password:hover {
+  color: var(--color-primary-500);
+}
+
+/* ==================== Checkbox（記住我） ==================== */
+
+.form-group-checkbox {
+  margin-bottom: var(--spacing-6);
+  text-align: left;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-label input[type='checkbox'] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.checkbox-custom {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-border-secondary);
+  border-radius: var(--radius-sm);
+  background-color: #ffffff;
+  margin-right: var(--spacing-2);
+  position: relative;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.checkbox-label:hover .checkbox-custom {
+  border-color: var(--color-primary-500);
+}
+
+.checkbox-label input[type='checkbox']:checked + .checkbox-custom {
+  background-color: var(--color-primary-500);
+  border-color: var(--color-primary-500);
+}
+
+.checkbox-label input[type='checkbox']:checked + .checkbox-custom::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.checkbox-label input[type='checkbox']:focus + .checkbox-custom {
+  box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.1);
+}
+
+.checkbox-text {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+/* ==================== Login Button ==================== */
+
+.btn-login {
+  width: 100%;
+  padding: var(--spacing-4);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-inverse);
+  background-color: var(--color-primary-500);
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-4);
+}
+
+.btn-login:hover:not(:disabled) {
+  background-color: var(--color-primary-600);
+  box-shadow: 0 4px 12px rgba(212, 165, 116, 0.3);
+  transform: translateY(-2px);
+}
+
+.btn-login:disabled {
+  background-color: var(--color-border-secondary);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ==================== Spinner（Loading 動畫） ==================== */
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ffffff;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==================== Forgot Password Link ==================== */
+
+.forgot-password {
+  display: inline-block;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-sm);
+  color: var(--color-primary-500);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.forgot-password:hover {
+  color: var(--color-primary-600);
+  text-decoration: underline;
+}
+
+/* ==================== Toast Notification ==================== */
+
+.login-toast {
+  position: fixed;
+  top: var(--spacing-6);
+  right: var(--spacing-6);
+  min-width: 300px;
+  padding: var(--spacing-4) var(--spacing-5);
+  background-color: #ffffff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  z-index: 9999;
+  animation: slideInRight 0.3s ease;
+}
+
+.login-toast.login-toast-success {
+  border-left: 4px solid #10b981;
+}
+
+.login-toast.login-toast-error {
+  border-left: 4px solid #ef4444;
+}
+
+.login-toast.login-toast-warning {
+  border-left: 4px solid #f59e0b;
+}
+
+.login-toast.login-toast-info {
+  border-left: 4px solid #3b82f6;
+}
+
+.toast-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: var(--font-size-sm);
+  flex-shrink: 0;
+}
+
+.login-toast-success .toast-icon {
+  background-color: #10b981;
+  color: #ffffff;
+}
+
+.login-toast-error .toast-icon {
+  background-color: #ef4444;
+  color: #ffffff;
+}
+
+.login-toast-warning .toast-icon {
+  background-color: #f59e0b;
+  color: #ffffff;
+}
+
+.login-toast-info .toast-icon {
+  background-color: #3b82f6;
+  color: #ffffff;
+}
+
+.toast-message {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+}
+
+.login-toast.fade-out {
+  animation: fadeOut 0.3s ease;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+/* ==================== RWD 響應式設計 ==================== */
+
+/* Tablet（768px - 1023px） */
+@media (max-width: 1023px) {
+  .login-card {
+    width: 380px;
+  }
+
+  .logo img {
+    width: 70px;
+  }
+}
+
+/* Mobile（< 768px） */
+@media (max-width: 767px) {
+  .login-container {
+    padding: var(--spacing-4);
+  }
+
+  .login-card {
+    width: 90%;
+    max-width: 360px;
+    padding: var(--spacing-8) var(--spacing-6);
+  }
+
+  .logo img {
+    width: 60px;
+  }
+
+  .login-title {
+    font-size: var(--font-size-2xl);
+  }
+
+  .login-subtitle {
+    font-size: var(--font-size-xs);
+  }
+
+  .form-group input[type='text'],
+  .form-group input[type='password'] {
+    font-size: var(--font-size-sm);
+  }
+
+  .btn-login {
+    font-size: var(--font-size-sm);
+  }
+
+  .login-toast {
+    left: var(--spacing-4);
+    right: var(--spacing-4);
+    min-width: auto;
+  }
+}
+
+/* Very Small Mobile（< 480px） */
+@media (max-width: 479px) {
+  .login-card {
+    padding: var(--spacing-6) var(--spacing-5);
+  }
+
+  .login-title {
+    font-size: var(--font-size-xl);
+  }
+}
+
+/* ==================== Accessibility ==================== */
+
+.form-group input:focus,
+.toggle-password:focus,
+.checkbox-label input:focus + .checkbox-custom,
+.btn-login:focus,
+.forgot-password:focus {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+/* ==================== Print Styles ==================== */
+
+@media print {
+  .admin-login-page {
+    display: none;
+  }
+}

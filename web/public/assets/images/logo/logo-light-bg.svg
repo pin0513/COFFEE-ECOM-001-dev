@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 品皇咖啡 Logo - 淺色背景版（深色 Logo） -->
+
+  <!-- 咖啡豆圖標 -->
+  <g id="coffee-bean-icon">
+    <!-- 外圈咖啡豆 -->
+    <ellipse cx="30" cy="30" rx="14" ry="18" fill="#d4a574" transform="rotate(-15 30 30)"/>
+    <!-- 咖啡豆中線 -->
+    <path d="M 20 30 Q 30 26, 40 30" stroke="#6b4423" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <!-- 咖啡豆內部曲線 -->
+    <path d="M 22 30 Q 30 34, 38 30" stroke="#6b4423" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+  </g>
+
+  <!-- 品牌文字 -->
+  <g id="brand-text">
+    <!-- PIN HUANG -->
+    <text x="60" y="25" font-family="Montserrat, sans-serif" font-size="16" font-weight="600" fill="#212121" letter-spacing="1.5">
+      PIN HUANG
+    </text>
+
+    <!-- COFFEE -->
+    <text x="60" y="42" font-family="Montserrat, sans-serif" font-size="11" font-weight="400" fill="#8c6236" letter-spacing="3">
+      COFFEE
+    </text>
+
+    <!-- 品皇咖啡 -->
+    <text x="60" y="52" font-family="Noto Sans TC, sans-serif" font-size="8" font-weight="400" fill="#757575" letter-spacing="1">
+      品皇咖啡
+    </text>
+  </g>
+
+  <!-- 裝飾線 -->
+  <line x1="60" y1="28" x2="145" y2="28" stroke="#d4a574" stroke-width="0.5" opacity="0.4"/>
+</svg>

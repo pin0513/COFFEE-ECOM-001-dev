@@ -1,0 +1,5 @@
+/* App level resets — design tokens are loaded in main.tsx */
+
+#root {
+  min-height: 100vh;
+}
