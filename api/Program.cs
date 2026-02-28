@@ -230,7 +230,7 @@ app.MapPut("/api/categories/{id:int}", [Authorize] async (int id, [FromBody] Upd
 app.MapGet("/api/products", async (
     [FromQuery] int? categoryId, [FromQuery] bool? featured, [FromQuery] bool? isActive,
     [FromQuery] bool? hasBulk, [FromQuery] bool? hasSub, [FromQuery] bool? hasPromo,
-    [FromQuery] int page, [FromQuery] int pageSize, AppDbContext db) =>
+    [FromQuery] int page = 1, [FromQuery] int pageSize = 20, AppDbContext db = null!) =>
 {
     if (page < 1) page = 1;
     if (pageSize < 1 || pageSize > 100) pageSize = 20;

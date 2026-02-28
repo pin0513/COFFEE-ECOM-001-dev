@@ -19,6 +19,9 @@ public static class DbSeeder
 
         await db.SaveChangesAsync();
 
+        // 需依賴已存在的 Category ID，故在 SaveChangesAsync 之後執行
+        await SeedProductsAsync(db);
+
         // 分類 SpecTemplate 補充（SaveChangesAsync 後執行，確保分類已存在）
         await SeedCategorySpecTemplatesAsync(db);
     }
@@ -277,6 +280,178 @@ public static class DbSeeder
         };
 
         db.ContentPages.AddRange(pages);
+    }
+
+    /// <summary>
+    /// 測試商品（僅在空 DB 時執行，涵蓋所有前台功能情境）
+    /// </summary>
+    private static async Task SeedProductsAsync(AppDbContext db)
+    {
+        if (await db.Products.AnyAsync()) return;
+
+        var catSpecialty  = await db.Categories.Where(c => c.Code == "SPECIALTY_BEANS").Select(c => c.Id).FirstOrDefaultAsync();
+        var catCommercial = await db.Categories.Where(c => c.Code == "COMMERCIAL_BLEND").Select(c => c.Id).FirstOrDefaultAsync();
+        var catInstant    = await db.Categories.Where(c => c.Code == "INSTANT_COFFEE").Select(c => c.Id).FirstOrDefaultAsync();
+
+        if (catSpecialty == 0 || catCommercial == 0) return; // 分類不存在則跳過
+
+        var now = DateTime.UtcNow;
+
+        var products = new List<Product>
+        {
+            // 1. 精選商品 + 大量購買（首頁展示用）
+            new()
+            {
+                Sku = "TEST-001",
+                Name = "衣索比亞 耶加雪菲 日曬",
+                ShortDescription = "草莓果醬、茉莉花香、柑橘酸",
+                Description = "來自耶加雪菲產區，日曬處理法帶出奔放果香，是精品咖啡入門首選。",
+                CategoryId = catSpecialty,
+                Price = 480, Unit = "半磅",
+                IsActive = true, IsOrderable = true, IsFeatured = true,
+                SortOrder = 1, CreatedAt = now,
+                ImageUrl = "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=600&h=750&fit=crop",
+                BulkOptions = """[{"qty":3,"label":"3包","discount":8},{"qty":6,"label":"6包","discount":15}]""",
+            },
+
+            // 2. 定期訂購商品
+            new()
+            {
+                Sku = "TEST-002",
+                Name = "哥倫比亞 薇拉 水洗",
+                ShortDescription = "焦糖、堅果、奶油餘韻",
+                Description = "南美洲精品豆代表作，水洗處理呈現乾淨甜感，適合各種沖煮方式。",
+                CategoryId = catSpecialty,
+                Price = 420, Unit = "半磅",
+                IsActive = true, IsOrderable = true, IsFeatured = false,
+                SortOrder = 2, CreatedAt = now,
+                ImageUrl = "https://images.unsplash.com/photo-1497515114629-f71d768fd07c?w=600&h=750&fit=crop",
+                SubscriptionOptions = """{"discount":10,"frequencies":["每週","每兩週","每月"],"defaultFrequency":"每兩週"}""",
+            },
+
+            // 3. 促銷倒數 + 需預付款（即期特惠情境）
+            new()
+            {
+                Sku = "TEST-003",
+                Name = "肯亞 AA 日曬 即期特惠",
+                ShortDescription = "黑醋栗、熱帶水果、莓果酸",
+                Description = "肯亞 AA 等級，限量即期品，以優惠價讓您體驗頂級風味。",
+                CategoryId = catSpecialty,
+                Price = 320, Unit = "半磅",
+                IsActive = true, IsOrderable = true, IsFeatured = false,
+                SortOrder = 3, CreatedAt = now,
+                ImageUrl = "https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=600&h=750&fit=crop",
+                PromotionTag = "即期特惠",
+                RequirePrePayment = true,
+                PromotionEndAt = now.AddDays(3),
+            },
+
+            // 4. 大量購買優惠（商業配方豆）
+            new()
+            {
+                Sku = "TEST-004",
+                Name = "品皇 精選配方豆",
+                ShortDescription = "均衡甜感，適合義式/手沖",
+                Description = "品皇招牌配方，多年調配心血，適合餐廳、辦公室大量採購。",
+                CategoryId = catCommercial,
+                Price = 380, Unit = "1磅",
+                IsActive = true, IsOrderable = true, IsFeatured = false,
+                SortOrder = 4, CreatedAt = now,
+                ImageUrl = "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=600&h=750&fit=crop",
+                BulkOptions = """[{"qty":5,"label":"5包","discount":10},{"qty":10,"label":"10包","discount":18},{"qty":20,"label":"20包","discount":25}]""",
+            },
+
+            // 5. 週末特惠促銷（標籤 + 倒數）
+            new()
+            {
+                Sku = "TEST-005",
+                Name = "瓜地馬拉 安提瓜 中深焙",
+                ShortDescription = "黑巧克力、煙燻焦糖、奶甜",
+                Description = "瓜地馬拉火山土壤孕育，中深焙帶出醇厚甜感，是美式咖啡愛好者首選。",
+                CategoryId = catSpecialty,
+                Price = 450, Unit = "半磅",
+                IsActive = true, IsOrderable = true, IsFeatured = false,
+                SortOrder = 5, CreatedAt = now,
+                ImageUrl = "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600&h=750&fit=crop",
+                PromotionTag = "週末限定",
+                PromotionEndAt = now.AddDays(2),
+            },
+
+            // 6. 暫停販售（isOrderable = false）
+            new()
+            {
+                Sku = "TEST-006",
+                Name = "巴西 喜拉朵 日曬",
+                ShortDescription = "堅果、黑巧克力、低酸甜感",
+                Description = "巴西代表豆款，目前補貨中，暫停販售。",
+                CategoryId = catSpecialty,
+                Price = 360, Unit = "半磅",
+                IsActive = true, IsOrderable = false, IsFeatured = false,
+                SortOrder = 6, CreatedAt = now,
+                ImageUrl = "https://images.unsplash.com/photo-1539167430869-89e80df698b4?w=600&h=750&fit=crop",
+            },
+
+            // 7. 未設定售價（price = 0，前台禁止加入購物車）
+            new()
+            {
+                Sku = "TEST-007",
+                Name = "品皇 商業配方 B（詢價）",
+                ShortDescription = "大宗訂購專用，請洽客服報價",
+                CategoryId = catCommercial,
+                Price = 0, Unit = "公斤",
+                IsActive = true, IsOrderable = false, IsFeatured = false,
+                SortOrder = 7, CreatedAt = now,
+                ImageUrl = "https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=600&h=750&fit=crop",
+            },
+
+            // 8. 大量優惠 + 定期訂購（雙重優惠）
+            new()
+            {
+                Sku = "TEST-008",
+                Name = "品皇 商業配方 C（訂閱＋批購）",
+                ShortDescription = "醇厚低酸，辦公室最愛",
+                Description = "適合長期合作客戶，支援定期配送與批量採購雙重優惠。",
+                CategoryId = catCommercial,
+                Price = 280, Unit = "1磅",
+                IsActive = true, IsOrderable = true, IsFeatured = false,
+                SortOrder = 8, CreatedAt = now,
+                ImageUrl = "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600&h=750&fit=crop",
+                BulkOptions = """[{"qty":5,"label":"5包","discount":8},{"qty":10,"label":"10包","discount":15}]""",
+                SubscriptionOptions = """{"discount":5,"frequencies":["每月","每季"],"defaultFrequency":"每月"}""",
+            },
+
+            // 9. 精選禮盒 + 訂閱
+            new()
+            {
+                Sku = "TEST-009",
+                Name = "品皇 精選入門禮盒",
+                ShortDescription = "三種風格豆款，初探精品咖啡",
+                Description = "精心挑選淺、中、深三種烘焙度，讓您輕鬆探索咖啡世界。",
+                CategoryId = catSpecialty,
+                Price = 860, Unit = "禮盒",
+                IsActive = true, IsOrderable = true, IsFeatured = true,
+                SortOrder = 9, CreatedAt = now,
+                ImageUrl = "https://images.unsplash.com/photo-1504627298434-2b6fb7adc609?w=600&h=750&fit=crop",
+                SubscriptionOptions = """{"discount":8,"frequencies":["每月","每季"],"defaultFrequency":"每月"}""",
+            },
+
+            // 10. 即溶咖啡（不同分類）
+            new()
+            {
+                Sku = "TEST-010",
+                Name = "品皇 二合一咖啡（30入）",
+                ShortDescription = "方便即沖，香醇不苦澀",
+                CategoryId = catInstant,
+                Price = 180, Unit = "盒",
+                IsActive = true, IsOrderable = true, IsFeatured = false,
+                SortOrder = 10, CreatedAt = now,
+                ImageUrl = "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&h=750&fit=crop",
+                BulkOptions = """[{"qty":3,"label":"3盒","discount":5}]""",
+            },
+        };
+
+        db.Products.AddRange(products);
+        await db.SaveChangesAsync();
     }
 
     private static async Task SeedCategorySpecTemplatesAsync(AppDbContext db)
