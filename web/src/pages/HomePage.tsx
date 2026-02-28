@@ -80,7 +80,7 @@ const DEFAULT_BANNERS: HeroBanner[] = [
     subTitle: '專業烘焙，極致品味。精選世界各地優質咖啡豆。',
     buttonText: '立即選購',
     buttonUrl: '/products',
-    imageUrl: 'https://placehold.co/1920x700/2c1810/f5ede3/webp?text=Pin+Huang+Coffee',
+    imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=1920&h=700&fit=crop&q=85',
     sortOrder: 0,
   },
   {
@@ -89,7 +89,7 @@ const DEFAULT_BANNERS: HeroBanner[] = [
     subTitle: '精選咖啡豆限量折扣，把握最後機會。',
     buttonText: '查看優惠',
     buttonUrl: '/products',
-    imageUrl: 'https://placehold.co/1920x700/3d2314/d4a574/webp?text=Special+Offers',
+    imageUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=1920&h=700&fit=crop&q=85',
     sortOrder: 1,
   },
   {
@@ -98,7 +98,7 @@ const DEFAULT_BANNERS: HeroBanner[] = [
     subTitle: '定期訂購享折扣，每次配送省更多。',
     buttonText: '了解訂閱',
     buttonUrl: '/products',
-    imageUrl: 'https://placehold.co/1920x700/1a2e1a/8bc47e/webp?text=Subscribe+%26+Save',
+    imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1920&h=700&fit=crop&q=85',
     sortOrder: 2,
   },
 ];
