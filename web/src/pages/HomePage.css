@@ -728,3 +728,31 @@
     font-size: var(--font-size-xl);
   }
 }
+
+/* ==================== Stores Section ==================== */
+.stores-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--spacing-6);
+}
+
+.store-card {
+  background: var(--color-bg-light);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: var(--spacing-6);
+}
+
+.store-name {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-3);
+}
+
+.store-detail {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--spacing-2);
+  line-height: 1.6;
+}

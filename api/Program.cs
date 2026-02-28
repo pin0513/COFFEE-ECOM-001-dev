@@ -750,6 +750,133 @@ app.MapPatch("/api/orders/{id:int}/status", [Authorize] async (int id, [FromBody
     return Results.Ok(new { order.Id, Status = order.Status.ToString(), PaymentStatus = order.PaymentStatus.ToString() });
 }).WithName("UpdateOrderStatus").WithTags("Orders");
 
+// Testimonials
+app.MapGet("/api/testimonials", async (AppDbContext db) =>
+    Results.Ok(await db.Testimonials
+        .Where(t => t.IsVisible)
+        .OrderBy(t => t.SortOrder).ThenBy(t => t.Id)
+        .Select(t => new { t.Id, t.Content, t.AuthorName, t.Rating, t.SortOrder })
+        .ToListAsync()))
+.WithName("GetTestimonials").WithTags("Testimonials");
+
+app.MapGet("/api/testimonials/all", [Authorize] async (AppDbContext db) =>
+    Results.Ok(await db.Testimonials
+        .OrderBy(t => t.SortOrder).ThenBy(t => t.Id)
+        .Select(t => new { t.Id, t.Content, t.AuthorName, t.Rating, t.IsVisible, t.SortOrder, t.CreatedAt })
+        .ToListAsync()))
+.WithName("GetAllTestimonials").WithTags("Testimonials");
+
+app.MapPost("/api/testimonials", [Authorize] async ([FromBody] UpsertTestimonialRequest req, AppDbContext db) =>
+{
+    if (string.IsNullOrEmpty(req.Content)) return Results.BadRequest(new { Message = "評價內容不可為空" });
+    var t = new Testimonial
+    {
+        Content = req.Content,
+        AuthorName = req.AuthorName ?? "匿名",
+        Rating = req.Rating is >= 1 and <= 5 ? req.Rating : 5,
+        IsVisible = req.IsVisible ?? true,
+        SortOrder = req.SortOrder ?? 0,
+        CreatedAt = DateTime.UtcNow
+    };
+    db.Testimonials.Add(t);
+    await db.SaveChangesAsync();
+    return Results.Created($"/api/testimonials/{t.Id}", new { t.Id });
+}).WithName("CreateTestimonial").WithTags("Testimonials");
+
+app.MapPut("/api/testimonials/{id:int}", [Authorize] async (int id, [FromBody] UpsertTestimonialRequest req, AppDbContext db) =>
+{
+    var t = await db.Testimonials.FindAsync(id);
+    if (t == null) return Results.NotFound();
+    if (!string.IsNullOrEmpty(req.Content)) t.Content = req.Content;
+    if (req.AuthorName != null) t.AuthorName = req.AuthorName;
+    if (req.Rating is >= 1 and <= 5) t.Rating = req.Rating;
+    if (req.IsVisible.HasValue) t.IsVisible = req.IsVisible.Value;
+    if (req.SortOrder.HasValue) t.SortOrder = req.SortOrder.Value;
+    t.UpdatedAt = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+    return Results.Ok(new { t.Id });
+}).WithName("UpdateTestimonial").WithTags("Testimonials");
+
+app.MapDelete("/api/testimonials/{id:int}", [Authorize] async (int id, AppDbContext db) =>
+{
+    var t = await db.Testimonials.FindAsync(id);
+    if (t == null) return Results.NotFound();
+    db.Testimonials.Remove(t);
+    await db.SaveChangesAsync();
+    return Results.Ok(new { Message = "評價已刪除" });
+}).WithName("DeleteTestimonial").WithTags("Testimonials");
+
+app.MapPatch("/api/testimonials/{id:int}/toggle", [Authorize] async (int id, AppDbContext db) =>
+{
+    var t = await db.Testimonials.FindAsync(id);
+    if (t == null) return Results.NotFound();
+    t.IsVisible = !t.IsVisible;
+    t.UpdatedAt = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+    return Results.Ok(new { t.Id, t.IsVisible });
+}).WithName("ToggleTestimonial").WithTags("Testimonials");
+
+// Stores
+app.MapGet("/api/stores", async (AppDbContext db) =>
+    Results.Ok(await db.Stores
+        .Where(s => s.IsVisible)
+        .OrderBy(s => s.SortOrder).ThenBy(s => s.Id)
+        .Select(s => new { s.Id, s.Name, s.Address, s.Phone, s.BusinessHours, s.SortOrder })
+        .ToListAsync()))
+.WithName("GetStores").WithTags("Stores");
+
+app.MapPost("/api/stores", [Authorize] async ([FromBody] UpsertStoreRequest req, AppDbContext db) =>
+{
+    if (string.IsNullOrEmpty(req.Name)) return Results.BadRequest(new { Message = "門市名稱不可為空" });
+    var s = new Store
+    {
+        Name = req.Name,
+        Address = req.Address ?? "",
+        Phone = req.Phone ?? "",
+        BusinessHours = req.BusinessHours ?? "",
+        IsVisible = req.IsVisible ?? true,
+        SortOrder = req.SortOrder ?? 0,
+        CreatedAt = DateTime.UtcNow
+    };
+    db.Stores.Add(s);
+    await db.SaveChangesAsync();
+    return Results.Created($"/api/stores/{s.Id}", new { s.Id });
+}).WithName("CreateStore").WithTags("Stores");
+
+app.MapPut("/api/stores/{id:int}", [Authorize] async (int id, [FromBody] UpsertStoreRequest req, AppDbContext db) =>
+{
+    var s = await db.Stores.FindAsync(id);
+    if (s == null) return Results.NotFound();
+    if (!string.IsNullOrEmpty(req.Name)) s.Name = req.Name;
+    if (req.Address != null) s.Address = req.Address;
+    if (req.Phone != null) s.Phone = req.Phone;
+    if (req.BusinessHours != null) s.BusinessHours = req.BusinessHours;
+    if (req.IsVisible.HasValue) s.IsVisible = req.IsVisible.Value;
+    if (req.SortOrder.HasValue) s.SortOrder = req.SortOrder.Value;
+    s.UpdatedAt = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+    return Results.Ok(new { s.Id });
+}).WithName("UpdateStore").WithTags("Stores");
+
+app.MapDelete("/api/stores/{id:int}", [Authorize] async (int id, AppDbContext db) =>
+{
+    var s = await db.Stores.FindAsync(id);
+    if (s == null) return Results.NotFound();
+    db.Stores.Remove(s);
+    await db.SaveChangesAsync();
+    return Results.Ok(new { Message = "門市已刪除" });
+}).WithName("DeleteStore").WithTags("Stores");
+
+app.MapPatch("/api/stores/{id:int}/toggle", [Authorize] async (int id, AppDbContext db) =>
+{
+    var s = await db.Stores.FindAsync(id);
+    if (s == null) return Results.NotFound();
+    s.IsVisible = !s.IsVisible;
+    s.UpdatedAt = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+    return Results.Ok(new { s.Id, s.IsVisible });
+}).WithName("ToggleStore").WithTags("Stores");
+
 app.Run();
 
 public record CreateCustomerRequest(string Email, string? Name, string? Phone, string? Address, string? DisplayName, string? FirebaseUid);
@@ -786,3 +913,5 @@ public record ImportRow
     public string? Unit { get; set; }
     public string? ShortDescription { get; set; }
 }
+public record UpsertTestimonialRequest(string? Content, string? AuthorName, int Rating, bool? IsVisible, int? SortOrder);
+public record UpsertStoreRequest(string? Name, string? Address, string? Phone, string? BusinessHours, bool? IsVisible, int? SortOrder);

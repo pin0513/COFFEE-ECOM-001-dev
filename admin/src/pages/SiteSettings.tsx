@@ -22,6 +22,9 @@ interface SettingsForm {
   bank_branch: string;
   bank_account: string;
   bank_account_name: string;
+  // brand story
+  brand_story_title: string;
+  brand_story_content: string;
 }
 
 export default function SiteSettings() {
@@ -58,6 +61,8 @@ export default function SiteSettings() {
           bank_branch: bankInfo.branch || '',
           bank_account: bankInfo.accountNumber || '',
           bank_account_name: bankInfo.accountName || '',
+          brand_story_title: data.brand_story_title || '品皇咖啡的故事',
+          brand_story_content: data.brand_story_content || '',
         });
         setCurrentLogoUrl(data.logo_url || '');
       } catch {
@@ -109,6 +114,8 @@ export default function SiteSettings() {
         { key: 'payment_bank_transfer_enabled', value: values.payment_bank_transfer_enabled ? 'true' : 'false' },
         { key: 'payment_cash_enabled', value: values.payment_cash_enabled ? 'true' : 'false' },
         { key: 'bank_account_info', value: bankInfo },
+        { key: 'brand_story_title', value: values.brand_story_title || '' },
+        { key: 'brand_story_content', value: values.brand_story_content || '' },
       ];
 
       await apiClient.put('/site-settings', items);
@@ -226,6 +233,14 @@ export default function SiteSettings() {
           extra="每筆新訂單建立後，系統會寄送通知到此信箱（需設定 SMTP）"
         >
           <Input placeholder="例：orders@pinhung.com.tw" />
+        </Form.Item>
+
+        <Divider>品牌故事</Divider>
+        <Form.Item label="品牌故事標題" name="brand_story_title">
+          <Input placeholder="品皇咖啡的故事" />
+        </Form.Item>
+        <Form.Item label="品牌故事內容" name="brand_story_content">
+          <Input.TextArea rows={4} placeholder="輸入品牌故事文案..." />
         </Form.Item>
 
         <Form.Item>

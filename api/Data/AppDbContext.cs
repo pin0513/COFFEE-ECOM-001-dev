@@ -16,6 +16,8 @@ public class AppDbContext : DbContext
     public DbSet<Customer> Customers { get; set; }
     public DbSet<Order> Orders { get; set; }
     public DbSet<OrderItem> OrderItems { get; set; }
+    public DbSet<Testimonial> Testimonials { get; set; }
+    public DbSet<Store> Stores { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -121,6 +123,19 @@ public class AppDbContext : DbContext
              .WithMany()
              .HasForeignKey(i => i.ProductId)
              .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Testimonial>(e =>
+        {
+            e.HasKey(t => t.Id);
+            e.Property(t => t.AuthorName).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<Store>(e =>
+        {
+            e.HasKey(s => s.Id);
+            e.Property(s => s.Name).HasMaxLength(100);
+            e.Property(s => s.Phone).HasMaxLength(50);
         });
     }
 }

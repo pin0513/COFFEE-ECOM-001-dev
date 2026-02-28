@@ -15,6 +15,8 @@ export interface SiteSettings {
   bank_account_info: string;
   order_notification_email: string;
   checkout_enabled: string;
+  brand_story_title: string;
+  brand_story_content: string;
 }
 
 export const getSiteSettings = async (): Promise<SiteSettings> => {

@@ -3,12 +3,28 @@ import { useNavigate } from 'react-router-dom';
 import { getProducts } from '../services/productService';
 import type { Product } from '../services/productService';
 import { apiClient, getImageUrl } from '../config/api';
+import { getSiteSettings } from '../services/siteSettingsService';
 import './HomePage.css';
 
 interface Category {
   id: number;
   name: string;
   icon?: string;
+}
+
+interface Testimonial {
+  id: number;
+  content: string;
+  authorName: string;
+  rating: number;
+}
+
+interface Store {
+  id: number;
+  name: string;
+  address: string;
+  phone: string;
+  businessHours: string;
 }
 
 // 首頁展示的 3 大分類（依 DB name 比對）
@@ -22,6 +38,12 @@ export default function HomePage() {
   const navigate = useNavigate();
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [stores, setStores] = useState<Store[]>([]);
+  const [brandStoryTitle, setBrandStoryTitle] = useState('品皇咖啡的故事');
+  const [brandStoryContent, setBrandStoryContent] = useState(
+    '自 2010 年創立以來，品皇咖啡秉持著「專業烘焙，極致品味」的理念，精選世界各地最優質的咖啡豆，透過專業烘焙師的精湛技藝，為您呈現每一杯完美的咖啡。我們相信，好的咖啡不僅是一種飲品，更是一種生活態度，一種對品質的堅持。'
+  );
   const [email, setEmail] = useState('');
   const [subscribeSuccess, setSubscribeSuccess] = useState(false);
 
@@ -37,23 +59,33 @@ export default function HomePage() {
 
   // 載入精選商品
   useEffect(() => {
-    const fetchFeaturedProducts = async () => {
-      try {
-        const response = await getProducts({
-          page: 1,
-          pageSize: 4,
-          featured: true,
-          isActive: true,
-        });
-        setFeaturedProducts(response.data);
-      } catch (error) {
-        console.error('Failed to fetch featured products:', error);
-        // Fallback to placeholder data
-        setFeaturedProducts([]);
-      }
-    };
+    getProducts({ page: 1, pageSize: 4, featured: true, isActive: true })
+      .then(res => setFeaturedProducts(res.data))
+      .catch(() => setFeaturedProducts([]));
+  }, []);
 
-    fetchFeaturedProducts();
+  // 載入評價（動態，從 API 取得）
+  useEffect(() => {
+    apiClient.get<Testimonial[]>('/testimonials')
+      .then(res => setTestimonials(res.data || []))
+      .catch(() => setTestimonials([]));
+  }, []);
+
+  // 載入門市資訊
+  useEffect(() => {
+    apiClient.get<Store[]>('/stores')
+      .then(res => setStores(res.data || []))
+      .catch(() => setStores([]));
+  }, []);
+
+  // 載入品牌故事（從 site-settings 取得）
+  useEffect(() => {
+    getSiteSettings()
+      .then(settings => {
+        if (settings.brand_story_title) setBrandStoryTitle(settings.brand_story_title);
+        if (settings.brand_story_content) setBrandStoryContent(settings.brand_story_content);
+      })
+      .catch(() => {});
   }, []);
 
   // Scroll animations
@@ -87,6 +119,8 @@ export default function HomePage() {
     }
   };
 
+  const renderStars = (rating: number) => '⭐'.repeat(Math.min(5, Math.max(1, rating)));
+
   return (
     <div className="home-page">
       {/* Hero Section */}
@@ -108,6 +142,30 @@ export default function HomePage() {
             >
               了解更多
             </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Categories Quick Nav — Hero 正下方，第一個入口 */}
+      <section className="section categories animate-on-scroll">
+        <div className="container">
+          <div className="section-header">
+            <h2 className="section-title">探索我們的產品</h2>
+            <p className="section-subtitle">EXPLORE OUR PRODUCTS</p>
+          </div>
+
+          <div className="category-grid">
+            {SHOWCASE_CATEGORIES.map(sc => {
+              const cat = categories.find(c => c.name === sc.match);
+              const url = cat ? `/products?categoryId=${cat.id}` : '/products';
+              return (
+                <div key={sc.match} className="category-card" onClick={() => navigate(url)}>
+                  <div className="category-icon">{sc.icon}</div>
+                  <h3 className="category-name">{sc.label}</h3>
+                  <p className="category-name-en">{sc.en}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -151,30 +209,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Categories */}
-      <section className="section categories animate-on-scroll">
-        <div className="container">
-          <div className="section-header">
-            <h2 className="section-title">探索我們的產品</h2>
-            <p className="section-subtitle">EXPLORE OUR PRODUCTS</p>
-          </div>
-
-          <div className="category-grid">
-            {SHOWCASE_CATEGORIES.map(sc => {
-              const cat = categories.find(c => c.name === sc.match);
-              const url = cat ? `/products?categoryId=${cat.id}` : '/products';
-              return (
-                <div key={sc.match} className="category-card" onClick={() => navigate(url)}>
-                  <div className="category-icon">{sc.icon}</div>
-                  <h3 className="category-name">{sc.label}</h3>
-                  <p className="category-name-en">{sc.en}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
       {/* Brand Story */}
       <section className="section brand-story animate-on-scroll">
         <div className="container">
@@ -187,54 +221,58 @@ export default function HomePage() {
               />
             </div>
             <div className="brand-story-content">
-              <h2 className="brand-story-title">品皇咖啡的故事</h2>
-              <p className="brand-story-text">
-                自 2010 年創立以來，品皇咖啡秉持著「專業烘焙，極致品味」的理念，
-                精選世界各地最優質的咖啡豆，透過專業烘焙師的精湛技藝，
-                為您呈現每一杯完美的咖啡。我們相信，好的咖啡不僅是一種飲品，
-                更是一種生活態度，一種對品質的堅持。
-              </p>
+              <h2 className="brand-story-title">{brandStoryTitle}</h2>
+              <p className="brand-story-text">{brandStoryContent}</p>
               <a href="/about" className="brand-story-link">閱讀更多</a>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="section testimonials animate-on-scroll">
-        <div className="container">
-          <div className="section-header">
-            <h2 className="section-title">顧客怎麼說</h2>
-            <p className="section-subtitle">CUSTOMER REVIEWS</p>
-          </div>
-
-          <div className="testimonial-grid">
-            <div className="testimonial-card">
-              <div className="testimonial-stars">⭐⭐⭐⭐⭐</div>
-              <p className="testimonial-content">
-                "品質非常優良，每次購買都很滿意。咖啡豆新鮮烘焙，香氣十足，值得推薦！"
-              </p>
-              <p className="testimonial-author">- 李先生</p>
+      {/* Testimonials — 動態，空陣列時不顯示 */}
+      {testimonials.length > 0 && (
+        <section className="section testimonials animate-on-scroll">
+          <div className="container">
+            <div className="section-header">
+              <h2 className="section-title">顧客怎麼說</h2>
+              <p className="section-subtitle">CUSTOMER REVIEWS</p>
             </div>
 
-            <div className="testimonial-card">
-              <div className="testimonial-stars">⭐⭐⭐⭐⭐</div>
-              <p className="testimonial-content">
-                "送貨速度很快，包裝完整。客服態度親切，解答很詳細，購物體驗非常好！"
-              </p>
-              <p className="testimonial-author">- 王小姐</p>
-            </div>
-
-            <div className="testimonial-card">
-              <div className="testimonial-stars">⭐⭐⭐⭐⭐</div>
-              <p className="testimonial-content">
-                "服務非常親切，商品品質穩定。已經回購多次，是我最信賴的咖啡供應商！"
-              </p>
-              <p className="testimonial-author">- 陳先生</p>
+            <div className="testimonial-grid">
+              {testimonials.map(t => (
+                <div key={t.id} className="testimonial-card">
+                  <div className="testimonial-stars">{renderStars(t.rating)}</div>
+                  <p className="testimonial-content">"{t.content}"</p>
+                  <p className="testimonial-author">- {t.authorName}</p>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
+
+      {/* Stores — 動態，空陣列時不顯示 */}
+      {stores.length > 0 && (
+        <section className="section stores animate-on-scroll">
+          <div className="container">
+            <div className="section-header">
+              <h2 className="section-title">門市資訊</h2>
+              <p className="section-subtitle">OUR STORES</p>
+            </div>
+
+            <div className="stores-grid">
+              {stores.map(store => (
+                <div key={store.id} className="store-card">
+                  <h3 className="store-name">{store.name}</h3>
+                  {store.address && <p className="store-detail">📍 {store.address}</p>}
+                  {store.phone && <p className="store-detail">📞 {store.phone}</p>}
+                  {store.businessHours && <p className="store-detail">🕐 {store.businessHours}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Newsletter */}
       <section className="section newsletter">

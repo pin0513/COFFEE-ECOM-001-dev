@@ -1,4 +1,4 @@
-import { Layout, Typography, Card, Row, Col, Button, Badge, Select, message, Spin, Grid, BackTop } from 'antd';
+import { Layout, Typography, Card, Row, Col, Button, Badge, message, Spin, Grid, BackTop, Tabs } from 'antd';
 import { ShoppingCartOutlined, CoffeeOutlined, UpOutlined } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
@@ -91,6 +91,14 @@ export default function ProductsPage() {
     message.success(`${product.name} 已加入購物車`);
   };
 
+  // Tab Pills 項目
+  const tabItems = [
+    { key: 'all', label: '全部商品' },
+    ...categories.map(c => ({ key: String(c.id), label: c.name })),
+  ];
+
+  const activeTabKey = selectedCategoryId ? String(selectedCategoryId) : 'all';
+
   if (loading) {
     return (
       <Layout style={{ minHeight: '100vh' }}>
@@ -120,17 +128,17 @@ export default function ProductsPage() {
       </Header>
 
       <Content style={{ padding: screens.xs ? '16px' : screens.sm ? '24px' : '50px' }}>
-        <div style={{ marginBottom: 30 }}>
-          <Title level={2}>商品列表</Title>
-          <Select
-            value={selectedCategoryId ?? 'all'}
-            onChange={(v) => setSelectedCategoryId(v === 'all' ? null : (v as number))}
-            style={{ width: 200 }}
-            options={[
-              { label: '全部商品', value: 'all' },
-              ...categories.map(c => ({ label: c.name, value: c.id })),
-            ]}
-          />
+        <div style={{ marginBottom: 24 }}>
+          <Title level={2} style={{ marginBottom: 16 }}>商品列表</Title>
+          {/* Category Tab Pills */}
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <Tabs
+              activeKey={activeTabKey}
+              onChange={(key) => setSelectedCategoryId(key === 'all' ? null : Number(key))}
+              items={tabItems}
+              style={{ minWidth: 'max-content' }}
+            />
+          </div>
         </div>
 
         {products.length === 0 ? (

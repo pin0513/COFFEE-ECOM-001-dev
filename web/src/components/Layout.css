@@ -8,6 +8,13 @@
   flex-direction: column;
 }
 
+/* 行動版底部導覽列佔位 */
+@media (max-width: 768px) {
+  .site-main--with-bottom-nav {
+    padding-bottom: 60px;
+  }
+}
+
 /* ========================================
    Site Header
    ======================================== */

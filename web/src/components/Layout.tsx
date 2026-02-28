@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useCartStore } from '../stores/cartStore';
 import { getSiteSettings } from '../services/siteSettingsService';
 import type { SiteSettings } from '../services/siteSettingsService';
+import BottomNavBar from './BottomNavBar';
 import './Layout.css';
 
 interface LayoutProps {
@@ -53,7 +54,7 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       </header>
 
-      <main className="site-main">{children}</main>
+      <main className="site-main site-main--with-bottom-nav">{children}</main>
 
       <footer className="site-footer">
         <div className="footer-container">
@@ -102,6 +103,8 @@ export default function Layout({ children }: LayoutProps) {
       )}
 
       {mobileMenuOpen && <div className="mobile-menu-overlay" onClick={() => setMobileMenuOpen(false)} />}
+
+      <BottomNavBar />
     </div>
   );
 }

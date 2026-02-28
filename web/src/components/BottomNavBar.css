@@ -1,0 +1,79 @@
+/* 底部固定導覽列 - 只在行動版顯示 */
+.bottom-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: #fff;
+    border-top: 1px solid #e8e8e8;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+    height: 60px;
+    padding: 0;
+  }
+
+  .bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px 4px;
+    color: #888;
+    font-size: 12px;
+    transition: color 0.2s;
+    min-height: 44px; /* 觸控最小目標尺寸 */
+    min-width: 44px;
+  }
+
+  .bottom-nav-item:active {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
+
+  .bottom-nav-item.active {
+    color: #d4a574;
+  }
+
+  .bottom-nav-icon {
+    font-size: 20px;
+    line-height: 1;
+    position: relative;
+    display: inline-block;
+  }
+
+  .bottom-nav-label {
+    font-size: 11px;
+    line-height: 1;
+  }
+
+  /* 購物車 badge */
+  .bottom-nav-cart-icon {
+    position: relative;
+  }
+
+  .bottom-nav-badge {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    background: #ff4d4f;
+    color: #fff;
+    font-size: 9px;
+    font-weight: bold;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 8px;
+    min-width: 16px;
+    text-align: center;
+    white-space: nowrap;
+  }
+}

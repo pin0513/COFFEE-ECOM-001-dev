@@ -13,6 +13,8 @@ public static class DbSeeder
         await SeedAdminsAsync(db);
         await SeedCategoriesAsync(db);
         await SeedSiteSettingsAsync(db);
+        await SeedTestimonialsAsync(db);
+        await SeedStoresAsync(db);
 
         await db.SaveChangesAsync();
     }
@@ -72,8 +74,64 @@ public static class DbSeeder
             new() { Key = "bank_account_info", Value = "{\"bankName\":\"台灣銀行\",\"branch\":\"三重分行\",\"accountNumber\":\"請洽客服\",\"accountName\":\"品皇咖啡\"}" },
             new() { Key = "order_notification_email", Value = "" },
             new() { Key = "checkout_enabled", Value = "false" },
+            new() { Key = "brand_story_title", Value = "品皇咖啡的故事" },
+            new() { Key = "brand_story_content", Value = "自 2010 年創立以來，品皇咖啡秉持著「專業烘焙，極致品味」的理念，精選世界各地最優質的咖啡豆，透過專業烘焙師的精湛技藝，為您呈現每一杯完美的咖啡。我們相信，好的咖啡不僅是一種飲品，更是一種生活態度，一種對品質的堅持。" },
         };
 
         db.SiteSettings.AddRange(settings);
+    }
+
+    private static async Task SeedTestimonialsAsync(AppDbContext db)
+    {
+        if (await db.Testimonials.AnyAsync()) return;
+
+        var testimonials = new List<Testimonial>
+        {
+            new()
+            {
+                Content = "品質非常優良，每次購買都很滿意。咖啡豆新鮮烘焙，香氣十足，值得推薦！",
+                AuthorName = "李先生",
+                Rating = 5,
+                IsVisible = true,
+                SortOrder = 1,
+                CreatedAt = DateTime.UtcNow
+            },
+            new()
+            {
+                Content = "送貨速度很快，包裝完整。客服態度親切，解答很詳細，購物體驗非常好！",
+                AuthorName = "王小姐",
+                Rating = 5,
+                IsVisible = true,
+                SortOrder = 2,
+                CreatedAt = DateTime.UtcNow
+            },
+            new()
+            {
+                Content = "服務非常親切，商品品質穩定。已經回購多次，是我最信賴的咖啡供應商！",
+                AuthorName = "陳先生",
+                Rating = 5,
+                IsVisible = true,
+                SortOrder = 3,
+                CreatedAt = DateTime.UtcNow
+            },
+        };
+
+        db.Testimonials.AddRange(testimonials);
+    }
+
+    private static async Task SeedStoresAsync(AppDbContext db)
+    {
+        if (await db.Stores.AnyAsync()) return;
+
+        db.Stores.Add(new Store
+        {
+            Name = "品皇咖啡 三重本店",
+            Address = "新北市三重區重新路五段609巷12號",
+            Phone = "02-2999-0000",
+            BusinessHours = "週一至週六 09:00–18:00",
+            IsVisible = true,
+            SortOrder = 1,
+            CreatedAt = DateTime.UtcNow
+        });
     }
 }
