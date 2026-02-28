@@ -1,4 +1,6 @@
-import { type ReactNode, useState, useEffect } from 'react';
+import { type ReactNode, useState, useEffect, useMemo } from 'react';
+
+interface FooterLink { label: string; url: string; }
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useCartStore } from '../stores/cartStore';
 import { getSiteSettings } from '../services/siteSettingsService';
@@ -29,6 +31,22 @@ export default function Layout({ children }: LayoutProps) {
   const footerText = settings.footer_text || `© 2026 ${siteName}. All rights reserved.`;
   const contactPhone = settings.contact_phone || '';
   const contactAddress = settings.contact_address || '';
+  const facebookUrl = settings.footer_social_facebook || '';
+  const instagramUrl = settings.footer_social_instagram || '';
+
+  const shoppingLinks = useMemo<FooterLink[]>(() => {
+    try { return JSON.parse(settings.footer_links_shopping || '[]'); } catch { return []; }
+  }, [settings.footer_links_shopping]);
+
+  const serviceLinks = useMemo<FooterLink[]>(() => {
+    try { return JSON.parse(settings.footer_links_service || '[]'); } catch { return []; }
+  }, [settings.footer_links_service]);
+
+  const handleFooterLink = (url: string) => {
+    if (!url) return;
+    if (url.startsWith('/')) { navigate(url); }
+    else { window.open(url, '_blank', 'noopener,noreferrer'); }
+  };
 
   return (
     <div className="layout">
@@ -68,25 +86,63 @@ export default function Layout({ children }: LayoutProps) {
             <div className="footer-section">
               <h4 className="footer-heading">購物資訊</h4>
               <ul className="footer-links">
-                <li><button onClick={() => navigate('/products')}>商品列表</button></li>
-                <li><button onClick={() => navigate('/cart')}>購物車</button></li>
-                <li><button onClick={() => navigate('/pages/shipping')}>配送說明</button></li>
+                {shoppingLinks.length > 0
+                  ? shoppingLinks.map((link, i) => (
+                      <li key={i}><button onClick={() => handleFooterLink(link.url)}>{link.label}</button></li>
+                    ))
+                  : <>
+                      <li><button onClick={() => navigate('/products')}>商品列表</button></li>
+                      <li><button onClick={() => navigate('/cart')}>購物車</button></li>
+                    </>
+                }
               </ul>
             </div>
             <div className="footer-section">
               <h4 className="footer-heading">客戶服務</h4>
               <ul className="footer-links">
-                <li><button onClick={() => navigate('/pages/contact')}>聯絡我們</button></li>
-                <li><button onClick={() => navigate('/pages/faq')}>常見問題</button></li>
-                <li><button onClick={() => navigate('/pages/about')}>關於我們</button></li>
+                {serviceLinks.length > 0
+                  ? serviceLinks.map((link, i) => (
+                      <li key={i}><button onClick={() => handleFooterLink(link.url)}>{link.label}</button></li>
+                    ))
+                  : <>
+                      <li><button onClick={() => navigate('/pages/contact')}>聯絡我們</button></li>
+                      <li><button onClick={() => navigate('/pages/about')}>關於我們</button></li>
+                    </>
+                }
               </ul>
             </div>
             <div className="footer-section">
               <h4 className="footer-heading">關注我們</h4>
               <div className="social-links">
-                <a href="#" aria-label="Facebook"><span className="social-icon">📘</span></a>
-                <a href="#" aria-label="Instagram"><span className="social-icon">📷</span></a>
-                {lineUrl && <a href={lineUrl} target="_blank" rel="noopener noreferrer" aria-label="LINE"><span className="social-icon">💬</span></a>}
+                {facebookUrl && (
+                  <a href={facebookUrl} target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                    <span className="social-icon">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+                      </svg>
+                    </span>
+                  </a>
+                )}
+                {instagramUrl && (
+                  <a href={instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                    <span className="social-icon">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                        <circle cx="12" cy="12" r="4"/>
+                        <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+                      </svg>
+                    </span>
+                  </a>
+                )}
+                {lineUrl && (
+                  <a href={lineUrl} target="_blank" rel="noopener noreferrer" aria-label="LINE">
+                    <span className="social-icon">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/>
+                      </svg>
+                    </span>
+                  </a>
+                )}
               </div>
             </div>
           </div>

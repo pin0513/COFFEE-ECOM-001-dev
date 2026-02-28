@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Drawer, message } from 'antd';
 import { useCartStore } from '../stores/cartStore';
@@ -111,6 +111,8 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [checkoutEnabled, setCheckoutEnabled] = useState(true);
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const pageTopRef = useRef<HTMLDivElement>(null);
 
   // 草稿篩選（Drawer 內操作，Apply 才生效）
   const [draftCatId, setDraftCatId] = useState<number | null>(null);
@@ -130,6 +132,13 @@ export default function ProductsPage() {
 
   useEffect(() => {
     getSiteSettings().then(s => setCheckoutEnabled(s.checkout_enabled !== 'false')).catch(() => {});
+  }, []);
+
+  // Scroll-to-top visibility
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 400);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   useEffect(() => {
@@ -205,8 +214,15 @@ export default function ProductsPage() {
   const currentCategory = categories.find(c => c.id === selectedCategoryId);
   const pageTitle = currentCategory ? currentCategory.name : '我們的咖啡';
 
+  const scrollToTop = () => {
+    pageTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
     <div className="bb-products-page">
+      {/* 頁面頂部錨點（scroll-to-top 目標） */}
+      <div ref={pageTopRef} />
+
       {/* 頁面標題列 */}
       <div className="bb-page-header">
         <div className="bb-page-header-inner">
@@ -315,6 +331,20 @@ export default function ProductsPage() {
           </label>
         </div>
       </Drawer>
+
+      {/* Scroll-to-top button */}
+      {showScrollTop && (
+        <button
+          className="bb-scroll-top"
+          onClick={scrollToTop}
+          aria-label="回到頂部"
+          title="回到篩選區"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polyline points="18 15 12 9 6 15"/>
+          </svg>
+        </button>
+      )}
     </div>
   );
 }

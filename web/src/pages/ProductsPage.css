@@ -1062,3 +1062,45 @@
     padding: var(--spacing-3);
   }
 }
+
+/* ── Scroll-to-top button ─────────────────────────────── */
+.bb-scroll-top {
+  position: fixed;
+  bottom: 88px;        /* LINE 按鈕上方（LINE 固定在 bottom: 24px，高約 48px） */
+  right: 24px;
+  z-index: 120;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-brown-medium, #d4a574);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  color: var(--color-brown-dark, #6b4226);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+  transition: background 0.2s, transform 0.2s, opacity 0.2s;
+  animation: scrollTopIn 0.25s ease both;
+}
+
+.bb-scroll-top:hover {
+  background: var(--color-brown-medium, #d4a574);
+  color: white;
+  transform: translateY(-2px);
+}
+
+@keyframes scrollTopIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+@media (max-width: 767px) {
+  .bb-scroll-top {
+    bottom: 80px;   /* 手機底部 BottomNavBar 上方 */
+    right: 16px;
+    width: 40px;
+    height: 40px;
+  }
+}

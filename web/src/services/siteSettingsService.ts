@@ -17,6 +17,11 @@ export interface SiteSettings {
   checkout_enabled: string;
   brand_story_title: string;
   brand_story_content: string;
+  // Footer links (JSON strings)
+  footer_links_shopping: string;
+  footer_links_service: string;
+  footer_social_facebook: string;
+  footer_social_instagram: string;
 }
 
 export const getSiteSettings = async (): Promise<SiteSettings> => {

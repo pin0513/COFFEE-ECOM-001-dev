@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Card, Form, Input, Button, message, Space, Divider, Upload, Switch, Row, Col } from 'antd';
-import { UploadOutlined } from '@ant-design/icons';
+import { UploadOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import type { UploadFile } from 'antd';
 import { apiClient } from '../config/api';
+
+interface FooterLink { label: string; url: string; }
 
 interface SettingsForm {
   site_name: string;
@@ -25,6 +27,9 @@ interface SettingsForm {
   // brand story
   brand_story_title: string;
   brand_story_content: string;
+  // social links
+  footer_social_facebook: string;
+  footer_social_instagram: string;
 }
 
 export default function SiteSettings() {
@@ -32,6 +37,8 @@ export default function SiteSettings() {
   const [loading, setLoading] = useState(false);
   const [logoFile, setLogoFile] = useState<UploadFile[]>([]);
   const [currentLogoUrl, setCurrentLogoUrl] = useState<string>('');
+  const [shoppingLinks, setShoppingLinks] = useState<FooterLink[]>([]);
+  const [serviceLinks, setServiceLinks] = useState<FooterLink[]>([]);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -42,6 +49,13 @@ export default function SiteSettings() {
         let bankInfo = { bankName: '', branch: '', accountNumber: '', accountName: '' };
         if (data.bank_account_info) {
           try { bankInfo = JSON.parse(data.bank_account_info); } catch { /* ignore */ }
+        }
+
+        if (data.footer_links_shopping) {
+          try { setShoppingLinks(JSON.parse(data.footer_links_shopping)); } catch { /* ignore */ }
+        }
+        if (data.footer_links_service) {
+          try { setServiceLinks(JSON.parse(data.footer_links_service)); } catch { /* ignore */ }
         }
 
         form.setFieldsValue({
@@ -63,6 +77,8 @@ export default function SiteSettings() {
           bank_account_name: bankInfo.accountName || '',
           brand_story_title: data.brand_story_title || '品皇咖啡的故事',
           brand_story_content: data.brand_story_content || '',
+          footer_social_facebook: data.footer_social_facebook || '',
+          footer_social_instagram: data.footer_social_instagram || '',
         });
         setCurrentLogoUrl(data.logo_url || '');
       } catch {
@@ -116,6 +132,10 @@ export default function SiteSettings() {
         { key: 'bank_account_info', value: bankInfo },
         { key: 'brand_story_title', value: values.brand_story_title || '' },
         { key: 'brand_story_content', value: values.brand_story_content || '' },
+        { key: 'footer_links_shopping', value: JSON.stringify(shoppingLinks.filter(l => l.label || l.url)) },
+        { key: 'footer_links_service', value: JSON.stringify(serviceLinks.filter(l => l.label || l.url)) },
+        { key: 'footer_social_facebook', value: values.footer_social_facebook || '' },
+        { key: 'footer_social_instagram', value: values.footer_social_instagram || '' },
       ];
 
       await apiClient.put('/site-settings', items);
@@ -242,6 +262,106 @@ export default function SiteSettings() {
         <Form.Item label="品牌故事內容" name="brand_story_content">
           <Input.TextArea rows={4} placeholder="輸入品牌故事文案..." />
         </Form.Item>
+
+        <Divider>頁尾連結管理</Divider>
+        <Row gutter={32}>
+          <Col span={12}>
+            <div style={{ fontWeight: 600, marginBottom: 8 }}>購物資訊連結</div>
+            {shoppingLinks.map((link, i) => (
+              <Space key={i} style={{ display: 'flex', marginBottom: 8 }}>
+                <Input
+                  placeholder="連結名稱"
+                  value={link.label}
+                  onChange={e => {
+                    const updated = [...shoppingLinks];
+                    updated[i] = { ...updated[i], label: e.target.value };
+                    setShoppingLinks(updated);
+                  }}
+                  style={{ width: 120 }}
+                />
+                <Input
+                  placeholder="/products 或 https://..."
+                  value={link.url}
+                  onChange={e => {
+                    const updated = [...shoppingLinks];
+                    updated[i] = { ...updated[i], url: e.target.value };
+                    setShoppingLinks(updated);
+                  }}
+                  style={{ width: 220 }}
+                />
+                <Button
+                  type="text"
+                  danger
+                  icon={<DeleteOutlined />}
+                  onClick={() => setShoppingLinks(shoppingLinks.filter((_, idx) => idx !== i))}
+                />
+              </Space>
+            ))}
+            <Button
+              type="dashed"
+              icon={<PlusOutlined />}
+              size="small"
+              onClick={() => setShoppingLinks([...shoppingLinks, { label: '', url: '' }])}
+            >
+              新增連結
+            </Button>
+          </Col>
+          <Col span={12}>
+            <div style={{ fontWeight: 600, marginBottom: 8 }}>客戶服務連結</div>
+            {serviceLinks.map((link, i) => (
+              <Space key={i} style={{ display: 'flex', marginBottom: 8 }}>
+                <Input
+                  placeholder="連結名稱"
+                  value={link.label}
+                  onChange={e => {
+                    const updated = [...serviceLinks];
+                    updated[i] = { ...updated[i], label: e.target.value };
+                    setServiceLinks(updated);
+                  }}
+                  style={{ width: 120 }}
+                />
+                <Input
+                  placeholder="/pages/contact 或 https://..."
+                  value={link.url}
+                  onChange={e => {
+                    const updated = [...serviceLinks];
+                    updated[i] = { ...updated[i], url: e.target.value };
+                    setServiceLinks(updated);
+                  }}
+                  style={{ width: 220 }}
+                />
+                <Button
+                  type="text"
+                  danger
+                  icon={<DeleteOutlined />}
+                  onClick={() => setServiceLinks(serviceLinks.filter((_, idx) => idx !== i))}
+                />
+              </Space>
+            ))}
+            <Button
+              type="dashed"
+              icon={<PlusOutlined />}
+              size="small"
+              onClick={() => setServiceLinks([...serviceLinks, { label: '', url: '' }])}
+            >
+              新增連結
+            </Button>
+          </Col>
+        </Row>
+
+        <Divider dashed>社群媒體連結</Divider>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item label="Facebook 連結" name="footer_social_facebook">
+              <Input placeholder="https://www.facebook.com/..." />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item label="Instagram 連結" name="footer_social_instagram">
+              <Input placeholder="https://www.instagram.com/..." />
+            </Form.Item>
+          </Col>
+        </Row>
 
         <Form.Item>
           <Button type="primary" htmlType="submit" loading={loading} size="large">

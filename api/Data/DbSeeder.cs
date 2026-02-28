@@ -24,6 +24,9 @@ public static class DbSeeder
 
         // 分類 SpecTemplate 補充（SaveChangesAsync 後執行，確保分類已存在）
         await SeedCategorySpecTemplatesAsync(db);
+
+        // 補充既有 DB 缺少的 footer 連結設定（升級用，不影響新 DB）
+        await EnsureFooterLinksAsync(db);
     }
 
     private static async Task SeedAdminsAsync(AppDbContext db)
@@ -83,9 +86,33 @@ public static class DbSeeder
             new() { Key = "checkout_enabled", Value = "false" },
             new() { Key = "brand_story_title", Value = "品皇咖啡的故事" },
             new() { Key = "brand_story_content", Value = "自 2010 年創立以來，品皇咖啡秉持著「專業烘焙，極致品味」的理念，精選世界各地最優質的咖啡豆，透過專業烘焙師的精湛技藝，為您呈現每一杯完美的咖啡。我們相信，好的咖啡不僅是一種飲品，更是一種生活態度，一種對品質的堅持。" },
+            new() { Key = "footer_links_shopping", Value = "[{\"label\":\"商品列表\",\"url\":\"/products\"},{\"label\":\"購物車\",\"url\":\"/cart\"},{\"label\":\"配送說明\",\"url\":\"/pages/shipping\"}]" },
+            new() { Key = "footer_links_service", Value = "[{\"label\":\"聯絡我們\",\"url\":\"/pages/contact\"},{\"label\":\"常見問題\",\"url\":\"/pages/faq\"},{\"label\":\"關於我們\",\"url\":\"/pages/about\"}]" },
+            new() { Key = "footer_social_facebook", Value = "" },
+            new() { Key = "footer_social_instagram", Value = "" },
         };
 
         db.SiteSettings.AddRange(settings);
+    }
+
+    // 補充既有 DB 缺少的 footer 連結 key（升級用）
+    private static async Task EnsureFooterLinksAsync(AppDbContext db)
+    {
+        var defaults = new Dictionary<string, string>
+        {
+            ["footer_links_shopping"] = "[{\"label\":\"商品列表\",\"url\":\"/products\"},{\"label\":\"購物車\",\"url\":\"/cart\"},{\"label\":\"配送說明\",\"url\":\"/pages/shipping\"}]",
+            ["footer_links_service"]  = "[{\"label\":\"聯絡我們\",\"url\":\"/pages/contact\"},{\"label\":\"常見問題\",\"url\":\"/pages/faq\"},{\"label\":\"關於我們\",\"url\":\"/pages/about\"}]",
+            ["footer_social_facebook"] = "",
+            ["footer_social_instagram"] = "",
+        };
+        foreach (var (key, val) in defaults)
+        {
+            if (!await db.SiteSettings.AnyAsync(s => s.Key == key))
+            {
+                db.SiteSettings.Add(new SiteSetting { Key = key, Value = val, UpdatedAt = DateTime.UtcNow });
+            }
+        }
+        await db.SaveChangesAsync();
     }
 
     private static async Task SeedTestimonialsAsync(AppDbContext db)
@@ -292,6 +319,9 @@ public static class DbSeeder
         var catSpecialty  = await db.Categories.Where(c => c.Code == "SPECIALTY_BEANS").Select(c => c.Id).FirstOrDefaultAsync();
         var catCommercial = await db.Categories.Where(c => c.Code == "COMMERCIAL_BLEND").Select(c => c.Id).FirstOrDefaultAsync();
         var catInstant    = await db.Categories.Where(c => c.Code == "INSTANT_COFFEE").Select(c => c.Id).FirstOrDefaultAsync();
+        var catEquipment  = await db.Categories.Where(c => c.Code == "EQUIPMENT").Select(c => c.Id).FirstOrDefaultAsync();
+        var catSyrup      = await db.Categories.Where(c => c.Code == "SYRUP").Select(c => c.Id).FirstOrDefaultAsync();
+        var catOther      = await db.Categories.Where(c => c.Code == "OTHER").Select(c => c.Id).FirstOrDefaultAsync();
 
         if (catSpecialty == 0 || catCommercial == 0) return; // 分類不存在則跳過
 
@@ -447,6 +477,223 @@ public static class DbSeeder
                 SortOrder = 10, CreatedAt = now,
                 ImageUrl = "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&h=750&fit=crop",
                 BulkOptions = """[{"qty":3,"label":"3盒","discount":5}]""",
+            },
+
+            // --- 以下為擴充商品（TEST-011 ~ TEST-024）---
+
+            // 11. 手沖濾掛組合包 - 精選濾掛，有 BulkOptions，isFeatured=true
+            new()
+            {
+                Sku = "TEST-011",
+                Name = "品皇 手沖濾掛組合包（10入）",
+                ShortDescription = "精選三款風味，旅行辦公皆適用",
+                Description = "精選衣索比亞、哥倫比亞、瓜地馬拉三款風味濾掛，每包獨立封裝，新鮮鎖香，沖泡簡便不失品味。",
+                CategoryId = catOther,
+                Price = 650, Unit = "盒",
+                IsActive = true, IsOrderable = true, IsFeatured = true,
+                SortOrder = 11, CreatedAt = now,
+                ImageUrl = "https://images.unsplash.com/photo-1600093463592-8e36ae95ef56?w=400&q=80",
+                BulkOptions = """[{"qty":2,"label":"2盒","discount":5},{"qty":4,"label":"4盒","discount":10}]""",
+            },
+
+            // 12. 耶加雪菲膠囊咖啡 - 膠囊，有 SubscriptionOptions（月訂/每兩月）
+            new()
+            {
+                Sku = "TEST-012",
+                Name = "品皇 耶加雪菲膠囊咖啡（10顆）",
+                ShortDescription = "果香明亮，相容 Nespresso 膠囊機",
+                Description = "採用衣索比亞耶加雪菲精品豆，精密萃取封裝，相容 Nespresso Original Line 膠囊機，一鍵享受精品咖啡。",
+                CategoryId = catInstant,
+                Price = 520, Unit = "盒",
+                IsActive = true, IsOrderable = true, IsFeatured = false,
+                SortOrder = 12, CreatedAt = now,
+                ImageUrl = "https://images.unsplash.com/photo-1510707577719-ae7c14805e3a?w=400&q=80",
+                SubscriptionOptions = """{"discount":10,"frequencies":["每月","每兩月"],"defaultFrequency":"每月"}""",
+            },
+
+            // 13. 阿拉比卡精選咖啡豆 - 精品豆，promotionTag 買一送一，限時 5 天
+            new()
+            {
+                Sku = "TEST-013",
+                Name = "阿拉比卡 精選綜合咖啡豆",
+                ShortDescription = "多產區混豆，層次豐富，均衡易飲",
+                Description = "嚴選中南美洲、非洲三大產區阿拉比卡豆，中焙調和，呈現焦糖甜感與柔和果酸，是每日飲用的好選擇。",
+                CategoryId = catSpecialty,
+                Price = 799, Unit = "半磅",
+                IsActive = true, IsOrderable = true, IsFeatured = false,
+                SortOrder = 13, CreatedAt = now,
+                ImageUrl = "https://images.unsplash.com/photo-1611564494260-6f21b80af7ea?w=400&q=80",
+                PromotionTag = "買一送一",
+                PromotionEndAt = now.AddDays(5),
+            },
+
+            // 14. 品皇手沖濾杯套組 - 器材，IsOrderable=true，無特殊
+            new()
+            {
+                Sku = "TEST-014",
+                Name = "品皇 陶瓷手沖濾杯套組",
+                ShortDescription = "V60 造型，導流均勻，入門首選",
+                Description = "品皇自選陶瓷手沖濾杯，附不鏽鋼支架與濾紙 30 張，導流設計精準控制水流，輕鬆沖出均勻萃取風味，適合手沖新手與進階玩家。",
+                CategoryId = catEquipment,
+                Price = 1200, Unit = "組",
+                IsActive = true, IsOrderable = true, IsFeatured = false,
+                SortOrder = 14, CreatedAt = now,
+                ImageUrl = "https://images.unsplash.com/photo-1556742031-c6961e8560b0?w=400&q=80",
+            },
+
+            // 15. 黑糖咖啡糖漿 - 糖漿，promotionTag 新品上市
+            new()
+            {
+                Sku = "TEST-015",
+                Name = "品皇 黑糖咖啡風味糖漿",
+                ShortDescription = "台灣黑糖煉製，濃郁香甜不膩",
+                Description = "選用台灣在地黑糖熬製，帶有自然甘蔗香氣與焦糖尾韻，適合加入拿鐵、美式或手搖飲，賦予咖啡獨特的台灣風味。",
+                CategoryId = catSyrup,
+                Price = 280, Unit = "瓶",
+                IsActive = true, IsOrderable = true, IsFeatured = false,
+                SortOrder = 15, CreatedAt = now,
+                ImageUrl = "https://images.unsplash.com/photo-1609951651556-5334e2706168?w=400&q=80",
+                PromotionTag = "新品上市",
+            },
+
+            // 16. 淺焙衣索比亞 1kg - 精品豆，BulkOptions，isFeatured=true
+            new()
+            {
+                Sku = "TEST-016",
+                Name = "衣索比亞 淺焙 耶加雪菲 淨重 1kg",
+                ShortDescription = "大容量划算裝，草莓藍莓果香",
+                Description = "衣索比亞 Kochere 產區，海拔 1900m，日曬淺焙，展現奔放莓果與花香風味。1kg 大容量適合重度咖啡愛好者或小型咖啡館採購。",
+                CategoryId = catSpecialty,
+                Price = 960, Unit = "1公斤",
+                IsActive = true, IsOrderable = true, IsFeatured = true,
+                SortOrder = 16, CreatedAt = now,
+                ImageUrl = "https://images.unsplash.com/photo-1606791422814-b32c705e3e2f?w=400&q=80",
+                BulkOptions = """[{"qty":2,"label":"2件","discount":5},{"qty":3,"label":"3件","discount":10}]""",
+            },
+
+            // 17. 品皇經典馬克杯 - 周邊，無特殊
+            new()
+            {
+                Sku = "TEST-017",
+                Name = "品皇 經典馬克杯",
+                ShortDescription = "320ml 陶瓷杯，印有品皇 Logo",
+                Description = "品皇咖啡官方周邊，高品質陶瓷燒製，320ml 容量，厚實保溫，簡約設計適合日常使用或作為伴手禮。",
+                CategoryId = catOther,
+                Price = 350, Unit = "個",
+                IsActive = true, IsOrderable = true, IsFeatured = false,
+                SortOrder = 17, CreatedAt = now,
+                ImageUrl = "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=400&q=80",
+            },
+
+            // 18. 薩爾瓦多 水洗 中烘 - 精品豆，SubscriptionOptions（週訂/月訂）
+            new()
+            {
+                Sku = "TEST-018",
+                Name = "薩爾瓦多 聖塔安娜 水洗 中烘",
+                ShortDescription = "奶油感、柑橘酸、甜感細膩",
+                Description = "來自薩爾瓦多聖塔安娜火山產區，水洗處理法呈現乾淨果酸與柑橘香，中焙保留明亮甜感，適合手沖與拿鐵，是每日固定飲用的好選擇。",
+                CategoryId = catSpecialty,
+                Price = 580, Unit = "半磅",
+                IsActive = true, IsOrderable = true, IsFeatured = false,
+                SortOrder = 18, CreatedAt = now,
+                ImageUrl = "https://images.unsplash.com/photo-1580933073521-dc49ac0d4e6a?w=400&q=80",
+                SubscriptionOptions = """{"discount":8,"frequencies":["每週","每月"],"defaultFrequency":"每月"}""",
+            },
+
+            // 19. 台灣高山咖啡豆 - 精品豆，promotionTag 台灣之光，requirePrePayment，限時 7 天
+            new()
+            {
+                Sku = "TEST-019",
+                Name = "台灣 阿里山 高山咖啡豆",
+                ShortDescription = "海拔 1600m，蜜處理，花香甜感",
+                Description = "嘉義阿里山產區，海拔 1600m 以上，當季採收，蜜處理法保留果皮甜感，呈現烏龍茶香、柑橘蜜糖風味，台灣精品咖啡之光。限量供應，預購需預付款。",
+                CategoryId = catSpecialty,
+                Price = 1200, Unit = "半磅",
+                IsActive = true, IsOrderable = true, IsFeatured = false,
+                SortOrder = 19, CreatedAt = now,
+                ImageUrl = "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=400&q=80",
+                PromotionTag = "台灣之光",
+                RequirePrePayment = true,
+                PromotionEndAt = now.AddDays(7),
+            },
+
+            // 20. 濾掛綜合 30 入 - 有 BulkOptions 2-tier + SubscriptionOptions，isFeatured=true
+            new()
+            {
+                Sku = "TEST-020",
+                Name = "品皇 濾掛咖啡 綜合口味 30入",
+                ShortDescription = "輕焙/中焙/深焙各 10 包，天天不重複",
+                Description = "集結品皇三款經典烘焙度濾掛咖啡，每日輪替品飲，輕鬆感受咖啡風味的多變層次。獨立封裝，攜帶方便，支援定期訂閱讓您永遠不斷貨。",
+                CategoryId = catOther,
+                Price = 420, Unit = "盒",
+                IsActive = true, IsOrderable = true, IsFeatured = true,
+                SortOrder = 20, CreatedAt = now,
+                ImageUrl = "https://images.unsplash.com/photo-1559525839-8a0fde8b38f3?w=400&q=80",
+                BulkOptions = """[{"qty":2,"label":"2盒","discount":5},{"qty":4,"label":"4盒","discount":10}]""",
+                SubscriptionOptions = """{"discount":8,"frequencies":["每月","每季"],"defaultFrequency":"每月"}""",
+            },
+
+            // 21. 品皇商業豆 10kg 裝 - 商業豆，BulkOptions 3-tier，requirePrePayment
+            new()
+            {
+                Sku = "TEST-021",
+                Name = "品皇 商業配方豆 10kg 裝",
+                ShortDescription = "餐廳、辦公室大宗採購首選",
+                Description = "品皇專業商業配方，適合義式咖啡機萃取，穩定均衡風味確保出杯品質一致。10kg 大裝適合餐廳、連鎖飲料店、辦公室大量採購，需預付款後安排出貨。",
+                CategoryId = catCommercial,
+                Price = 2800, Unit = "10公斤",
+                IsActive = true, IsOrderable = true, IsFeatured = false,
+                SortOrder = 21, CreatedAt = now,
+                ImageUrl = "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400&q=80",
+                BulkOptions = """[{"qty":2,"label":"2袋","discount":5},{"qty":3,"label":"3袋","discount":8},{"qty":5,"label":"5袋","discount":12}]""",
+                RequirePrePayment = true,
+            },
+
+            // 22. 咖啡知識禮盒組 - 禮盒，isFeatured=false，普通商品
+            new()
+            {
+                Sku = "TEST-022",
+                Name = "品皇 咖啡知識禮盒組",
+                ShortDescription = "精品豆 ×2 + 手沖量杯 + 風味輪卡",
+                Description = "送禮自用兩相宜，禮盒內含精品咖啡豆兩款（各半磅）、專業手沖量杯及精美咖啡風味輪卡一套，附品皇咖啡知識手冊，是送給咖啡愛好者的最佳禮物。",
+                CategoryId = catOther,
+                Price = 1580, Unit = "禮盒",
+                IsActive = true, IsOrderable = true, IsFeatured = false,
+                SortOrder = 22, CreatedAt = now,
+                ImageUrl = "https://images.unsplash.com/photo-1512568400610-62da28bc8a13?w=400&q=80",
+            },
+
+            // 23. 肯亞 AA 即期 5 折 - 精品豆，promotionTag，requirePrePayment，限時 1 天
+            new()
+            {
+                Sku = "TEST-023",
+                Name = "肯亞 AA 特選 即期下殺",
+                ShortDescription = "黑醋栗、莓果酸、熱帶果香",
+                Description = "頂級肯亞 AA 等級，即期優惠出清，原價 NT$480，限時以半價供應。需預付款，庫存有限售完為止，把握機會以實惠價格體驗非洲精品風味。",
+                CategoryId = catSpecialty,
+                Price = 240, Unit = "半磅",
+                IsActive = true, IsOrderable = true, IsFeatured = false,
+                SortOrder = 23, CreatedAt = now,
+                ImageUrl = "https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=400&q=80",
+                PromotionTag = "即期5折",
+                RequirePrePayment = true,
+                PromotionEndAt = now.AddDays(1),
+            },
+
+            // 24. 品皇濃縮膠囊 - 膠囊，SubscriptionOptions（月訂）+ BulkOptions
+            new()
+            {
+                Sku = "TEST-024",
+                Name = "品皇 濃縮義式膠囊咖啡（10顆）",
+                ShortDescription = "深烘義式風味，濃郁醇厚，一鍵萃取",
+                Description = "採用深焙配方豆，高壓萃取封裝，呈現義式濃縮的醇厚焦糖香與持久 Crema，相容 Nespresso Original Line 膠囊機，搭配月訂方案享有長期折扣。",
+                CategoryId = catInstant,
+                Price = 720, Unit = "盒",
+                IsActive = true, IsOrderable = true, IsFeatured = false,
+                SortOrder = 24, CreatedAt = now,
+                ImageUrl = "https://images.unsplash.com/photo-1522992319-0365e5f11656?w=400&q=80",
+                BulkOptions = """[{"qty":2,"label":"2盒","discount":5},{"qty":4,"label":"4盒","discount":10}]""",
+                SubscriptionOptions = """{"discount":10,"frequencies":["每月"],"defaultFrequency":"每月"}""",
             },
         };
 
