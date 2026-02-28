@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import {
-  Table, Button, Modal, Form, Input, InputNumber, Switch, Space, message, Popconfirm, Tag, Typography
+  Table, Button, Modal, Form, Input, InputNumber, Switch, Space, message, Popconfirm, Tag, Typography, Upload
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, UploadOutlined, LoadingOutlined } from '@ant-design/icons';
+import type { UploadProps } from 'antd';
 import { apiClient } from '../config/api';
 
 const { TextArea } = Input;
@@ -13,6 +14,7 @@ interface Testimonial {
   content: string;
   authorName: string;
   rating: number;
+  imageUrl?: string;
   isVisible: boolean;
   sortOrder: number;
   createdAt: string;
@@ -22,6 +24,7 @@ interface TestimonialForm {
   content: string;
   authorName: string;
   rating: number;
+  imageUrl: string;
   isVisible: boolean;
   sortOrder: number;
 }
@@ -32,6 +35,36 @@ export default function TestimonialManagement() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form] = Form.useForm<TestimonialForm>();
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [previewAvatar, setPreviewAvatar] = useState('');
+
+  const getImageSrc = (url: string | undefined) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    const base = (apiClient.defaults.baseURL ?? '').replace(/\/api$/, '');
+    return `${base}${url}`;
+  };
+
+  const handleAvatarUpload: UploadProps['customRequest'] = async ({ file, onSuccess, onError }) => {
+    setAvatarUploading(true);
+    const formData = new FormData();
+    formData.append('file', file as File);
+    try {
+      const res = await apiClient.post<{ url: string }>('/uploads/testimonials', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const url = res.data.url;
+      form.setFieldValue('imageUrl', url);
+      setPreviewAvatar(url);
+      onSuccess?.(res.data);
+      message.success('頭像上傳成功');
+    } catch {
+      onError?.(new Error('上傳失敗'));
+      message.error('頭像上傳失敗');
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
 
   const fetchTestimonials = async () => {
     setLoading(true);
@@ -49,7 +82,8 @@ export default function TestimonialManagement() {
 
   const handleCreate = () => {
     form.resetFields();
-    form.setFieldsValue({ rating: 5, isVisible: true, sortOrder: 0 });
+    form.setFieldsValue({ rating: 5, isVisible: true, sortOrder: 0, imageUrl: '' });
+    setPreviewAvatar('');
     setEditingId(null);
     setModalOpen(true);
   };
@@ -59,9 +93,11 @@ export default function TestimonialManagement() {
       content: record.content,
       authorName: record.authorName,
       rating: record.rating,
+      imageUrl: record.imageUrl || '',
       isVisible: record.isVisible,
       sortOrder: record.sortOrder,
     });
+    setPreviewAvatar(record.imageUrl || '');
     setEditingId(record.id);
     setModalOpen(true);
   };
@@ -104,6 +140,17 @@ export default function TestimonialManagement() {
 
   const columns = [
     { title: 'ID', dataIndex: 'id', width: 60 },
+    {
+      title: '頭像',
+      dataIndex: 'imageUrl',
+      width: 70,
+      render: (url: string | undefined) => {
+        const src = getImageSrc(url);
+        return src
+          ? <img src={src} alt="" style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: '50%' }} />
+          : null;
+      },
+    },
     {
       title: '作者',
       dataIndex: 'authorName',
@@ -190,6 +237,29 @@ export default function TestimonialManagement() {
           </Form.Item>
           <Form.Item name="authorName" label="作者" rules={[{ required: true, message: '請輸入作者名稱' }]}>
             <Input placeholder="如：李先生" />
+          </Form.Item>
+          <Form.Item name="imageUrl" label="顧客頭像" hidden>
+            <Input />
+          </Form.Item>
+          <Form.Item label="上傳顧客頭像">
+            <Space align="start">
+              <Upload
+                accept=".jpg,.jpeg,.png,.webp"
+                showUploadList={false}
+                customRequest={handleAvatarUpload}
+              >
+                <Button icon={avatarUploading ? <LoadingOutlined /> : <UploadOutlined />} disabled={avatarUploading}>
+                  {avatarUploading ? '上傳中...' : '上傳頭像'}
+                </Button>
+              </Upload>
+              {previewAvatar && getImageSrc(previewAvatar) && (
+                <img
+                  src={getImageSrc(previewAvatar)!}
+                  alt="頭像預覽"
+                  style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: '50%', border: '1px solid #d9d9d9' }}
+                />
+              )}
+            </Space>
           </Form.Item>
           <Form.Item name="rating" label="星級（1-5）" rules={[{ required: true }]}>
             <InputNumber min={1} max={5} style={{ width: '100%' }} />

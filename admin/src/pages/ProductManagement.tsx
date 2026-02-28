@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import {
   Card, Table, Button, Modal, Form, Input, InputNumber, Select,
-  Switch, Space, message, Upload, Tag, Dropdown, Divider,
+  Switch, Space, message, Upload, Tag, Dropdown, Divider, Checkbox,
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, UploadOutlined, ImportOutlined, LoadingOutlined, DownOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, UploadOutlined, ImportOutlined, LoadingOutlined, DownOutlined, MinusCircleOutlined } from '@ant-design/icons';
 import type { UploadFile, UploadProps } from 'antd';
 import { apiClient } from '../config/api';
 
@@ -18,6 +18,12 @@ interface Category {
   id: number;
   name: string;
   specTemplate?: string | null;
+}
+
+interface BulkTier {
+  qty: number;
+  label: string;
+  discount: number;
 }
 
 interface Product {
@@ -36,6 +42,10 @@ interface Product {
   inventoryEnabled: boolean;
   stockQuantity: number;
   specData: string | null;
+  bulkOptions: string | null;
+  subscriptionOptions: string | null;
+  parentProductId: number | null;
+  variantLabel: string | null;
 }
 
 export default function ProductManagement() {
@@ -53,6 +63,12 @@ export default function ProductManagement() {
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [allowBulk, setAllowBulk] = useState(false);
+  const [bulkTiers, setBulkTiers] = useState<BulkTier[]>([]);
+  const [allowSubscription, setAllowSubscription] = useState(false);
+  const [subDiscount, setSubDiscount] = useState(10);
+  const [subFreqs, setSubFreqs] = useState<string[]>(['每兩週', '每月']);
+  const [subDefault, setSubDefault] = useState('每兩週');
   const [form] = Form.useForm();
 
   const fetchProducts = async (p = 1) => {
@@ -132,6 +148,32 @@ export default function ProductManagement() {
       try { specValues = JSON.parse(product.specData); } catch { /* ignore */ }
     }
 
+    // 解析購買模式
+    if (product.bulkOptions) {
+      try {
+        setAllowBulk(true);
+        setBulkTiers(JSON.parse(product.bulkOptions));
+      } catch { setAllowBulk(false); setBulkTiers([]); }
+    } else {
+      setAllowBulk(false);
+      setBulkTiers([]);
+    }
+
+    if (product.subscriptionOptions) {
+      try {
+        const opts = JSON.parse(product.subscriptionOptions);
+        setAllowSubscription(true);
+        setSubDiscount(opts.discount ?? 10);
+        setSubFreqs(opts.frequencies ?? ['每兩週', '每月']);
+        setSubDefault(opts.defaultFrequency ?? '每兩週');
+      } catch { setAllowSubscription(false); }
+    } else {
+      setAllowSubscription(false);
+      setSubDiscount(10);
+      setSubFreqs(['每兩週', '每月']);
+      setSubDefault('每兩週');
+    }
+
     form.setFieldsValue({
       sku: product.sku,
       name: product.name,
@@ -144,6 +186,8 @@ export default function ProductManagement() {
       isFeatured: product.isFeatured,
       isOrderable: product.isOrderable,
       inventoryEnabled: product.inventoryEnabled,
+      parentProductId: product.parentProductId ?? undefined,
+      variantLabel: product.variantLabel ?? undefined,
       ...Object.fromEntries(Object.entries(specValues).map(([k, v]) => [`spec_${k}`, v])),
     });
     setIsModalVisible(true);
@@ -153,6 +197,12 @@ export default function ProductManagement() {
     setEditingProduct(null);
     setPreviewImageUrl(null);
     setSelectedCategoryId(null);
+    setAllowBulk(false);
+    setBulkTiers([]);
+    setAllowSubscription(false);
+    setSubDiscount(10);
+    setSubFreqs(['每兩週', '每月']);
+    setSubDefault('每兩週');
     form.resetFields();
     form.setFieldsValue({ isActive: true, isOrderable: true, inventoryEnabled: false, unit: '磅' });
     setIsModalVisible(true);
@@ -194,11 +244,17 @@ export default function ProductManagement() {
         cleanValues[k] = v;
       }
     }
-    if (Object.keys(specData).length > 0) {
-      cleanValues.specData = JSON.stringify(specData);
-    } else {
-      cleanValues.specData = null;
-    }
+    cleanValues.specData = Object.keys(specData).length > 0 ? JSON.stringify(specData) : null;
+
+    // 購買模式序列化
+    cleanValues.bulkOptions = allowBulk && bulkTiers.length > 0
+      ? JSON.stringify(bulkTiers) : '';
+    cleanValues.subscriptionOptions = allowSubscription
+      ? JSON.stringify({ discount: subDiscount, frequencies: subFreqs, defaultFrequency: subDefault }) : '';
+
+    // Variants
+    cleanValues.parentProductId = (cleanValues.parentProductId as number | undefined) ?? 0;
+    cleanValues.variantLabel = (cleanValues.variantLabel as string | undefined) ?? '';
 
     try {
       if (editingProduct) {
@@ -434,7 +490,102 @@ export default function ProductManagement() {
             </>
           )}
 
-          <Divider style={{ margin: '8px 0 16px' }} />
+          {/* 購買模式設定 */}
+          <Divider style={{ margin: '8px 0 16px' }}>購買模式設定</Divider>
+          <div style={{ marginBottom: 12 }}>
+            <Space align="center" style={{ marginBottom: 8 }}>
+              <Switch checked disabled size="small" />
+              <span style={{ color: '#666' }}>一次購買（永遠開啟）</span>
+            </Space>
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <Space align="center" style={{ marginBottom: allowBulk ? 8 : 0 }}>
+              <Switch checked={allowBulk} onChange={setAllowBulk} size="small" />
+              <span>大量購買優惠</span>
+            </Space>
+            {allowBulk && (
+              <div style={{ marginLeft: 32, marginTop: 8 }}>
+                <Table
+                  dataSource={bulkTiers}
+                  rowKey={(_, i) => String(i)}
+                  size="small"
+                  pagination={false}
+                  columns={[
+                    { title: '數量', dataIndex: 'qty', width: 80, render: (v, _, i) => (
+                      <InputNumber size="small" value={v} min={1} style={{ width: 70 }}
+                        onChange={(val) => setBulkTiers(t => t.map((r, idx) => idx === i ? { ...r, qty: val ?? 1 } : r))} />
+                    )},
+                    { title: '顯示文字', dataIndex: 'label', render: (v, _, i) => (
+                      <Input size="small" value={v}
+                        onChange={(e) => setBulkTiers(t => t.map((r, idx) => idx === i ? { ...r, label: e.target.value } : r))} />
+                    )},
+                    { title: '折扣%', dataIndex: 'discount', width: 90, render: (v, _, i) => (
+                      <InputNumber size="small" value={v} min={1} max={99} style={{ width: 80 }}
+                        onChange={(val) => setBulkTiers(t => t.map((r, idx) => idx === i ? { ...r, discount: val ?? 1 } : r))} />
+                    )},
+                    { title: '', width: 40, render: (_, __, i) => (
+                      <Button type="text" danger size="small" icon={<MinusCircleOutlined />}
+                        onClick={() => setBulkTiers(t => t.filter((_, idx) => idx !== i))} />
+                    )},
+                  ]}
+                />
+                <Button size="small" style={{ marginTop: 8 }} icon={<PlusOutlined />}
+                  onClick={() => setBulkTiers(t => [...t, { qty: 3, label: '3包優惠', discount: 5 }])}>
+                  新增方案
+                </Button>
+              </div>
+            )}
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <Space align="center" style={{ marginBottom: allowSubscription ? 8 : 0 }}>
+              <Switch checked={allowSubscription} onChange={setAllowSubscription} size="small" />
+              <span>定期訂購</span>
+            </Space>
+            {allowSubscription && (
+              <div style={{ marginLeft: 32, marginTop: 8 }}>
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  <Space>
+                    <span>訂購折扣：</span>
+                    <InputNumber value={subDiscount} min={1} max={99} onChange={v => setSubDiscount(v ?? 10)} />
+                    <span>%</span>
+                  </Space>
+                  <div>
+                    <span>可選頻率：</span>
+                    <Checkbox.Group
+                      value={subFreqs}
+                      options={['每週', '每兩週', '每月']}
+                      onChange={(vals) => {
+                        setSubFreqs(vals as string[]);
+                        if (!vals.includes(subDefault)) setSubDefault(vals[0] as string ?? '每月');
+                      }}
+                    />
+                  </div>
+                  <Space>
+                    <span>預設頻率：</span>
+                    <Select
+                      value={subDefault}
+                      onChange={setSubDefault}
+                      style={{ width: 120 }}
+                      options={subFreqs.map(f => ({ label: f, value: f }))}
+                    />
+                  </Space>
+                </Space>
+              </div>
+            )}
+          </div>
+
+          {/* 商品群組 / 變體 */}
+          <Divider style={{ margin: '8px 0 16px' }}>商品群組（變體）</Divider>
+          <Space style={{ width: '100%' }}>
+            <Form.Item label="父商品 ID" name="parentProductId" style={{ marginBottom: 0, flex: 1 }}>
+              <InputNumber placeholder="留空 = 無群組" style={{ width: '100%' }} min={0} />
+            </Form.Item>
+            <Form.Item label="變體標籤" name="variantLabel" style={{ marginBottom: 0, flex: 1 }}>
+              <Input placeholder="如：半磅 / 1磅 / 整豆" />
+            </Form.Item>
+          </Space>
+
+          <Divider style={{ margin: '16px 0 12px' }} />
           <Space style={{ width: '100%', justifyContent: 'space-between' }}>
             <Form.Item label="啟用" name="isActive" valuePropName="checked" style={{ marginBottom: 0 }}>
               <Switch />

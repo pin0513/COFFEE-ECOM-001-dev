@@ -17,6 +17,7 @@ interface Testimonial {
   content: string;
   authorName: string;
   rating: number;
+  imageUrl?: string;
 }
 
 interface Store {
@@ -25,6 +26,7 @@ interface Store {
   address: string;
   phone: string;
   businessHours: string;
+  imageUrl?: string;
 }
 
 // 首頁展示的 3 大分類（依 DB name 比對）
@@ -246,7 +248,17 @@ export default function HomePage() {
                 <div key={t.id} className="testimonial-card">
                   <div className="testimonial-stars">{renderStars(t.rating)}</div>
                   <p className="testimonial-content">"{t.content}"</p>
-                  <p className="testimonial-author">- {t.authorName}</p>
+                  <div className="testimonial-card-header">
+                    {t.imageUrl && (
+                      <img
+                        src={getImageUrl(t.imageUrl) || ''}
+                        alt={t.authorName}
+                        className="testimonial-avatar"
+                        loading="lazy"
+                      />
+                    )}
+                    <p className="testimonial-author">- {t.authorName}</p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -266,10 +278,20 @@ export default function HomePage() {
             <div className="stores-grid">
               {stores.map(store => (
                 <div key={store.id} className="store-card">
-                  <h3 className="store-name">{store.name}</h3>
-                  {store.address && <p className="store-detail">📍 {store.address}</p>}
-                  {store.phone && <p className="store-detail">📞 {store.phone}</p>}
-                  {store.businessHours && <p className="store-detail">🕐 {store.businessHours}</p>}
+                  {store.imageUrl && (
+                    <img
+                      src={getImageUrl(store.imageUrl) || ''}
+                      alt={store.name}
+                      className="store-card-image"
+                      loading="lazy"
+                    />
+                  )}
+                  <div className="store-card-body">
+                    <h3 className="store-name">{store.name}</h3>
+                    {store.address && <p className="store-detail">📍 {store.address}</p>}
+                    {store.phone && <p className="store-detail">📞 {store.phone}</p>}
+                    {store.businessHours && <p className="store-detail">🕐 {store.businessHours}</p>}
+                  </div>
                 </div>
               ))}
             </div>

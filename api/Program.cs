@@ -99,6 +99,7 @@ if (!Path.IsPathRooted(uploadPath))
 Directory.CreateDirectory(Path.Combine(uploadPath, "logo"));
 Directory.CreateDirectory(Path.Combine(uploadPath, "products"));
 Directory.CreateDirectory(Path.Combine(uploadPath, "stores"));
+Directory.CreateDirectory(Path.Combine(uploadPath, "testimonials"));
 
 app.UseStaticFiles(new StaticFileOptions
 {
@@ -240,7 +241,8 @@ app.MapGet("/api/products", async (
             p.CategoryId, CategoryName = p.Category != null ? p.Category.Name : null,
             CategorySpecTemplate = p.Category != null ? p.Category.SpecTemplate : null,
             p.Price, p.ImageUrl, p.IsActive, p.IsFeatured, p.IsOrderable, p.InventoryEnabled,
-            p.StockQuantity, p.Unit, p.SpecData, p.SortOrder, p.CreatedAt })
+            p.StockQuantity, p.Unit, p.SpecData, p.SortOrder, p.CreatedAt,
+            p.BulkOptions, p.SubscriptionOptions, p.ParentProductId, p.VariantLabel })
         .ToListAsync();
     return Results.Ok(new { Data = products, Page = page, PageSize = pageSize, TotalCount = total,
         TotalPages = (int)Math.Ceiling((double)total / pageSize) });
@@ -253,7 +255,8 @@ app.MapGet("/api/products/{id:int}", async (int id, AppDbContext db) =>
     return Results.Ok(new { p.Id, p.Sku, p.Name, p.ShortDescription, p.Description,
         p.CategoryId, CategoryName = p.Category?.Name, CategorySpecTemplate = p.Category?.SpecTemplate,
         p.Price, p.ImageUrl, p.IsActive, p.IsFeatured,
-        p.IsOrderable, p.InventoryEnabled, p.StockQuantity, p.Unit, p.SpecData, p.SortOrder, p.CreatedAt, p.UpdatedAt });
+        p.IsOrderable, p.InventoryEnabled, p.StockQuantity, p.Unit, p.SpecData, p.SortOrder, p.CreatedAt, p.UpdatedAt,
+        p.BulkOptions, p.SubscriptionOptions, p.ParentProductId, p.VariantLabel });
 }).WithName("GetProductById").WithTags("Products");
 
 app.MapPost("/api/products", [Authorize] async ([FromBody] UpsertProductRequest req, AppDbContext db) =>
@@ -266,7 +269,11 @@ app.MapPost("/api/products", [Authorize] async ([FromBody] UpsertProductRequest 
         CategoryId = req.CategoryId ?? 1, Price = req.Price ?? 0, Unit = req.Unit ?? "磅",
         ImageUrl = req.ImageUrl, IsActive = req.IsActive ?? true, IsFeatured = req.IsFeatured ?? false,
         IsOrderable = req.IsOrderable ?? true, InventoryEnabled = req.InventoryEnabled ?? false,
-        SortOrder = req.SortOrder ?? 0, CreatedAt = DateTime.UtcNow
+        SortOrder = req.SortOrder ?? 0, CreatedAt = DateTime.UtcNow,
+        BulkOptions = string.IsNullOrEmpty(req.BulkOptions) ? null : req.BulkOptions,
+        SubscriptionOptions = string.IsNullOrEmpty(req.SubscriptionOptions) ? null : req.SubscriptionOptions,
+        ParentProductId = req.ParentProductId == 0 ? null : req.ParentProductId,
+        VariantLabel = string.IsNullOrEmpty(req.VariantLabel) ? null : req.VariantLabel,
     };
     db.Products.Add(product);
     await db.SaveChangesAsync();
@@ -290,6 +297,10 @@ app.MapPut("/api/products/{id:int}", [Authorize] async (int id, [FromBody] Upser
     if (req.InventoryEnabled.HasValue) product.InventoryEnabled = req.InventoryEnabled.Value;
     if (req.SortOrder.HasValue) product.SortOrder = req.SortOrder.Value;
     if (req.SpecData != null) product.SpecData = req.SpecData;
+    if (req.BulkOptions != null) product.BulkOptions = req.BulkOptions == "" ? null : req.BulkOptions;
+    if (req.SubscriptionOptions != null) product.SubscriptionOptions = req.SubscriptionOptions == "" ? null : req.SubscriptionOptions;
+    if (req.ParentProductId != null) product.ParentProductId = req.ParentProductId == 0 ? null : req.ParentProductId;
+    if (req.VariantLabel != null) product.VariantLabel = req.VariantLabel == "" ? null : req.VariantLabel;
     product.UpdatedAt = DateTime.UtcNow;
     await db.SaveChangesAsync();
     return Results.Ok(new { product.Id });
@@ -312,6 +323,19 @@ app.MapPost("/api/products/batch", [Authorize] async ([FromBody] BatchProductReq
     await db.SaveChangesAsync();
     return Results.Ok(new { Updated = products.Count });
 }).WithName("BatchUpdateProducts").WithTags("Products");
+
+app.MapGet("/api/products/{id:int}/variants", async (int id, AppDbContext db) =>
+{
+    var product = await db.Products.FindAsync(id);
+    if (product == null) return Results.NotFound();
+    var parentId = product.ParentProductId ?? id;
+    var variants = await db.Products
+        .Where(p => (p.ParentProductId == parentId || p.Id == parentId) && p.IsActive)
+        .OrderBy(p => p.SortOrder).ThenBy(p => p.Id)
+        .Select(p => new { p.Id, p.VariantLabel, p.Price, p.StockQuantity, p.ImageUrl, p.IsOrderable })
+        .ToListAsync();
+    return Results.Ok(variants);
+}).WithName("GetProductVariants").WithTags("Products");
 
 app.MapDelete("/api/products/{id:int}", [Authorize] async (int id, AppDbContext db) =>
 {
@@ -459,7 +483,7 @@ app.MapPut("/api/site-settings", [Authorize] async ([FromBody] List<SiteSettingI
 // Uploads
 async Task<IResult> HandleUpload(string category, HttpRequest request, IConfiguration config)
 {
-    var allowed = new[] { "logo", "products", "stores" };
+    var allowed = new[] { "logo", "products", "stores", "testimonials" };
     if (!allowed.Contains(category)) return Results.BadRequest(new { Message = "不允許的上傳分類" });
     if (!request.HasFormContentType || request.Form.Files.Count == 0) return Results.BadRequest(new { Message = "請上傳檔案" });
     var file = request.Form.Files[0];
@@ -755,14 +779,14 @@ app.MapGet("/api/testimonials", async (AppDbContext db) =>
     Results.Ok(await db.Testimonials
         .Where(t => t.IsVisible)
         .OrderBy(t => t.SortOrder).ThenBy(t => t.Id)
-        .Select(t => new { t.Id, t.Content, t.AuthorName, t.Rating, t.SortOrder })
+        .Select(t => new { t.Id, t.Content, t.AuthorName, t.Rating, t.ImageUrl, t.SortOrder })
         .ToListAsync()))
 .WithName("GetTestimonials").WithTags("Testimonials");
 
 app.MapGet("/api/testimonials/all", [Authorize] async (AppDbContext db) =>
     Results.Ok(await db.Testimonials
         .OrderBy(t => t.SortOrder).ThenBy(t => t.Id)
-        .Select(t => new { t.Id, t.Content, t.AuthorName, t.Rating, t.IsVisible, t.SortOrder, t.CreatedAt })
+        .Select(t => new { t.Id, t.Content, t.AuthorName, t.Rating, t.ImageUrl, t.IsVisible, t.SortOrder, t.CreatedAt })
         .ToListAsync()))
 .WithName("GetAllTestimonials").WithTags("Testimonials");
 
@@ -774,6 +798,7 @@ app.MapPost("/api/testimonials", [Authorize] async ([FromBody] UpsertTestimonial
         Content = req.Content,
         AuthorName = req.AuthorName ?? "匿名",
         Rating = req.Rating is >= 1 and <= 5 ? req.Rating : 5,
+        ImageUrl = req.ImageUrl ?? "",
         IsVisible = req.IsVisible ?? true,
         SortOrder = req.SortOrder ?? 0,
         CreatedAt = DateTime.UtcNow
@@ -790,6 +815,7 @@ app.MapPut("/api/testimonials/{id:int}", [Authorize] async (int id, [FromBody] U
     if (!string.IsNullOrEmpty(req.Content)) t.Content = req.Content;
     if (req.AuthorName != null) t.AuthorName = req.AuthorName;
     if (req.Rating is >= 1 and <= 5) t.Rating = req.Rating;
+    if (req.ImageUrl != null) t.ImageUrl = req.ImageUrl;
     if (req.IsVisible.HasValue) t.IsVisible = req.IsVisible.Value;
     if (req.SortOrder.HasValue) t.SortOrder = req.SortOrder.Value;
     t.UpdatedAt = DateTime.UtcNow;
@@ -821,7 +847,7 @@ app.MapGet("/api/stores", async (AppDbContext db) =>
     Results.Ok(await db.Stores
         .Where(s => s.IsVisible)
         .OrderBy(s => s.SortOrder).ThenBy(s => s.Id)
-        .Select(s => new { s.Id, s.Name, s.Address, s.Phone, s.BusinessHours, s.SortOrder })
+        .Select(s => new { s.Id, s.Name, s.Address, s.Phone, s.BusinessHours, s.ImageUrl, s.SortOrder })
         .ToListAsync()))
 .WithName("GetStores").WithTags("Stores");
 
@@ -834,6 +860,7 @@ app.MapPost("/api/stores", [Authorize] async ([FromBody] UpsertStoreRequest req,
         Address = req.Address ?? "",
         Phone = req.Phone ?? "",
         BusinessHours = req.BusinessHours ?? "",
+        ImageUrl = req.ImageUrl ?? "",
         IsVisible = req.IsVisible ?? true,
         SortOrder = req.SortOrder ?? 0,
         CreatedAt = DateTime.UtcNow
@@ -851,6 +878,7 @@ app.MapPut("/api/stores/{id:int}", [Authorize] async (int id, [FromBody] UpsertS
     if (req.Address != null) s.Address = req.Address;
     if (req.Phone != null) s.Phone = req.Phone;
     if (req.BusinessHours != null) s.BusinessHours = req.BusinessHours;
+    if (req.ImageUrl != null) s.ImageUrl = req.ImageUrl;
     if (req.IsVisible.HasValue) s.IsVisible = req.IsVisible.Value;
     if (req.SortOrder.HasValue) s.SortOrder = req.SortOrder.Value;
     s.UpdatedAt = DateTime.UtcNow;
@@ -899,7 +927,8 @@ public record UpsertProductRequest(
     string? Sku, string? Name, string? ShortDescription, string? Description,
     int? CategoryId, decimal? Price, string? Unit, string? ImageUrl,
     bool? IsActive, bool? IsFeatured, bool? IsOrderable, bool? InventoryEnabled, int? SortOrder,
-    string? SpecData);
+    string? SpecData, string? BulkOptions, string? SubscriptionOptions,
+    int? ParentProductId, string? VariantLabel);
 public record UpdateCategoryRequest(string? Name, string? Description, string? SpecTemplate, string? Icon, int? SortOrder);
 public record ProductTogglesRequest(bool? IsOrderable, bool? InventoryEnabled, bool? IsActive);
 public record BatchProductRequest(List<int> Ids, bool? IsOrderable, bool? IsActive, bool? IsFeatured);
@@ -913,5 +942,5 @@ public record ImportRow
     public string? Unit { get; set; }
     public string? ShortDescription { get; set; }
 }
-public record UpsertTestimonialRequest(string? Content, string? AuthorName, int Rating, bool? IsVisible, int? SortOrder);
-public record UpsertStoreRequest(string? Name, string? Address, string? Phone, string? BusinessHours, bool? IsVisible, int? SortOrder);
+public record UpsertTestimonialRequest(string? Content, string? AuthorName, int Rating, string? ImageUrl, bool? IsVisible, int? SortOrder);
+public record UpsertStoreRequest(string? Name, string? Address, string? Phone, string? BusinessHours, string? ImageUrl, bool? IsVisible, int? SortOrder);

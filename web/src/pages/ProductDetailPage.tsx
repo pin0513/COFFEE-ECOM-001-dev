@@ -1,17 +1,31 @@
-import { Layout, Typography, Button, Badge, Row, Col, Image, InputNumber, message, Grid, Spin, BackTop, Descriptions, Tag } from 'antd';
+import { Layout, Typography, Button, Badge, InputNumber, message, Grid, Spin, BackTop } from 'antd';
 import { ShoppingCartOutlined, CoffeeOutlined, LeftOutlined, UpOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { getProductById } from '../services/productService';
-import type { Product } from '../services/productService';
+import { getProductById, getProductVariants } from '../services/productService';
+import type { Product, ProductVariant } from '../services/productService';
 import { useCartStore } from '../stores/cartStore';
+import type { PurchaseMode } from '../stores/cartStore';
 import { getImageUrl } from '../config/api';
 import { getSiteSettings } from '../services/siteSettingsService';
+import './ProductDetailPage.css';
 
 interface SpecField {
   key: string;
   label: string;
   type: string;
+}
+
+interface BulkTier {
+  qty: number;
+  label: string;
+  discount: number;
+}
+
+interface SubscriptionOpts {
+  discount: number;
+  frequencies: string[];
+  defaultFrequency: string;
 }
 
 const { Header, Content } = Layout;
@@ -24,8 +38,16 @@ export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [quantity, setQuantity] = useState(1);
   const [product, setProduct] = useState<Product | null>(null);
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [loading, setLoading] = useState(true);
   const [checkoutEnabled, setCheckoutEnabled] = useState(true);
+
+  // 購買模式
+  const [purchaseMode, setPurchaseMode] = useState<PurchaseMode>('oneTime');
+  const [selectedTier, setSelectedTier] = useState<BulkTier | null>(null);
+  const [selectedFrequency, setSelectedFrequency] = useState<string>('');
+  const [subscriptionAdded, setSubscriptionAdded] = useState(false);
+
   const { addToCart, getTotalItems } = useCartStore();
 
   useEffect(() => {
@@ -39,6 +61,27 @@ export default function ProductDetailPage() {
       try {
         const data = await getProductById(parseInt(id));
         setProduct(data);
+        setPurchaseMode('oneTime');
+        setSelectedTier(null);
+        setSubscriptionAdded(false);
+
+        // 定期訂購預設頻率
+        if (data.subscriptionOptions) {
+          try {
+            const opts: SubscriptionOpts = JSON.parse(data.subscriptionOptions);
+            setSelectedFrequency(opts.defaultFrequency ?? '');
+          } catch { setSelectedFrequency(''); }
+        }
+
+        // 取得變體
+        if (data.parentProductId || data.variantLabel) {
+          try {
+            const variantData = await getProductVariants(parseInt(id));
+            setVariants(variantData.filter(v => v.variantLabel));
+          } catch { setVariants([]); }
+        } else {
+          setVariants([]);
+        }
       } catch {
         message.error('載入商品失敗');
       } finally {
@@ -48,29 +91,75 @@ export default function ProductDetailPage() {
     fetchProduct();
   }, [id]);
 
+  const bulkTiers: BulkTier[] = product?.bulkOptions ? (() => {
+    try { return JSON.parse(product.bulkOptions); } catch { return []; }
+  })() : [];
+
+  const subOpts: SubscriptionOpts | null = product?.subscriptionOptions ? (() => {
+    try { return JSON.parse(product.subscriptionOptions); } catch { return null; }
+  })() : null;
+
+  const hasBulk = bulkTiers.length > 0;
+  const hasSub = subOpts !== null;
+
+  // 計算折扣後價格
+  const getFinalPrice = (): number => {
+    if (!product) return 0;
+    if (purchaseMode === 'bulk' && selectedTier) {
+      return Math.round(product.price * (1 - selectedTier.discount / 100));
+    }
+    if (purchaseMode === 'subscription' && subOpts) {
+      return Math.round(product.price * (1 - subOpts.discount / 100));
+    }
+    return product.price;
+  };
+
+  const finalPrice = getFinalPrice();
+  const hasDiscount = product && finalPrice < product.price;
+
+  const handlePurchaseModeChange = (mode: PurchaseMode) => {
+    setPurchaseMode(mode);
+    if (mode !== 'bulk') setSelectedTier(null);
+    setSubscriptionAdded(false);
+  };
+
   const handleAddToCart = () => {
     if (!product) return;
     if (!checkoutEnabled) { message.warning('網站目前暫停接受訂單'); return; }
     if (product.price === 0) { message.warning('此商品尚未設定售價'); return; }
+    if (purchaseMode === 'bulk' && !selectedTier) { message.warning('請選擇大量購買方案'); return; }
+    if (purchaseMode === 'subscription' && !selectedFrequency) { message.warning('請選擇訂購頻率'); return; }
+
+    const cartId = `${product.id}:${purchaseMode}${purchaseMode === 'bulk' && selectedTier ? `:${selectedTier.qty}` : ''}${purchaseMode === 'subscription' ? `:${selectedFrequency}` : ''}`;
+
     for (let i = 0; i < quantity; i++) {
       addToCart({
-        id: product.id.toString(),
+        id: cartId,
+        productId: product.id.toString(),
         name: product.name,
-        price: product.price,
+        price: finalPrice,
+        originalPrice: product.price,
         image: getImageUrl(product.imageUrl) || 'https://placehold.co/400x400/f5ede3/d4a574/webp?text=Coffee',
-        description: product.shortDescription || product.description || '',
         category: product.categoryName || '',
+        description: product.shortDescription || product.description || '',
+        purchaseMode,
+        discountRate: purchaseMode === 'bulk' ? selectedTier?.discount : purchaseMode === 'subscription' ? subOpts?.discount : undefined,
+        subscriptionFrequency: purchaseMode === 'subscription' ? selectedFrequency : undefined,
       });
     }
-    message.success(`${product.name} x${quantity} 已加入購物車`);
+
+    if (purchaseMode === 'subscription') {
+      setSubscriptionAdded(true);
+    } else {
+      message.success(`${product.name} x${quantity} 已加入購物車`);
+    }
     setQuantity(1);
   };
 
-  // 判斷是否可加入購物車
   const canOrder = (p: Product) => checkoutEnabled && p.isOrderable && p.price > 0;
 
-  // 解析 spec 資料
-  const parseSpec = (p: Product) => {
+  // 解析規格 chips
+  const parseSpecChips = (p: Product) => {
     if (!p.categorySpecTemplate || !p.specData) return null;
     try {
       const fields: SpecField[] = JSON.parse(p.categorySpecTemplate);
@@ -78,6 +167,15 @@ export default function ProductDetailPage() {
       const entries = fields.filter(f => data[f.key]).map(f => ({ label: f.label, value: data[f.key] }));
       return entries.length > 0 ? entries : null;
     } catch { return null; }
+  };
+
+  const getAddToCartLabel = (p: Product) => {
+    if (!checkoutEnabled) return '網站暫停接受訂單';
+    if (p.price === 0) return '尚未設定售價';
+    if (!p.isOrderable) return '暫停販售';
+    if (purchaseMode === 'bulk' && !selectedTier) return '請先選擇方案';
+    if (purchaseMode === 'subscription') return '加入訂閱';
+    return '加入購物車';
   };
 
   return (
@@ -112,82 +210,209 @@ export default function ProductDetailPage() {
             <Button type="primary" onClick={() => navigate('/products')}>返回商品列表</Button>
           </div>
         ) : (
-          <Row gutter={[48, 32]}>
-            <Col xs={24} md={12}>
-              <Image
-                src={getImageUrl(product.imageUrl) || 'https://placehold.co/600x500/f5ede3/d4a574/webp?text=Coffee'}
-                alt={product.name}
-                style={{ width: '100%', borderRadius: 8 }}
-                fallback="https://placehold.co/600x500/f5ede3/d4a574/webp?text=Coffee"
-              />
-            </Col>
-
-            <Col xs={24} md={12}>
-              {product.categoryName && (
-                <Paragraph type="secondary" style={{ fontSize: 13, marginBottom: 4 }}>
-                  {product.categoryName}
-                </Paragraph>
-              )}
-              <Title level={2} style={{ marginBottom: 8 }}>{product.name}</Title>
-
-              {product.shortDescription && (
-                <Paragraph style={{ fontSize: 16, color: '#555', marginBottom: 16 }}>
-                  {product.shortDescription}
-                </Paragraph>
-              )}
-
-              <Title level={2} type="danger" style={{ marginBottom: 24 }}>
-                NT$ {product.price.toLocaleString()}
-              </Title>
-
-              {product.description && (
-                <div style={{ marginBottom: 24 }}>
-                  <Title level={5}>商品說明</Title>
-                  <Paragraph>{product.description}</Paragraph>
-                </div>
-              )}
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
-                <span>數量：</span>
-                <InputNumber
-                  min={1}
-                  max={99}
-                  value={quantity}
-                  onChange={(v) => setQuantity(v || 1)}
-                  disabled={!product.isOrderable}
+          <>
+            {/* 主區：圖片 + 資訊 */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: screens.xs ? '1fr' : '1fr 1fr',
+              gap: screens.xs ? 24 : 48,
+              alignItems: 'start',
+            }}>
+              {/* 左：商品圖片 */}
+              <div>
+                <img
+                  src={getImageUrl(product.imageUrl) || 'https://placehold.co/600x500/f5ede3/d4a574/webp?text=Coffee'}
+                  alt={product.name}
+                  onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/600x500/f5ede3/d4a574/webp?text=Coffee'; }}
+                  style={{ width: '100%', borderRadius: 12, objectFit: 'cover', aspectRatio: '4/3' }}
                 />
-                <span style={{ fontSize: 13, color: '#999' }}>{product.unit}</span>
               </div>
 
-              <Button
-                type="primary"
-                size="large"
-                icon={<ShoppingCartOutlined />}
-                onClick={handleAddToCart}
-                disabled={!canOrder(product)}
-                style={{ width: '100%' }}
-              >
-                {!checkoutEnabled ? '網站暫停接受訂單' : product.price === 0 ? '尚未設定售價' : product.isOrderable ? '加入購物車' : '暫停販售'}
-              </Button>
+              {/* 右：產品資訊 */}
+              <div>
+                {product.categoryName && (
+                  <p style={{ fontSize: 12, color: '#d4a574', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+                    {product.categoryName}
+                  </p>
+                )}
+                <Title level={2} style={{ marginBottom: 8, lineHeight: 1.3 }}>{product.name}</Title>
 
-              {/* 商品規格 */}
-              {(() => {
-                const specs = parseSpec(product);
-                return specs ? (
-                  <div style={{ marginTop: 24 }}>
-                    <Title level={5}>商品規格</Title>
-                    <Descriptions bordered column={1} size="small">
-                      {specs.map(s => (
-                        <Descriptions.Item key={s.label} label={s.label}>
-                          <Tag color="default">{s.value}</Tag>
-                        </Descriptions.Item>
+                {product.shortDescription && (
+                  <p style={{ fontSize: 15, color: '#b5895a', marginBottom: 16, fontStyle: 'italic' }}>
+                    {product.shortDescription}
+                  </p>
+                )}
+
+                {/* 變體選擇器 */}
+                {variants.length > 0 && (
+                  <div className="variants-section">
+                    <div className="variants-label">選擇規格</div>
+                    <div className="variant-grid">
+                      {variants.map(v => (
+                        <div
+                          key={v.id}
+                          className={`variant-card${v.id === product.id ? ' selected' : ''}${!v.isOrderable ? ' out-of-order' : ''}`}
+                          onClick={() => v.isOrderable && navigate(`/products/${v.id}`)}
+                        >
+                          <div className="variant-label">{v.variantLabel}</div>
+                          <div className="variant-price">NT$ {v.price.toLocaleString()}</div>
+                        </div>
                       ))}
-                    </Descriptions>
+                    </div>
                   </div>
-                ) : null;
-              })()}
-            </Col>
-          </Row>
+                )}
+
+                {/* 購買模式 */}
+                {(hasBulk || hasSub) && (
+                  <div className="purchase-mode-section">
+                    <div className="purchase-mode-label">購買方式</div>
+                    <div className="purchase-mode-selector">
+                      <div
+                        className={`purchase-mode-option${purchaseMode === 'oneTime' ? ' selected' : ''}`}
+                        onClick={() => handlePurchaseModeChange('oneTime')}
+                      >
+                        <div className="mode-title">一次購買</div>
+                        <div className="mode-subtitle">NT$ {product.price.toLocaleString()}</div>
+                      </div>
+
+                      {hasBulk && (
+                        <div
+                          className={`purchase-mode-option${purchaseMode === 'bulk' ? ' selected' : ''}`}
+                          onClick={() => handlePurchaseModeChange('bulk')}
+                        >
+                          <div className="mode-title">大量購買</div>
+                          <div className="mode-subtitle">最高省 {Math.max(...bulkTiers.map(t => t.discount))}%</div>
+                        </div>
+                      )}
+
+                      {hasSub && (
+                        <div
+                          className={`purchase-mode-option${purchaseMode === 'subscription' ? ' selected' : ''}`}
+                          onClick={() => handlePurchaseModeChange('subscription')}
+                        >
+                          <div className="mode-title">定期訂購</div>
+                          <div className="mode-subtitle">省 {subOpts!.discount}%</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* 大量購買方案 */}
+                {purchaseMode === 'bulk' && hasBulk && (
+                  <div className="bulk-section">
+                    <div className="bulk-section-label">選擇方案</div>
+                    <div className="bulk-tier-grid">
+                      {bulkTiers.map(tier => (
+                        <div
+                          key={tier.qty}
+                          className={`bulk-tier-card${selectedTier?.qty === tier.qty ? ' selected' : ''}`}
+                          onClick={() => setSelectedTier(tier)}
+                        >
+                          <div className="bulk-tier-label">{tier.label}</div>
+                          <div className="bulk-discount-badge">-{tier.discount}%</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 定期訂購頻率 */}
+                {purchaseMode === 'subscription' && hasSub && (
+                  <div className="subscription-section">
+                    <div className="subscription-section-label">訂購頻率</div>
+                    <div className="frequency-grid">
+                      {subOpts!.frequencies.map(freq => (
+                        <div
+                          key={freq}
+                          className={`frequency-card${selectedFrequency === freq ? ' selected' : ''}`}
+                          onClick={() => setSelectedFrequency(freq)}
+                        >
+                          {freq}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="subscription-note">
+                      訂購需求送出後，我們將與您確認配送時程
+                    </div>
+                  </div>
+                )}
+
+                {/* 數量 */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '20px 0' }}>
+                  <span style={{ fontWeight: 600, color: '#555' }}>數量：</span>
+                  <InputNumber
+                    min={1}
+                    max={99}
+                    value={quantity}
+                    onChange={(v) => setQuantity(v || 1)}
+                    disabled={!product.isOrderable}
+                  />
+                  <span style={{ fontSize: 13, color: '#999' }}>{product.unit}</span>
+                </div>
+
+                {/* 價格顯示 */}
+                <div className="price-block">
+                  {hasDiscount ? (
+                    <>
+                      <div className="price-original">NT$ {product.price.toLocaleString()}</div>
+                      <div className="price-final">NT$ {finalPrice.toLocaleString()}</div>
+                      <div className="price-savings">
+                        省下 NT$ {(product.price - finalPrice).toLocaleString()}（-{purchaseMode === 'bulk' && selectedTier ? selectedTier.discount : subOpts?.discount}%）
+                      </div>
+                    </>
+                  ) : (
+                    <div className="price-final">NT$ {product.price.toLocaleString()}</div>
+                  )}
+                </div>
+
+                {/* 加入購物車按鈕 */}
+                <Button
+                  type="primary"
+                  size="large"
+                  icon={<ShoppingCartOutlined />}
+                  onClick={handleAddToCart}
+                  disabled={!canOrder(product) || (purchaseMode === 'bulk' && !selectedTier)}
+                  style={{ width: '100%', marginBottom: 12 }}
+                >
+                  {getAddToCartLabel(product)}
+                </Button>
+
+                {/* 定期訂購成功提示 */}
+                {subscriptionAdded && (
+                  <div className="subscription-confirm">
+                    ✓ 訂購需求已加入，我們會與您確認配送時程
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 商品規格（Chip 風格） */}
+            {(() => {
+              const specs = parseSpecChips(product);
+              return specs ? (
+                <div className="spec-chips-section">
+                  <div className="spec-chips-title">商品規格</div>
+                  <div className="spec-chips">
+                    {specs.map(s => (
+                      <div key={s.label} className="spec-chip">
+                        <span className="spec-chip-label">{s.label}</span>
+                        <span className="spec-chip-value">{s.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null;
+            })()}
+
+            {/* 商品說明 */}
+            {product.description && (
+              <div className="description-section">
+                <div className="description-title">商品說明</div>
+                <div className="description-text">{product.description}</div>
+              </div>
+            )}
+          </>
         )}
       </Content>
 

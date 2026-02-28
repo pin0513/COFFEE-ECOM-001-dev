@@ -1,7 +1,8 @@
-import { Layout, Typography, Button, Badge, Card, List, InputNumber, Empty, Divider, Grid, BackTop, Alert } from 'antd';
+import { Layout, Typography, Button, Badge, Card, List, InputNumber, Empty, Divider, Grid, BackTop, Alert, Tag } from 'antd';
 import { ShoppingCartOutlined, CoffeeOutlined, DeleteOutlined, LeftOutlined, UpOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useCartStore } from '../stores/cartStore';
+import type { CartItem } from '../stores/cartStore';
 import { useState, useEffect } from 'react';
 import { getSiteSettings } from '../services/siteSettingsService';
 
@@ -23,6 +24,24 @@ export default function CartPage() {
     if (items.length === 0) return;
     if (!checkoutEnabled) return;
     navigate('/checkout');
+  };
+
+  const renderPurchaseModeBadge = (item: CartItem) => {
+    if (item.purchaseMode === 'bulk' && item.discountRate) {
+      return <Tag color="orange" style={{ marginLeft: 4 }}>大量購買 -{item.discountRate}%</Tag>;
+    }
+    if (item.purchaseMode === 'subscription') {
+      return (
+        <>
+          <Tag color="green" style={{ marginLeft: 4 }}>
+            定期訂購{item.subscriptionFrequency ? ` ${item.subscriptionFrequency}` : ''}
+            {item.discountRate ? ` -${item.discountRate}%` : ''}
+          </Tag>
+          <div style={{ fontSize: 11, color: '#999', marginTop: 2 }}>將與您確認配送時程</div>
+        </>
+      );
+    }
+    return null;
   };
 
   return (
@@ -94,7 +113,19 @@ export default function CartPage() {
                       title={<span style={{ fontSize: screens.xs ? 14 : 16 }}>{item.name}</span>}
                       description={
                         <div>
-                          <div style={{ fontSize: screens.xs ? 12 : 14 }}>單價：NT$ {item.price}</div>
+                          <div style={{ fontSize: screens.xs ? 12 : 14 }}>
+                            {item.originalPrice && item.originalPrice > item.price ? (
+                              <>
+                                <span style={{ textDecoration: 'line-through', color: '#bbb', marginRight: 6 }}>
+                                  NT$ {item.originalPrice}
+                                </span>
+                                <span>NT$ {item.price}</span>
+                              </>
+                            ) : (
+                              <span>NT$ {item.price}</span>
+                            )}
+                          </div>
+                          <div>{renderPurchaseModeBadge(item)}</div>
                           {screens.xs && (
                             <div style={{ marginTop: 8, display: 'flex', gap: 8, alignItems: 'center' }}>
                               <InputNumber

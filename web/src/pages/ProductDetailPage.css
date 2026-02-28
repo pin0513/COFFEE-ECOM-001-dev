@@ -1147,3 +1147,358 @@
     gap: var(--spacing-3);
   }
 }
+
+/* ==================== 購買模式選擇器 ==================== */
+
+.purchase-mode-section {
+  margin: 20px 0;
+}
+
+.purchase-mode-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.purchase-mode-selector {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.purchase-mode-option {
+  border: 2px solid #e8e0d5;
+  border-radius: 8px;
+  padding: 12px 16px;
+  cursor: pointer;
+  flex: 1;
+  min-width: 100px;
+  background: #fff;
+  transition: all 0.2s ease;
+  text-align: center;
+  user-select: none;
+}
+
+.purchase-mode-option:hover {
+  border-color: var(--color-primary-500);
+}
+
+.purchase-mode-option.selected {
+  border-color: var(--color-primary-500);
+  background: #fdf8f3;
+}
+
+.purchase-mode-option .mode-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.purchase-mode-option .mode-subtitle {
+  font-size: 12px;
+  color: var(--color-primary-500);
+  margin-top: 2px;
+}
+
+/* ==================== 大量購買方案 ==================== */
+
+.bulk-section {
+  margin: 16px 0;
+  padding: 16px;
+  background: #fdf8f3;
+  border-radius: 8px;
+  border: 1px solid #e8e0d5;
+}
+
+.bulk-section-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 10px;
+}
+
+.bulk-tier-grid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bulk-tier-card {
+  border: 2px solid #e8e0d5;
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  background: #fff;
+  transition: all 0.2s ease;
+  text-align: center;
+  min-width: 90px;
+}
+
+.bulk-tier-card:hover {
+  border-color: var(--color-primary-500);
+}
+
+.bulk-tier-card.selected {
+  border-color: var(--color-primary-500);
+  background: #fdf8f3;
+}
+
+.bulk-tier-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.bulk-discount-badge {
+  display: inline-block;
+  background: var(--color-primary-500);
+  color: white;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* ==================== 定期訂購頻率 ==================== */
+
+.subscription-section {
+  margin: 16px 0;
+  padding: 16px;
+  background: #fdf8f3;
+  border-radius: 8px;
+  border: 1px solid #e8e0d5;
+}
+
+.subscription-section-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 10px;
+}
+
+.frequency-grid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.frequency-card {
+  border: 2px solid #e8e0d5;
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  transition: all 0.2s ease;
+}
+
+.frequency-card:hover {
+  border-color: var(--color-primary-500);
+}
+
+.frequency-card.selected {
+  border-color: var(--color-primary-500);
+  background: #fdf8f3;
+  color: var(--color-primary-500);
+  font-weight: 600;
+}
+
+.subscription-note {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  background: #fff3cd;
+  border-radius: 4px;
+  padding: 8px 12px;
+}
+
+/* ==================== 商品變體選擇器 ==================== */
+
+.variants-section {
+  margin: 16px 0;
+}
+
+.variants-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.variant-grid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.variant-card {
+  border: 2px solid #e8e0d5;
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  background: #fff;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.variant-card:hover {
+  border-color: var(--color-primary-500);
+  background: #fdf8f3;
+}
+
+.variant-card.selected {
+  border-color: var(--color-primary-500);
+  background: #fdf8f3;
+}
+
+.variant-card.out-of-order {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.variant-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.variant-price {
+  font-size: 12px;
+  color: var(--color-primary-500);
+  margin-top: 2px;
+}
+
+/* ==================== 規格 Chip 風格 ==================== */
+
+.spec-chips-section {
+  margin: 24px 0;
+  padding: 20px;
+  background: var(--color-bg-secondary);
+  border-radius: 12px;
+  border: 1px solid #e8e0d5;
+}
+
+.spec-chips-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e8e0d5;
+}
+
+.spec-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.spec-chip {
+  background: #fff;
+  border: 1px solid #e8e0d5;
+  border-radius: 20px;
+  padding: 8px 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.spec-chip-label {
+  color: var(--color-primary-800);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.spec-chip-value {
+  color: var(--color-text-primary);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* ==================== 價格顯示（含折扣）==================== */
+
+.price-block {
+  margin: 16px 0;
+}
+
+.price-original {
+  text-decoration: line-through;
+  color: var(--color-text-tertiary);
+  font-size: 16px;
+}
+
+.price-final {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-primary-500);
+}
+
+.price-savings {
+  color: #16a34a;
+  font-size: 14px;
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+/* ==================== 訂閱確認訊息 ==================== */
+
+.subscription-confirm {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #16a34a;
+}
+
+/* ==================== 商品說明 ==================== */
+
+.description-section {
+  margin: 24px 0;
+}
+
+.description-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 10px;
+}
+
+.description-text {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--color-text-secondary);
+  white-space: pre-line;
+}
+
+/* ==================== RWD 補充 ==================== */
+
+@media (max-width: 767px) {
+  .purchase-mode-selector {
+    gap: 8px;
+  }
+
+  .purchase-mode-option {
+    padding: 10px 12px;
+    min-width: 80px;
+  }
+
+  .price-final {
+    font-size: 28px;
+  }
+
+  .spec-chips-section {
+    padding: 14px;
+  }
+}

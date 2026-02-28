@@ -1,6 +1,14 @@
-import type { Product } from '../stores/cartStore';
+// 注意：這是舊版 cartStore 商品格式（已棄用），僅保留作為靜態測試資料
+interface LegacyCartProduct {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  category: string;
+  description: string;
+}
 
-export const mockProducts: Product[] = [
+export const mockProducts: LegacyCartProduct[] = [
   {
     id: 'coffee-001',
     name: '衣索比亞 耶加雪菲',

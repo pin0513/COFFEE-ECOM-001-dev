@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import {
-  Table, Button, Modal, Form, Input, InputNumber, Switch, Space, message, Popconfirm, Tag, Typography
+  Table, Button, Modal, Form, Input, InputNumber, Switch, Space, message, Popconfirm, Tag, Typography, Upload
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, UploadOutlined, LoadingOutlined } from '@ant-design/icons';
+import type { UploadProps } from 'antd';
 import { apiClient } from '../config/api';
 
 const { TextArea } = Input;
@@ -14,6 +15,7 @@ interface Store {
   address: string;
   phone: string;
   businessHours: string;
+  imageUrl?: string;
   isVisible: boolean;
   sortOrder: number;
 }
@@ -23,6 +25,7 @@ interface StoreForm {
   address: string;
   phone: string;
   businessHours: string;
+  imageUrl: string;
   isVisible: boolean;
   sortOrder: number;
 }
@@ -33,6 +36,36 @@ export default function StoreManagement() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form] = Form.useForm<StoreForm>();
+  const [imageUploading, setImageUploading] = useState(false);
+  const [previewStoreImage, setPreviewStoreImage] = useState('');
+
+  const getImageSrc = (url: string | undefined) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    const base = (apiClient.defaults.baseURL ?? '').replace(/\/api$/, '');
+    return `${base}${url}`;
+  };
+
+  const handleStoreImageUpload: UploadProps['customRequest'] = async ({ file, onSuccess, onError }) => {
+    setImageUploading(true);
+    const formData = new FormData();
+    formData.append('file', file as File);
+    try {
+      const res = await apiClient.post<{ url: string }>('/uploads/stores', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const url = res.data.url;
+      form.setFieldValue('imageUrl', url);
+      setPreviewStoreImage(url);
+      onSuccess?.(res.data);
+      message.success('圖片上傳成功');
+    } catch {
+      onError?.(new Error('上傳失敗'));
+      message.error('圖片上傳失敗');
+    } finally {
+      setImageUploading(false);
+    }
+  };
 
   const fetchStores = async () => {
     setLoading(true);
@@ -53,7 +86,8 @@ export default function StoreManagement() {
 
   const handleCreate = () => {
     form.resetFields();
-    form.setFieldsValue({ isVisible: true, sortOrder: 0 });
+    form.setFieldsValue({ isVisible: true, sortOrder: 0, imageUrl: '' });
+    setPreviewStoreImage('');
     setEditingId(null);
     setModalOpen(true);
   };
@@ -64,9 +98,11 @@ export default function StoreManagement() {
       address: record.address,
       phone: record.phone,
       businessHours: record.businessHours,
+      imageUrl: record.imageUrl || '',
       isVisible: record.isVisible,
       sortOrder: record.sortOrder,
     });
+    setPreviewStoreImage(record.imageUrl || '');
     setEditingId(record.id);
     setModalOpen(true);
   };
@@ -109,6 +145,17 @@ export default function StoreManagement() {
 
   const columns = [
     { title: 'ID', dataIndex: 'id', width: 60 },
+    {
+      title: '圖',
+      dataIndex: 'imageUrl',
+      width: 70,
+      render: (url: string | undefined) => {
+        const src = getImageSrc(url);
+        return src
+          ? <img src={src} alt="" style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 6 }} />
+          : null;
+      },
+    },
     { title: '門市名稱', dataIndex: 'name', width: 150 },
     { title: '地址', dataIndex: 'address', ellipsis: true },
     { title: '電話', dataIndex: 'phone', width: 130 },
@@ -181,6 +228,29 @@ export default function StoreManagement() {
         <Form form={form} layout="vertical">
           <Form.Item name="name" label="門市名稱" rules={[{ required: true, message: '請輸入門市名稱' }]}>
             <Input placeholder="如：品皇咖啡 三重本店" />
+          </Form.Item>
+          <Form.Item name="imageUrl" label="門市照片" hidden>
+            <Input />
+          </Form.Item>
+          <Form.Item label="上傳門市照片">
+            <Space align="start">
+              <Upload
+                accept=".jpg,.jpeg,.png,.webp"
+                showUploadList={false}
+                customRequest={handleStoreImageUpload}
+              >
+                <Button icon={imageUploading ? <LoadingOutlined /> : <UploadOutlined />} disabled={imageUploading}>
+                  {imageUploading ? '上傳中...' : '上傳圖片'}
+                </Button>
+              </Upload>
+              {previewStoreImage && getImageSrc(previewStoreImage) && (
+                <img
+                  src={getImageSrc(previewStoreImage)!}
+                  alt="門市預覽"
+                  style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 6, border: '1px solid #d9d9d9' }}
+                />
+              )}
+            </Space>
           </Form.Item>
           <Form.Item name="address" label="地址">
             <Input placeholder="新北市三重區..." />

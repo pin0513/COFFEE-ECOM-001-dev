@@ -17,6 +17,9 @@ public static class DbSeeder
         await SeedStoresAsync(db);
 
         await db.SaveChangesAsync();
+
+        // 分類 SpecTemplate 補充（SaveChangesAsync 後執行，確保分類已存在）
+        await SeedCategorySpecTemplatesAsync(db);
     }
 
     private static async Task SeedAdminsAsync(AppDbContext db)
@@ -117,6 +120,31 @@ public static class DbSeeder
         };
 
         db.Testimonials.AddRange(testimonials);
+    }
+
+    private static async Task SeedCategorySpecTemplatesAsync(AppDbContext db)
+    {
+        // 用 ExecuteSqlRawAsync 直接 UPDATE，避免 AnyAsync() 跳過的問題
+        var templates = new Dictionary<string, string>
+        {
+            ["精品咖啡豆"] = """[{"key":"origin","label":"產地","type":"text"},{"key":"altitude","label":"海拔高度","type":"text"},{"key":"process","label":"處理法","type":"select","options":["日曬","水洗","蜜處理","厭氧"]},{"key":"roast","label":"烘焙度","type":"select","options":["淺焙","中淺焙","中焙","中深焙","深焙"]},{"key":"flavor","label":"風味描述","type":"text"},{"key":"body","label":"醇厚度","type":"select","options":["輕盈","中等","厚實"]},{"key":"acidity","label":"酸度","type":"select","options":["低","中","高"]},{"key":"brew","label":"推薦沖煮","type":"text"}]""",
+            ["商業配方豆"] = """[{"key":"origin","label":"產地","type":"text"},{"key":"roast","label":"烘焙度","type":"select","options":["淺焙","中焙","中深焙","深焙"]},{"key":"flavor","label":"風味描述","type":"text"},{"key":"brew","label":"適合沖煮方式","type":"text"},{"key":"spec","label":"規格說明","type":"text"}]""",
+            ["即溶/二合一/三合一"] = """[{"key":"brand","label":"品牌","type":"text"},{"key":"spec","label":"規格","type":"text"},{"key":"flavor","label":"口味","type":"text"},{"key":"sugar","label":"含糖量","type":"select","options":["無糖","微糖","半糖","全糖"]},{"key":"count","label":"數量/盒","type":"text"}]""",
+            ["茶葉/花草茶"] = """[{"key":"teaType","label":"茶種","type":"select","options":["綠茶","紅茶","烏龍茶","普洱茶","白茶","花草茶","抹茶"]},{"key":"origin","label":"產地","type":"text"},{"key":"grade","label":"等級","type":"text"},{"key":"flavor","label":"風味描述","type":"text"},{"key":"brew","label":"沖泡建議","type":"text"}]""",
+            ["咖啡機/沖煮器材"] = """[{"key":"brand","label":"品牌","type":"text"},{"key":"capacity","label":"適用容量","type":"text"},{"key":"material","label":"材質","type":"text"},{"key":"brewMethod","label":"適合沖煮方式","type":"select","options":["手沖","義式","法壓","虹吸","摩卡壺","冷萃","其他"]},{"key":"spec","label":"規格說明","type":"text"}]""",
+            ["奶精/奶粉"] = """[{"key":"brand","label":"品牌","type":"text"},{"key":"spec","label":"規格","type":"text"},{"key":"target","label":"適用對象","type":"text"},{"key":"ingredient","label":"成分說明","type":"text"}]""",
+            ["糖漿/醬料"] = """[{"key":"flavor","label":"口味","type":"text"},{"key":"volume","label":"容量","type":"text"},{"key":"ingredient","label":"成分說明","type":"text"},{"key":"usage","label":"使用建議","type":"text"}]""",
+            ["糖/代糖"] = """[{"key":"brand","label":"品牌","type":"text"},{"key":"spec","label":"規格","type":"text"},{"key":"target","label":"適用對象","type":"text"}]""",
+            ["其他"] = """[{"key":"brand","label":"品牌","type":"text"},{"key":"spec","label":"規格說明","type":"text"},{"key":"target","label":"適用對象","type":"text"}]""",
+        };
+
+        foreach (var (name, template) in templates)
+        {
+            // 只有 SpecTemplate 為 NULL 時才更新，避免覆蓋後台手動設定
+            await db.Database.ExecuteSqlRawAsync(
+                $"UPDATE \"Categories\" SET \"SpecTemplate\" = {{0}} WHERE \"Name\" = {{1}} AND \"SpecTemplate\" IS NULL",
+                template, name);
+        }
     }
 
     private static async Task SeedStoresAsync(AppDbContext db)

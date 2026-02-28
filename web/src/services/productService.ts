@@ -19,6 +19,19 @@ export interface Product {
   specData: string | null;
   categorySpecTemplate: string | null;
   createdAt: string;
+  bulkOptions: string | null;
+  subscriptionOptions: string | null;
+  parentProductId: number | null;
+  variantLabel: string | null;
+}
+
+export interface ProductVariant {
+  id: number;
+  variantLabel: string | null;
+  price: number;
+  stockQuantity: number;
+  imageUrl: string | null;
+  isOrderable: boolean;
 }
 
 export interface PaginatedResponse<T> {
@@ -44,5 +57,10 @@ export const getProducts = async (params?: GetProductsParams): Promise<Paginated
 
 export const getProductById = async (id: number): Promise<Product> => {
   const response = await apiClient.get<Product>(`/products/${id}`);
+  return response.data;
+};
+
+export const getProductVariants = async (id: number): Promise<ProductVariant[]> => {
+  const response = await apiClient.get<ProductVariant[]>(`/products/${id}/variants`);
   return response.data;
 };

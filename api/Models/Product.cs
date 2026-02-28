@@ -107,6 +107,30 @@ public class Product
     public DateTime? UpdatedAt { get; set; }
 
     /// <summary>
+    /// 大量購買設定（JSON 陣列，null = 未啟用）
+    /// 格式: [{"qty":3,"label":"3包","discount":5},{"qty":6,"label":"6包","discount":10}]
+    /// </summary>
+    public string? BulkOptions { get; set; }
+
+    /// <summary>
+    /// 定期訂購設定（JSON 物件，null = 未啟用）
+    /// 格式: {"discount":10,"frequencies":["每週","每兩週","每月"],"defaultFrequency":"每兩週"}
+    /// </summary>
+    public string? SubscriptionOptions { get; set; }
+
+    /// <summary>
+    /// 父商品 ID（兄弟產品法：同群組商品的 parent）
+    /// null = 獨立商品或本身就是 parent
+    /// </summary>
+    public int? ParentProductId { get; set; }
+
+    /// <summary>
+    /// 變體標籤（如 "半磅", "1磅", "整豆", "中研磨"）
+    /// null = 無變體
+    /// </summary>
+    public string? VariantLabel { get; set; }
+
+    /// <summary>
     /// 商品屬性
     /// </summary>
     public List<ProductAttribute> Attributes { get; set; } = new();
