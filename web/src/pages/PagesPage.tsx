@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Spin, Button } from 'antd';
 import { LeftOutlined } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { apiClient } from '../config/api';
 import './PagesPage.css';
 
@@ -63,7 +64,7 @@ export default function PagesPage() {
         <h1 className="cp-title">{page.titleZhTW}</h1>
 
         <article className="cp-body">
-          <ReactMarkdown>{page.bodyZhTW}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{page.bodyZhTW}</ReactMarkdown>
         </article>
 
         {page.updatedAt && (

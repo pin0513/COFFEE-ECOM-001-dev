@@ -40,10 +40,36 @@ interface Store {
 }
 
 // 首頁展示的 3 大分類（依 DB name 比對）
+const CoffeeBeanIcon = () => (
+  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <ellipse cx="24" cy="24" rx="14" ry="10" stroke="currentColor" strokeWidth="2.2" fill="none"/>
+    <path d="M24 14 C20 18 20 30 24 34" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none"/>
+    <ellipse cx="24" cy="24" rx="14" ry="10" stroke="currentColor" strokeWidth="2.2" fill="none" transform="rotate(30 24 24)"/>
+  </svg>
+);
+
+const EquipmentIcon = () => (
+  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M16 10 L16 38 Q16 40 18 40 L30 40 Q32 40 32 38 L32 10 Z" stroke="currentColor" strokeWidth="2.2" fill="none" strokeLinejoin="round"/>
+    <path d="M20 10 L20 6 M28 10 L28 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M32 18 Q38 18 38 24 Q38 30 32 30" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none"/>
+    <path d="M20 22 L28 22 M20 27 L28 27" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+  </svg>
+);
+
+const SyrupIcon = () => (
+  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M17 18 L15 38 Q15 40 17 40 L31 40 Q33 40 31 38 L29 18 Z" stroke="currentColor" strokeWidth="2.2" fill="none" strokeLinejoin="round"/>
+    <path d="M17 18 Q17 14 20 13 L28 13 Q31 14 31 18" stroke="currentColor" strokeWidth="2.2" fill="none" strokeLinejoin="round"/>
+    <path d="M22 13 L22 10 Q22 8 24 8 Q26 8 26 10 L26 13" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round"/>
+    <path d="M20 26 Q24 30 28 26" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" fill="none"/>
+  </svg>
+);
+
 const SHOWCASE_CATEGORIES = [
-  { match: '精品咖啡豆',     icon: '☕', label: '咖啡豆',   en: 'Coffee Beans' },
-  { match: '咖啡機/沖煮器材', icon: '⚙️', label: '沖煮器材', en: 'Equipment'    },
-  { match: '糖漿/醬料',      icon: '🍯', label: '糖漿',     en: 'Syrups'       },
+  { match: '精品咖啡豆',     icon: <CoffeeBeanIcon />, label: '咖啡豆',   en: 'Coffee Beans' },
+  { match: '咖啡機/沖煮器材', icon: <EquipmentIcon />,  label: '沖煮器材', en: 'Equipment'    },
+  { match: '糖漿/醬料',      icon: <SyrupIcon />,      label: '糖漿',     en: 'Syrups'       },
 ];
 
 // 預設 fallback banners（API 無資料時使用）
@@ -473,53 +499,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="footer">
-        <div className="container">
-          <div className="footer-grid">
-            <div className="footer-column">
-              <img
-                src="/assets/images/logo/logo-dark-bg.svg"
-                alt="品皇咖啡"
-                className="footer-logo"
-              />
-            </div>
-
-            <div className="footer-column">
-              <h4 className="footer-column-title">關於我們</h4>
-              <ul className="footer-links">
-                <li><a href="/about">公司簡介</a></li>
-                <li><a href="/products">產品分類</a></li>
-                <li><a href="/quality">品質保證</a></li>
-              </ul>
-            </div>
-
-            <div className="footer-column">
-              <h4 className="footer-column-title">聯絡我們</h4>
-              <ul className="footer-links">
-                <li><a href="/contact">聯絡方式</a></li>
-                <li><a href="/faq">常見問題</a></li>
-                <li><a href="/shipping">配送說明</a></li>
-              </ul>
-            </div>
-
-            <div className="footer-column">
-              <h4 className="footer-column-title">社群媒體</h4>
-              <ul className="footer-links">
-                <li><a href="https://facebook.com" target="_blank" rel="noopener noreferrer">Facebook</a></li>
-                <li><a href="https://instagram.com" target="_blank" rel="noopener noreferrer">Instagram</a></li>
-                <li><a href="https://line.me" target="_blank" rel="noopener noreferrer">LINE</a></li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="footer-bottom">
-            <p className="footer-copyright">
-              © 2026 Pin Huang Coffee. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
