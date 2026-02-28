@@ -88,7 +88,7 @@ export default function HomePage() {
       .catch(() => {});
   }, []);
 
-  // Scroll animations
+  // Scroll animations — mount 時建立 observer，stores/testimonials 載入後補 observe
   useEffect(() => {
     observerRef.current = new IntersectionObserver(
       (entries) => {
@@ -100,12 +100,15 @@ export default function HomePage() {
       },
       { threshold: 0.1 }
     );
-
-    const elements = document.querySelectorAll('.animate-on-scroll');
-    elements.forEach((el) => observerRef.current?.observe(el));
-
     return () => observerRef.current?.disconnect();
   }, []);
+
+  useEffect(() => {
+    const observer = observerRef.current;
+    if (!observer) return;
+    const elements = document.querySelectorAll('.animate-on-scroll:not(.animate-in)');
+    elements.forEach((el) => observer.observe(el));
+  }, [testimonials, stores]);
 
   // Newsletter subscription
   const handleSubscribe = (e: React.FormEvent) => {
