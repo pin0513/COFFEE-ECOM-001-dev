@@ -1,206 +1,320 @@
-import { Layout, Typography, Card, Row, Col, Button, Badge, message, Spin, Grid, BackTop, Tabs } from 'antd';
-import { ShoppingCartOutlined, CoffeeOutlined, UpOutlined } from '@ant-design/icons';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { Drawer, message } from 'antd';
 import { useCartStore } from '../stores/cartStore';
 import { getProducts } from '../services/productService';
 import type { Product } from '../services/productService';
 import { apiClient, getImageUrl } from '../config/api';
 import { getSiteSettings } from '../services/siteSettingsService';
+import './ProductsPage.css';
 
-const { Header, Content } = Layout;
-const { Title, Paragraph } = Typography;
-const { Meta } = Card;
-const { useBreakpoint } = Grid;
+interface Category { id: number; name: string; }
 
-interface Category {
-  id: number;
-  name: string;
+/** 促銷倒數計時 hook */
+function useCountdown(endAt: string | null | undefined): string {
+  const [remaining, setRemaining] = useState('');
+  useEffect(() => {
+    if (!endAt) { setRemaining(''); return; }
+    const tick = () => {
+      const diff = new Date(endAt).getTime() - Date.now();
+      if (diff <= 0) { setRemaining('已截止'); return; }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setRemaining(h > 0 ? `${h}h ${m}m` : `${m}m ${s}s`);
+    };
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [endAt]);
+  return remaining;
+}
+
+/** Blue Bottle 風格商品卡 */
+function ProductCard({ product, onAddToCart, onNavigate, checkoutEnabled }: {
+  product: Product;
+  onAddToCart: (p: Product) => void;
+  onNavigate: (id: number) => void;
+  checkoutEnabled: boolean;
+}) {
+  const countdown = useCountdown(product.promotionEndAt);
+
+  // Badge 優先序：promotionTag > bulk > subscription > featured
+  let badgeClass = '';
+  let badgeText = '';
+  if (product.promotionTag) {
+    badgeClass = 'bb-badge promo';
+    badgeText = product.promotionTag;
+  } else if (product.bulkOptions) {
+    badgeClass = 'bb-badge bulk';
+    badgeText = 'BEST SELLER';
+  } else if (product.subscriptionOptions) {
+    badgeClass = 'bb-badge sub';
+    badgeText = 'SUBSCRIBE';
+  } else if (product.isFeatured) {
+    badgeClass = 'bb-badge featured';
+    badgeText = 'FEATURED';
+  }
+
+  const showCountdown = product.promotionEndAt && countdown && countdown !== '已截止';
+  const canAddToCart = checkoutEnabled && product.isOrderable && product.price > 0;
+  const imgSrc = getImageUrl(product.imageUrl) || 'https://placehold.co/600x700/f0ece4/c5a882/webp?text=Coffee';
+
+  const addBtnLabel = !checkoutEnabled
+    ? '暫停接受訂單'
+    : product.price === 0
+      ? '未設定售價'
+      : !product.isOrderable
+        ? '暫停販售'
+        : 'ADD TO CART';
+
+  return (
+    <div className="bb-card">
+      {/* 圖片區 — 點擊進入詳情 */}
+      <div className="bb-card-image" onClick={() => onNavigate(product.id)}>
+        <img src={imgSrc} alt={product.name} loading="lazy" />
+        {badgeText && <span className={badgeClass}>{badgeText}</span>}
+        {showCountdown && <span className="bb-countdown">⏱ {countdown}</span>}
+      </div>
+
+      {/* 文字區 */}
+      <div className="bb-card-body">
+        <div className="bb-card-name-row">
+          <span className="bb-card-name" onClick={() => onNavigate(product.id)}>
+            {product.name}
+          </span>
+          <span className="bb-card-price">NT${product.price.toLocaleString()}</span>
+        </div>
+        {product.categoryName && (
+          <div className="bb-card-sub">{product.categoryName}</div>
+        )}
+        {product.shortDescription && (
+          <div className="bb-card-tagline">{product.shortDescription}</div>
+        )}
+        <button
+          className={`bb-add-btn${!canAddToCart ? ' disabled' : ''}`}
+          disabled={!canAddToCart}
+          onClick={(e) => { e.stopPropagation(); if (canAddToCart) onAddToCart(product); }}
+        >
+          {addBtnLabel}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export default function ProductsPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const screens = useBreakpoint();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [checkoutEnabled, setCheckoutEnabled] = useState(true);
-  const { addToCart, getTotalItems } = useCartStore();
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+
+  // 草稿篩選（Drawer 內操作，Apply 才生效）
+  const [draftCatId, setDraftCatId] = useState<number | null>(null);
+  const [draftBulk, setDraftBulk] = useState(false);
+  const [draftSub, setDraftSub] = useState(false);
+  const [draftPromo, setDraftPromo] = useState(false);
+
+  // 已套用的篩選
+  const [filterBulk, setFilterBulk] = useState(false);
+  const [filterSub, setFilterSub] = useState(false);
+  const [filterPromo, setFilterPromo] = useState(false);
+
+  const { addToCart } = useCartStore();
+
+  const categoryIdParam = searchParams.get('categoryId');
+  const selectedCategoryId = categoryIdParam ? Number(categoryIdParam) : null;
 
   useEffect(() => {
     getSiteSettings().then(s => setCheckoutEnabled(s.checkout_enabled !== 'false')).catch(() => {});
   }, []);
 
-  // URL 中的 categoryId（null 表示全部）
-  const categoryIdParam = searchParams.get('categoryId');
-  const selectedCategoryId = categoryIdParam ? Number(categoryIdParam) : null;
-
-  const setSelectedCategoryId = (id: number | null) => {
-    if (id === null) {
-      setSearchParams({});
-    } else {
-      setSearchParams({ categoryId: String(id) });
-    }
-  };
-
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await apiClient.get<Category[]>('/categories');
-        setCategories(res.data || []);
-      } catch {
-        console.error('Failed to fetch categories');
-      }
-    };
-    fetchCategories();
+    apiClient.get<Category[]>('/categories').then(res => setCategories(res.data || [])).catch(() => {});
   }, []);
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
-      try {
-        const params: Record<string, unknown> = { page: 1, pageSize: 100, isActive: true };
-        if (selectedCategoryId) params.categoryId = selectedCategoryId;
-        const response = await getProducts(params);
-        setProducts(response.data);
-      } catch {
-        message.error('載入商品失敗，請稍後再試');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProducts();
-  }, [selectedCategoryId]);
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params: Record<string, unknown> = { page: 1, pageSize: 100, isActive: true };
+      if (selectedCategoryId) params.categoryId = selectedCategoryId;
+      if (filterBulk) params.hasBulk = true;
+      if (filterSub) params.hasSub = true;
+      if (filterPromo) params.hasPromo = true;
+      const response = await getProducts(params);
+      setProducts(response.data);
+    } catch {
+      message.error('載入商品失敗，請稍後再試');
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedCategoryId, filterBulk, filterSub, filterPromo]);
+
+  useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
   const handleAddToCart = (product: Product) => {
     if (!checkoutEnabled) { message.warning('網站目前暫停接受訂單'); return; }
     if (product.price === 0) { message.warning('此商品尚未設定售價'); return; }
-    if (!product.isOrderable) {
-      message.warning('此商品目前無法下單');
-      return;
-    }
+    if (!product.isOrderable) { message.warning('此商品目前無法下單'); return; }
     addToCart({
       id: product.id.toString(),
       name: product.name,
       price: product.price,
-      image: getImageUrl(product.imageUrl) || 'https://placehold.co/200x200/f5ede3/d4a574/webp?text=Coffee',
-      description: product.shortDescription || product.description || '',
+      image: getImageUrl(product.imageUrl) || '',
+      description: product.shortDescription || '',
       category: product.categoryName || '',
+      requirePrePayment: product.requirePrePayment,
     });
     message.success(`${product.name} 已加入購物車`);
   };
 
-  // Tab Pills 項目
-  const tabItems = [
-    { key: 'all', label: '全部商品' },
-    ...categories.map(c => ({ key: String(c.id), label: c.name })),
-  ];
+  // 開啟 Drawer，同步草稿狀態
+  const openFilter = () => {
+    setDraftCatId(selectedCategoryId);
+    setDraftBulk(filterBulk);
+    setDraftSub(filterSub);
+    setDraftPromo(filterPromo);
+    setFilterDrawerOpen(true);
+  };
 
-  const activeTabKey = selectedCategoryId ? String(selectedCategoryId) : 'all';
+  const applyFilter = () => {
+    if (draftCatId === null) setSearchParams({});
+    else setSearchParams({ categoryId: String(draftCatId) });
+    setFilterBulk(draftBulk);
+    setFilterSub(draftSub);
+    setFilterPromo(draftPromo);
+    setFilterDrawerOpen(false);
+  };
 
-  if (loading) {
-    return (
-      <Layout style={{ minHeight: '100vh' }}>
-        <Content style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-          <Spin size="large" tip="載入商品中..." />
-        </Content>
-      </Layout>
-    );
-  }
+  const clearFilter = () => {
+    setDraftCatId(null);
+    setDraftBulk(false);
+    setDraftSub(false);
+    setDraftPromo(false);
+  };
+
+  const activeFilterCount =
+    (selectedCategoryId ? 1 : 0) +
+    (filterBulk ? 1 : 0) +
+    (filterSub ? 1 : 0) +
+    (filterPromo ? 1 : 0);
+
+  const currentCategory = categories.find(c => c.id === selectedCategoryId);
+  const pageTitle = currentCategory ? currentCategory.name : '我們的咖啡';
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Header style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: screens.xs ? '0 12px' : screens.sm ? '0 20px' : '0 50px',
-        height: screens.xs ? 56 : 64,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', color: 'white', cursor: 'pointer' }} onClick={() => navigate('/')}>
-          <CoffeeOutlined style={{ fontSize: screens.xs ? 24 : 32, marginRight: screens.xs ? 8 : 12 }} />
-          <Title level={screens.xs ? 5 : 3} style={{ margin: 0, color: 'white', fontSize: screens.xs ? 16 : 20 }}>品皇咖啡</Title>
+    <div className="bb-products-page">
+      {/* 頁面標題列 */}
+      <div className="bb-page-header">
+        <div className="bb-page-header-inner">
+          <h1 className="bb-page-title">{pageTitle}</h1>
+          <button className="bb-filter-btn" onClick={openFilter}>
+            FILTER
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="4" y1="6" x2="20" y2="6"/>
+              <line x1="4" y1="12" x2="20" y2="12"/>
+              <line x1="4" y1="18" x2="20" y2="18"/>
+            </svg>
+            {activeFilterCount > 0 && <span className="bb-filter-count">{activeFilterCount}</span>}
+          </button>
         </div>
-        <Badge count={getTotalItems()} showZero>
-          <Button type="primary" size={screens.xs ? 'small' : 'middle'} icon={<ShoppingCartOutlined />} onClick={() => navigate('/cart')}>
-            {screens.xs ? '' : '購物車'}
-          </Button>
-        </Badge>
-      </Header>
+      </div>
 
-      <Content style={{ padding: screens.xs ? '16px' : screens.sm ? '24px' : '50px' }}>
-        <div style={{ marginBottom: 24 }}>
-          <Title level={2} style={{ marginBottom: 16 }}>商品列表</Title>
-          {/* Category Tab Pills */}
-          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-            <Tabs
-              activeKey={activeTabKey}
-              onChange={(key) => setSelectedCategoryId(key === 'all' ? null : Number(key))}
-              items={tabItems}
-              style={{ minWidth: 'max-content' }}
+      {/* 分類快速篩選 Pills */}
+      <div className="bb-category-pills">
+        <button
+          className={`bb-cat-pill${!selectedCategoryId ? ' active' : ''}`}
+          onClick={() => setSearchParams({})}
+        >
+          全部
+        </button>
+        {categories.map(c => (
+          <button
+            key={c.id}
+            className={`bb-cat-pill${selectedCategoryId === c.id ? ' active' : ''}`}
+            onClick={() => setSearchParams({ categoryId: String(c.id) })}
+          >
+            {c.name}
+          </button>
+        ))}
+      </div>
+
+      {/* 商品 Grid */}
+      {loading ? (
+        <div className="bb-loading"><div className="bb-spinner" /></div>
+      ) : products.length === 0 ? (
+        <div className="bb-empty">
+          <p>目前沒有符合條件的商品，請調整篩選條件</p>
+          <button className="bb-empty-reset" onClick={() => { setSearchParams({}); setFilterBulk(false); setFilterSub(false); setFilterPromo(false); }}>
+            清除篩選
+          </button>
+        </div>
+      ) : (
+        <div className="bb-grid">
+          {products.map(product => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              onAddToCart={handleAddToCart}
+              onNavigate={id => navigate(`/products/${id}`)}
+              checkoutEnabled={checkoutEnabled}
             />
+          ))}
+        </div>
+      )}
+
+      {/* Filter 抽屜（Blue Bottle 風格） */}
+      <Drawer
+        title={<span style={{ fontWeight: 700, letterSpacing: '0.08em', fontSize: 16 }}>Filter</span>}
+        placement="right"
+        open={filterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        width={360}
+        styles={{ body: { padding: '24px', paddingBottom: 100 } }}
+        footer={
+          <div className="bb-drawer-footer">
+            <button className="bb-drawer-clear" onClick={clearFilter}>CLEAR ALL</button>
+            <button className="bb-drawer-apply" onClick={applyFilter}>
+              APPLY{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+            </button>
           </div>
+        }
+      >
+        {/* 分類 */}
+        <div className="bb-filter-section">
+          <div className="bb-filter-section-title">分類</div>
+          <label className="bb-filter-radio">
+            <input type="radio" name="cat" checked={draftCatId === null} onChange={() => setDraftCatId(null)} />
+            <span>全部商品</span>
+          </label>
+          {categories.map(c => (
+            <label key={c.id} className="bb-filter-radio">
+              <input type="radio" name="cat" checked={draftCatId === c.id} onChange={() => setDraftCatId(c.id)} />
+              <span>{c.name}</span>
+            </label>
+          ))}
         </div>
 
-        {products.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: screens.xs ? '16px' : '50px' }}>
-            <Paragraph>目前沒有商品，請稍後再來看看</Paragraph>
-          </div>
-        ) : (
-          <Row gutter={[24, 24]}>
-            {products.map(product => (
-              <Col xs={24} sm={12} md={8} lg={6} key={product.id}>
-                <Card
-                  hoverable
-                  cover={
-                    <img
-                      alt={product.name}
-                      src={getImageUrl(product.imageUrl) || 'https://placehold.co/400x300/f5ede3/d4a574/webp?text=Coffee'}
-                      style={{ height: 200, objectFit: 'cover' }}
-                    />
-                  }
-                  actions={[
-                    <Button type="link" onClick={() => navigate(`/products/${product.id}`)}>查看詳情</Button>,
-                    <Button
-                      type="primary"
-                      onClick={() => handleAddToCart(product)}
-                      disabled={!checkoutEnabled || !product.isOrderable || product.price === 0}
-                    >
-                      {!checkoutEnabled ? '暫停接受訂單' : product.price === 0 ? '未設定售價' : !product.isOrderable ? '暫停販售' : '加入購物車'}
-                    </Button>
-                  ]}
-                >
-                  <Meta
-                    title={product.name}
-                    description={
-                      <>
-                        {product.shortDescription && (
-                          <Paragraph ellipsis={{ rows: 2 }} style={{ color: '#666', fontSize: 13, marginBottom: 8 }}>
-                            {product.shortDescription}
-                          </Paragraph>
-                        )}
-                        <Title level={4} type="danger" style={{ margin: 0 }}>NT$ {product.price}</Title>
-                        <Paragraph type="secondary" style={{ fontSize: 12, margin: '4px 0 0 0' }}>
-                          {product.categoryName || '未分類'}
-                        </Paragraph>
-                      </>
-                    }
-                  />
-                </Card>
-              </Col>
-            ))}
-          </Row>
-        )}
-      </Content>
-
-      <BackTop visibilityHeight={300}>
-        <div style={{
-          height: 40, width: 40, lineHeight: '40px', borderRadius: '50%',
-          backgroundColor: '#d4a574', color: '#fff', textAlign: 'center', fontSize: 20,
-          boxShadow: '0 4px 12px rgba(212, 165, 116, 0.4)', cursor: 'pointer', transition: 'all 0.3s',
-        }}>
-          <UpOutlined />
+        {/* 購買模式 */}
+        <div className="bb-filter-section">
+          <div className="bb-filter-section-title">購買模式</div>
+          <label className="bb-filter-checkbox">
+            <input type="checkbox" checked={draftBulk} onChange={e => setDraftBulk(e.target.checked)} />
+            <span>多買優惠</span>
+          </label>
+          <label className="bb-filter-checkbox">
+            <input type="checkbox" checked={draftSub} onChange={e => setDraftSub(e.target.checked)} />
+            <span>可訂閱</span>
+          </label>
+          <label className="bb-filter-checkbox">
+            <input type="checkbox" checked={draftPromo} onChange={e => setDraftPromo(e.target.checked)} />
+            <span>促銷特惠</span>
+          </label>
         </div>
-      </BackTop>
-    </Layout>
+      </Drawer>
+    </div>
   );
 }

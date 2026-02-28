@@ -15,6 +15,7 @@ export interface CartItem {
   purchaseMode: PurchaseMode;
   discountRate?: number;           // 折扣百分比（bulk 用）
   subscriptionFrequency?: string;  // 訂購頻率（subscription 用）
+  requirePrePayment?: boolean;     // 需預付款（即期品等）
 }
 
 // 向下相容：舊版 addToCart 參數（一次購買，無購買模式）
@@ -30,6 +31,7 @@ export interface AddToCartParams {
   purchaseMode?: PurchaseMode;
   discountRate?: number;
   subscriptionFrequency?: string;
+  requirePrePayment?: boolean;
 }
 
 interface CartStore {
@@ -64,6 +66,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
       purchaseMode,
       discountRate: params.discountRate,
       subscriptionFrequency: params.subscriptionFrequency,
+      requirePrePayment: params.requirePrePayment,
     };
 
     if (existingItem) {

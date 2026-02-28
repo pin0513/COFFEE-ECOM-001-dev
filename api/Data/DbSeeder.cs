@@ -15,6 +15,7 @@ public static class DbSeeder
         await SeedSiteSettingsAsync(db);
         await SeedTestimonialsAsync(db);
         await SeedStoresAsync(db);
+        await SeedContentPagesAsync(db);
 
         await db.SaveChangesAsync();
 
@@ -120,6 +121,162 @@ public static class DbSeeder
         };
 
         db.Testimonials.AddRange(testimonials);
+    }
+
+    private static async Task SeedContentPagesAsync(AppDbContext db)
+    {
+        if (await db.ContentPages.AnyAsync()) return;
+
+        var pages = new List<ContentPage>
+        {
+            new()
+            {
+                Slug = "about",
+                TitleZhTW = "關於我們",
+                BodyZhTW = """
+## 品皇咖啡的故事
+
+自 2010 年創立以來，品皇咖啡秉持著「專業烘焙，極致品味」的理念，精選世界各地最優質的咖啡豆，透過專業烘焙師的精湛技藝，為您呈現每一杯完美的咖啡。
+
+### 我們的理念
+
+我們相信，好的咖啡不僅是一種飲品，更是一種生活態度，一種對品質的堅持。
+
+- **嚴選原料**：直接與世界各地咖啡農場合作，確保豆源品質
+- **專業烘焙**：擁有超過 15 年經驗的烘焙師團隊，掌握每一批豆子的最佳風味
+- **快速出貨**：烘焙後 48 小時內出貨，確保咖啡新鮮度
+
+### 聯絡資訊
+
+- 電話：02-2999-0000
+- 地址：新北市三重區重新路五段609巷12號
+- 營業時間：週一至週六 09:00–18:00
+""",
+                IsPublished = true,
+                SortOrder = 1,
+                CreatedAt = DateTime.UtcNow
+            },
+            new()
+            {
+                Slug = "contact",
+                TitleZhTW = "聯絡我們",
+                BodyZhTW = """
+## 聯絡我們
+
+有任何問題或需要協助，歡迎透過以下方式與我們聯繫。
+
+### 聯絡方式
+
+| 方式 | 資訊 |
+|------|------|
+| 電話 | 02-2999-0000 |
+| Email | service@pinhung.com.tw |
+| LINE | 請搜尋 @pinhung |
+
+### 門市地址
+
+**品皇咖啡 三重本店**
+新北市三重區重新路五段609巷12號
+營業時間：週一至週六 09:00–18:00
+
+### 回覆時間
+
+我們通常在一個工作天內回覆，週末與國定假日不在服務時間內。
+若有緊急需求，建議透過電話或 LINE 聯繫我們。
+""",
+                IsPublished = true,
+                SortOrder = 2,
+                CreatedAt = DateTime.UtcNow
+            },
+            new()
+            {
+                Slug = "faq",
+                TitleZhTW = "常見問題",
+                BodyZhTW = """
+## 常見問題
+
+### 訂購相關
+
+**Q：如何下單？**
+在商品頁面選擇商品，加入購物車後前往結帳，填寫收件資訊即可完成訂購。
+
+**Q：可以修改或取消訂單嗎？**
+訂單成立後若需修改或取消，請於 24 小時內聯絡我們，出貨後恕無法取消。
+
+**Q：有最低訂購金額嗎？**
+目前沒有最低訂購金額限制。
+
+---
+
+### 付款相關
+
+**Q：支援哪些付款方式？**
+目前支援貨到付款與銀行轉帳兩種方式。
+
+**Q：銀行轉帳帳號是哪個？**
+下單時選擇銀行轉帳，系統會顯示帳號資訊，轉帳後請填寫後5碼以利核帳。
+
+---
+
+### 配送相關
+
+**Q：何時出貨？**
+一般商品通常在 1-2 個工作天內出貨，烘焙訂製商品需 3-5 個工作天。
+
+**Q：有配送到全台嗎？**
+是的，我們配送至全台灣，使用黑貓宅急便運送。
+
+**Q：運費是多少？**
+目前運費為固定費率，詳情請參考配送說明頁面。
+""",
+                IsPublished = true,
+                SortOrder = 3,
+                CreatedAt = DateTime.UtcNow
+            },
+            new()
+            {
+                Slug = "shipping",
+                TitleZhTW = "配送說明",
+                BodyZhTW = """
+## 配送說明
+
+### 配送範圍
+
+配送至全台灣本島、澎湖、金門、馬祖。
+
+### 出貨時間
+
+| 商品類型 | 出貨時間 |
+|---------|---------|
+| 一般現貨商品 | 1-2 個工作天 |
+| 烘焙訂製商品 | 3-5 個工作天 |
+| 促銷限量商品 | 確認付款後 1-2 個工作天 |
+
+> 注意：假日及國定假日不出貨，出貨時間順延。
+
+### 運費說明
+
+- 黑貓宅急便統一運費
+- 詳細金額請洽客服確認
+
+### 配送注意事項
+
+1. 收件資訊請填寫正確，以免延誤配送
+2. 若遇無人在家，物流公司將留通知單，請依指示辦理
+3. 生鮮或冷藏商品請確保收件時有人在場
+
+### 退換貨說明
+
+收到商品後如有問題，請於 7 天內聯絡我們，我們將協助您處理。
+退換貨需保持商品原包裝完整，開封後之食品恕無法退換。
+""",
+                IsPublished = true,
+                SortOrder = 4,
+                CreatedAt = DateTime.UtcNow
+            },
+        };
+
+        db.ContentPages.AddRange(pages);
     }
 
     private static async Task SeedCategorySpecTemplatesAsync(AppDbContext db)

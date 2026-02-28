@@ -20,11 +20,14 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins(
-            "http://localhost:5173",
-            "http://localhost:5174",
-            "http://localhost:3000"
-        )
+        policy
+        .SetIsOriginAllowed(origin =>
+        {
+            // 允許所有 localhost（任意 port）與正式域名
+            var uri = new Uri(origin);
+            return uri.Host == "localhost" || uri.Host == "127.0.0.1"
+                || uri.Host.EndsWith(".pinhung.com");
+        })
         .AllowAnyMethod()
         .AllowAnyHeader()
         .AllowCredentials();
@@ -226,6 +229,7 @@ app.MapPut("/api/categories/{id:int}", [Authorize] async (int id, [FromBody] Upd
 // Products
 app.MapGet("/api/products", async (
     [FromQuery] int? categoryId, [FromQuery] bool? featured, [FromQuery] bool? isActive,
+    [FromQuery] bool? hasBulk, [FromQuery] bool? hasSub, [FromQuery] bool? hasPromo,
     [FromQuery] int page, [FromQuery] int pageSize, AppDbContext db) =>
 {
     if (page < 1) page = 1;
@@ -234,6 +238,9 @@ app.MapGet("/api/products", async (
     if (categoryId.HasValue) query = query.Where(p => p.CategoryId == categoryId.Value);
     if (featured.HasValue) query = query.Where(p => p.IsFeatured == featured.Value);
     if (isActive.HasValue) query = query.Where(p => p.IsActive == isActive.Value);
+    if (hasBulk == true) query = query.Where(p => p.BulkOptions != null);
+    if (hasSub == true) query = query.Where(p => p.SubscriptionOptions != null);
+    if (hasPromo == true) query = query.Where(p => p.PromotionTag != null);
     var total = await query.CountAsync();
     var products = await query.OrderBy(p => p.SortOrder).ThenBy(p => p.Id)
         .Skip((page - 1) * pageSize).Take(pageSize)
@@ -242,7 +249,8 @@ app.MapGet("/api/products", async (
             CategorySpecTemplate = p.Category != null ? p.Category.SpecTemplate : null,
             p.Price, p.ImageUrl, p.IsActive, p.IsFeatured, p.IsOrderable, p.InventoryEnabled,
             p.StockQuantity, p.Unit, p.SpecData, p.SortOrder, p.CreatedAt,
-            p.BulkOptions, p.SubscriptionOptions, p.ParentProductId, p.VariantLabel })
+            p.BulkOptions, p.SubscriptionOptions, p.ParentProductId, p.VariantLabel,
+            p.PromotionTag, p.RequirePrePayment, p.PromotionEndAt })
         .ToListAsync();
     return Results.Ok(new { Data = products, Page = page, PageSize = pageSize, TotalCount = total,
         TotalPages = (int)Math.Ceiling((double)total / pageSize) });
@@ -256,7 +264,8 @@ app.MapGet("/api/products/{id:int}", async (int id, AppDbContext db) =>
         p.CategoryId, CategoryName = p.Category?.Name, CategorySpecTemplate = p.Category?.SpecTemplate,
         p.Price, p.ImageUrl, p.IsActive, p.IsFeatured,
         p.IsOrderable, p.InventoryEnabled, p.StockQuantity, p.Unit, p.SpecData, p.SortOrder, p.CreatedAt, p.UpdatedAt,
-        p.BulkOptions, p.SubscriptionOptions, p.ParentProductId, p.VariantLabel });
+        p.BulkOptions, p.SubscriptionOptions, p.ParentProductId, p.VariantLabel,
+        p.PromotionTag, p.RequirePrePayment, p.PromotionEndAt });
 }).WithName("GetProductById").WithTags("Products");
 
 app.MapPost("/api/products", [Authorize] async ([FromBody] UpsertProductRequest req, AppDbContext db) =>
@@ -274,6 +283,9 @@ app.MapPost("/api/products", [Authorize] async ([FromBody] UpsertProductRequest 
         SubscriptionOptions = string.IsNullOrEmpty(req.SubscriptionOptions) ? null : req.SubscriptionOptions,
         ParentProductId = req.ParentProductId == 0 ? null : req.ParentProductId,
         VariantLabel = string.IsNullOrEmpty(req.VariantLabel) ? null : req.VariantLabel,
+        PromotionTag = string.IsNullOrEmpty(req.PromotionTag) ? null : req.PromotionTag,
+        RequirePrePayment = req.RequirePrePayment ?? false,
+        PromotionEndAt = req.PromotionEndAt,
     };
     db.Products.Add(product);
     await db.SaveChangesAsync();
@@ -301,6 +313,9 @@ app.MapPut("/api/products/{id:int}", [Authorize] async (int id, [FromBody] Upser
     if (req.SubscriptionOptions != null) product.SubscriptionOptions = req.SubscriptionOptions == "" ? null : req.SubscriptionOptions;
     if (req.ParentProductId != null) product.ParentProductId = req.ParentProductId == 0 ? null : req.ParentProductId;
     if (req.VariantLabel != null) product.VariantLabel = req.VariantLabel == "" ? null : req.VariantLabel;
+    if (req.PromotionTag != null) product.PromotionTag = req.PromotionTag == "" ? null : req.PromotionTag;
+    if (req.RequirePrePayment.HasValue) product.RequirePrePayment = req.RequirePrePayment.Value;
+    if (req.PromotionEndAt != null) product.PromotionEndAt = req.PromotionEndAt;
     product.UpdatedAt = DateTime.UtcNow;
     await db.SaveChangesAsync();
     return Results.Ok(new { product.Id });
@@ -905,6 +920,153 @@ app.MapPatch("/api/stores/{id:int}/toggle", [Authorize] async (int id, AppDbCont
     return Results.Ok(new { s.Id, s.IsVisible });
 }).WithName("ToggleStore").WithTags("Stores");
 
+// Hero Banners
+app.MapGet("/api/hero-banners", async (AppDbContext db) =>
+    Results.Ok(await db.HeroBanners
+        .Where(b => b.IsActive)
+        .OrderBy(b => b.SortOrder).ThenBy(b => b.Id)
+        .Select(b => new { b.Id, b.Title, b.SubTitle, b.ButtonText, b.ButtonUrl, b.ImageUrl, b.SortOrder, b.IsActive })
+        .ToListAsync()))
+.WithName("GetHeroBanners").WithTags("HeroBanners");
+
+app.MapGet("/api/hero-banners/all", [Authorize] async (AppDbContext db) =>
+    Results.Ok(await db.HeroBanners
+        .OrderBy(b => b.SortOrder).ThenBy(b => b.Id)
+        .Select(b => new { b.Id, b.Title, b.SubTitle, b.ButtonText, b.ButtonUrl, b.ImageUrl, b.SortOrder, b.IsActive, b.CreatedAt, b.UpdatedAt })
+        .ToListAsync()))
+.WithName("GetAllHeroBanners").WithTags("HeroBanners");
+
+app.MapPost("/api/hero-banners", [Authorize] async ([FromBody] UpsertHeroBannerRequest req, AppDbContext db) =>
+{
+    if (string.IsNullOrEmpty(req.Title)) return Results.BadRequest(new { Message = "標題不可為空" });
+    var banner = new HeroBanner
+    {
+        Title = req.Title,
+        SubTitle = string.IsNullOrEmpty(req.SubTitle) ? null : req.SubTitle,
+        ButtonText = string.IsNullOrEmpty(req.ButtonText) ? null : req.ButtonText,
+        ButtonUrl = string.IsNullOrEmpty(req.ButtonUrl) ? null : req.ButtonUrl,
+        ImageUrl = string.IsNullOrEmpty(req.ImageUrl) ? null : req.ImageUrl,
+        SortOrder = req.SortOrder ?? 0,
+        IsActive = req.IsActive ?? true,
+        CreatedAt = DateTime.UtcNow,
+    };
+    db.HeroBanners.Add(banner);
+    await db.SaveChangesAsync();
+    return Results.Created($"/api/hero-banners/{banner.Id}", new { banner.Id });
+}).WithName("CreateHeroBanner").WithTags("HeroBanners");
+
+app.MapPut("/api/hero-banners/{id:int}", [Authorize] async (int id, [FromBody] UpsertHeroBannerRequest req, AppDbContext db) =>
+{
+    var banner = await db.HeroBanners.FindAsync(id);
+    if (banner == null) return Results.NotFound();
+    if (!string.IsNullOrEmpty(req.Title)) banner.Title = req.Title;
+    if (req.SubTitle != null) banner.SubTitle = req.SubTitle == "" ? null : req.SubTitle;
+    if (req.ButtonText != null) banner.ButtonText = req.ButtonText == "" ? null : req.ButtonText;
+    if (req.ButtonUrl != null) banner.ButtonUrl = req.ButtonUrl == "" ? null : req.ButtonUrl;
+    if (req.ImageUrl != null) banner.ImageUrl = req.ImageUrl == "" ? null : req.ImageUrl;
+    if (req.SortOrder.HasValue) banner.SortOrder = req.SortOrder.Value;
+    if (req.IsActive.HasValue) banner.IsActive = req.IsActive.Value;
+    banner.UpdatedAt = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+    return Results.Ok(new { banner.Id });
+}).WithName("UpdateHeroBanner").WithTags("HeroBanners");
+
+app.MapDelete("/api/hero-banners/{id:int}", [Authorize] async (int id, AppDbContext db) =>
+{
+    var banner = await db.HeroBanners.FindAsync(id);
+    if (banner == null) return Results.NotFound();
+    db.HeroBanners.Remove(banner);
+    await db.SaveChangesAsync();
+    return Results.Ok(new { Message = "Banner 已刪除" });
+}).WithName("DeleteHeroBanner").WithTags("HeroBanners");
+
+app.MapPatch("/api/hero-banners/{id:int}/toggle", [Authorize] async (int id, AppDbContext db) =>
+{
+    var banner = await db.HeroBanners.FindAsync(id);
+    if (banner == null) return Results.NotFound();
+    banner.IsActive = !banner.IsActive;
+    banner.UpdatedAt = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+    return Results.Ok(new { banner.Id, banner.IsActive });
+}).WithName("ToggleHeroBanner").WithTags("HeroBanners");
+
+// Content Pages
+app.MapGet("/api/pages", async (AppDbContext db) =>
+    Results.Ok(await db.ContentPages
+        .Where(p => p.IsPublished)
+        .OrderBy(p => p.SortOrder).ThenBy(p => p.Id)
+        .Select(p => new { p.Id, p.Slug, p.TitleZhTW, p.SortOrder })
+        .ToListAsync()))
+.WithName("GetContentPages").WithTags("ContentPages");
+
+app.MapGet("/api/pages/all", [Authorize] async (AppDbContext db) =>
+    Results.Ok(await db.ContentPages
+        .OrderBy(p => p.SortOrder).ThenBy(p => p.Id)
+        .Select(p => new { p.Id, p.Slug, p.TitleZhTW, p.BodyZhTW, p.IsPublished, p.SortOrder, p.CreatedAt, p.UpdatedAt })
+        .ToListAsync()))
+.WithName("GetAllContentPages").WithTags("ContentPages");
+
+app.MapGet("/api/pages/{slug}", async (string slug, AppDbContext db) =>
+{
+    var page = await db.ContentPages
+        .Where(p => p.Slug == slug && p.IsPublished)
+        .Select(p => new { p.Id, p.Slug, p.TitleZhTW, p.BodyZhTW, p.SortOrder, p.UpdatedAt })
+        .FirstOrDefaultAsync();
+    return page == null ? Results.NotFound() : Results.Ok(page);
+}).WithName("GetContentPageBySlug").WithTags("ContentPages");
+
+app.MapPost("/api/pages", [Authorize] async ([FromBody] UpsertContentPageRequest req, AppDbContext db) =>
+{
+    if (string.IsNullOrEmpty(req.Slug)) return Results.BadRequest(new { Message = "Slug 不可為空" });
+    if (string.IsNullOrEmpty(req.TitleZhTW)) return Results.BadRequest(new { Message = "標題不可為空" });
+    if (await db.ContentPages.AnyAsync(p => p.Slug == req.Slug))
+        return Results.Conflict(new { Message = "Slug 已存在" });
+    var page = new ContentPage
+    {
+        Slug = req.Slug.Trim().ToLower(),
+        TitleZhTW = req.TitleZhTW,
+        BodyZhTW = req.BodyZhTW ?? "",
+        IsPublished = req.IsPublished ?? true,
+        SortOrder = req.SortOrder ?? 0,
+        CreatedAt = DateTime.UtcNow
+    };
+    db.ContentPages.Add(page);
+    await db.SaveChangesAsync();
+    return Results.Created($"/api/pages/{page.Slug}", new { page.Id, page.Slug });
+}).WithName("CreateContentPage").WithTags("ContentPages");
+
+app.MapPut("/api/pages/{id:int}", [Authorize] async (int id, [FromBody] UpsertContentPageRequest req, AppDbContext db) =>
+{
+    var page = await db.ContentPages.FindAsync(id);
+    if (page == null) return Results.NotFound();
+    if (!string.IsNullOrEmpty(req.TitleZhTW)) page.TitleZhTW = req.TitleZhTW;
+    if (req.BodyZhTW != null) page.BodyZhTW = req.BodyZhTW;
+    if (req.IsPublished.HasValue) page.IsPublished = req.IsPublished.Value;
+    if (req.SortOrder.HasValue) page.SortOrder = req.SortOrder.Value;
+    page.UpdatedAt = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+    return Results.Ok(new { page.Id, page.Slug });
+}).WithName("UpdateContentPage").WithTags("ContentPages");
+
+app.MapDelete("/api/pages/{id:int}", [Authorize] async (int id, AppDbContext db) =>
+{
+    var page = await db.ContentPages.FindAsync(id);
+    if (page == null) return Results.NotFound();
+    db.ContentPages.Remove(page);
+    await db.SaveChangesAsync();
+    return Results.Ok(new { Message = "頁面已刪除" });
+}).WithName("DeleteContentPage").WithTags("ContentPages");
+
+app.MapPatch("/api/pages/{id:int}/toggle", [Authorize] async (int id, AppDbContext db) =>
+{
+    var page = await db.ContentPages.FindAsync(id);
+    if (page == null) return Results.NotFound();
+    page.IsPublished = !page.IsPublished;
+    page.UpdatedAt = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+    return Results.Ok(new { page.Id, page.IsPublished });
+}).WithName("ToggleContentPage").WithTags("ContentPages");
+
 app.Run();
 
 public record CreateCustomerRequest(string Email, string? Name, string? Phone, string? Address, string? DisplayName, string? FirebaseUid);
@@ -928,7 +1090,8 @@ public record UpsertProductRequest(
     int? CategoryId, decimal? Price, string? Unit, string? ImageUrl,
     bool? IsActive, bool? IsFeatured, bool? IsOrderable, bool? InventoryEnabled, int? SortOrder,
     string? SpecData, string? BulkOptions, string? SubscriptionOptions,
-    int? ParentProductId, string? VariantLabel);
+    int? ParentProductId, string? VariantLabel,
+    string? PromotionTag, bool? RequirePrePayment, DateTime? PromotionEndAt);
 public record UpdateCategoryRequest(string? Name, string? Description, string? SpecTemplate, string? Icon, int? SortOrder);
 public record ProductTogglesRequest(bool? IsOrderable, bool? InventoryEnabled, bool? IsActive);
 public record BatchProductRequest(List<int> Ids, bool? IsOrderable, bool? IsActive, bool? IsFeatured);
@@ -944,3 +1107,5 @@ public record ImportRow
 }
 public record UpsertTestimonialRequest(string? Content, string? AuthorName, int Rating, string? ImageUrl, bool? IsVisible, int? SortOrder);
 public record UpsertStoreRequest(string? Name, string? Address, string? Phone, string? BusinessHours, string? ImageUrl, bool? IsVisible, int? SortOrder);
+public record UpsertHeroBannerRequest(string? Title, string? SubTitle, string? ButtonText, string? ButtonUrl, string? ImageUrl, bool? IsActive, int? SortOrder);
+public record UpsertContentPageRequest(string? Slug, string? TitleZhTW, string? BodyZhTW, bool? IsPublished, int? SortOrder);

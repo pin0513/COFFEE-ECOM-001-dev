@@ -12,6 +12,8 @@ import {
   AppstoreOutlined,
   StarOutlined,
   EnvironmentOutlined,
+  PictureOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { useAuth } from '../contexts/AuthContext';
@@ -23,6 +25,8 @@ import SiteSettings from './SiteSettings';
 import CategoryManagement from './CategoryManagement';
 import TestimonialManagement from './TestimonialManagement';
 import StoreManagement from './StoreManagement';
+import HeroBannerManagement from './HeroBannerManagement';
+import ContentPageManagement from './ContentPageManagement';
 
 const { Header, Sider, Content } = Layout;
 
@@ -60,6 +64,8 @@ export default function AdminLayout() {
       case 'settings': return <SiteSettings />;
       case 'testimonials': return <TestimonialManagement />;
       case 'stores': return <StoreManagement />;
+      case 'hero-banners': return <HeroBannerManagement />;
+      case 'content-pages': return <ContentPageManagement />;
       default: return <Dashboard />;
     }
   };
@@ -84,8 +90,10 @@ export default function AdminLayout() {
             { key: 'products', icon: <ShoppingOutlined />, label: '商品管理' },
             { key: 'categories', icon: <AppstoreOutlined />, label: '分類管理' },
             { key: 'orders', icon: <ShoppingCartOutlined />, label: '訂單管理' },
+            { key: 'hero-banners', icon: <PictureOutlined />, label: 'Banner 管理' },
             { key: 'testimonials', icon: <StarOutlined />, label: '評價管理' },
             { key: 'stores', icon: <EnvironmentOutlined />, label: '門市管理' },
+            { key: 'content-pages', icon: <FileTextOutlined />, label: '內容頁管理' },
             { key: 'admins', icon: <TeamOutlined />, label: '管理員管理' },
             { key: 'settings', icon: <SettingOutlined />, label: '網站設定' },
           ]}

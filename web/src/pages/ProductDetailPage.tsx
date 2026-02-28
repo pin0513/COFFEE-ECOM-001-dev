@@ -145,6 +145,7 @@ export default function ProductDetailPage() {
         purchaseMode,
         discountRate: purchaseMode === 'bulk' ? selectedTier?.discount : purchaseMode === 'subscription' ? subOpts?.discount : undefined,
         subscriptionFrequency: purchaseMode === 'subscription' ? selectedFrequency : undefined,
+        requirePrePayment: product.requirePrePayment,
       });
     }
 

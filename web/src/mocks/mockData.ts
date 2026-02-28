@@ -28,6 +28,9 @@ export const mockProducts: Product[] = [
     subscriptionOptions: null,
     parentProductId: null,
     variantLabel: null,
+    promotionTag: null,
+    requirePrePayment: false,
+    promotionEndAt: null,
     createdAt: new Date().toISOString(),
   },
   {
@@ -52,6 +55,9 @@ export const mockProducts: Product[] = [
     subscriptionOptions: null,
     parentProductId: null,
     variantLabel: null,
+    promotionTag: null,
+    requirePrePayment: false,
+    promotionEndAt: null,
     createdAt: new Date().toISOString(),
   },
   {
@@ -76,6 +82,9 @@ export const mockProducts: Product[] = [
     subscriptionOptions: null,
     parentProductId: null,
     variantLabel: null,
+    promotionTag: null,
+    requirePrePayment: false,
+    promotionEndAt: null,
     createdAt: new Date().toISOString(),
   },
   {
@@ -100,6 +109,9 @@ export const mockProducts: Product[] = [
     subscriptionOptions: null,
     parentProductId: null,
     variantLabel: null,
+    promotionTag: null,
+    requirePrePayment: false,
+    promotionEndAt: null,
     createdAt: new Date().toISOString(),
   },
   {
@@ -124,6 +136,9 @@ export const mockProducts: Product[] = [
     subscriptionOptions: null,
     parentProductId: null,
     variantLabel: null,
+    promotionTag: null,
+    requirePrePayment: false,
+    promotionEndAt: null,
     createdAt: new Date().toISOString(),
   },
   {
@@ -148,6 +163,9 @@ export const mockProducts: Product[] = [
     subscriptionOptions: null,
     parentProductId: null,
     variantLabel: null,
+    promotionTag: null,
+    requirePrePayment: false,
+    promotionEndAt: null,
     createdAt: new Date().toISOString(),
   },
 ];

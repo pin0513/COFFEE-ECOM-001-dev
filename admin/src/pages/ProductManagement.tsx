@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   Card, Table, Button, Modal, Form, Input, InputNumber, Select,
-  Switch, Space, message, Upload, Tag, Dropdown, Divider, Checkbox,
+  Switch, Space, message, Upload, Tag, Dropdown, Divider, Checkbox, DatePicker,
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, UploadOutlined, ImportOutlined, LoadingOutlined, DownOutlined, MinusCircleOutlined } from '@ant-design/icons';
 import type { UploadFile, UploadProps } from 'antd';
@@ -46,6 +46,9 @@ interface Product {
   subscriptionOptions: string | null;
   parentProductId: number | null;
   variantLabel: string | null;
+  promotionTag: string | null;
+  requirePrePayment: boolean;
+  promotionEndAt: string | null;
 }
 
 export default function ProductManagement() {
@@ -69,6 +72,7 @@ export default function ProductManagement() {
   const [subDiscount, setSubDiscount] = useState(10);
   const [subFreqs, setSubFreqs] = useState<string[]>(['每兩週', '每月']);
   const [subDefault, setSubDefault] = useState('每兩週');
+  const [requirePrePayment, setRequirePrePayment] = useState(false);
   const [form] = Form.useForm();
 
   const fetchProducts = async (p = 1) => {
@@ -174,6 +178,8 @@ export default function ProductManagement() {
       setSubDefault('每兩週');
     }
 
+    setRequirePrePayment(product.requirePrePayment ?? false);
+
     form.setFieldsValue({
       sku: product.sku,
       name: product.name,
@@ -188,6 +194,7 @@ export default function ProductManagement() {
       inventoryEnabled: product.inventoryEnabled,
       parentProductId: product.parentProductId ?? undefined,
       variantLabel: product.variantLabel ?? undefined,
+      promotionTag: product.promotionTag ?? undefined,
       ...Object.fromEntries(Object.entries(specValues).map(([k, v]) => [`spec_${k}`, v])),
     });
     setIsModalVisible(true);
@@ -203,6 +210,7 @@ export default function ProductManagement() {
     setSubDiscount(10);
     setSubFreqs(['每兩週', '每月']);
     setSubDefault('每兩週');
+    setRequirePrePayment(false);
     form.resetFields();
     form.setFieldsValue({ isActive: true, isOrderable: true, inventoryEnabled: false, unit: '磅' });
     setIsModalVisible(true);
@@ -255,6 +263,13 @@ export default function ProductManagement() {
     // Variants
     cleanValues.parentProductId = (cleanValues.parentProductId as number | undefined) ?? 0;
     cleanValues.variantLabel = (cleanValues.variantLabel as string | undefined) ?? '';
+
+    // 促銷標籤 + 需預付款
+    cleanValues.promotionTag = (cleanValues.promotionTag as string | undefined) ?? '';
+    cleanValues.requirePrePayment = requirePrePayment;
+    // promotionEndAt: DatePicker 回傳 dayjs，轉 ISO string
+    const endAtVal = cleanValues.promotionEndAt as { toISOString?: () => string } | undefined;
+    cleanValues.promotionEndAt = endAtVal?.toISOString ? endAtVal.toISOString() : null;
 
     try {
       if (editingProduct) {
@@ -572,6 +587,22 @@ export default function ProductManagement() {
                 </Space>
               </div>
             )}
+          </div>
+
+          {/* 促銷設定 */}
+          <Divider style={{ margin: '8px 0 16px' }}>促銷設定</Divider>
+          <Form.Item label="促銷標籤文字" name="promotionTag" help="如：即期特惠、限時特賣（留空不顯示）">
+            <Input placeholder="留空不顯示促銷標籤" />
+          </Form.Item>
+          <Form.Item label="促銷截止時間" name="promotionEndAt" help="設定後前台商品卡顯示倒數計時，留空無倒數">
+            <DatePicker showTime style={{ width: '100%' }} placeholder="選填，設定促銷結束時間" />
+          </Form.Item>
+          <div style={{ marginBottom: 12 }}>
+            <Space align="center">
+              <Switch checked={requirePrePayment} onChange={setRequirePrePayment} size="small" />
+              <span>需預付款</span>
+              <span style={{ color: '#999', fontSize: 12 }}>（開啟後購物車僅允許銀行轉帳付款）</span>
+            </Space>
           </div>
 
           {/* 商品群組 / 變體 */}

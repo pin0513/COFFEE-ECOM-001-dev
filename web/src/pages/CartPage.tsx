@@ -1,19 +1,18 @@
-import { Layout, Typography, Button, Badge, Card, List, InputNumber, Empty, Divider, Grid, BackTop, Alert, Tag } from 'antd';
-import { ShoppingCartOutlined, CoffeeOutlined, DeleteOutlined, LeftOutlined, UpOutlined } from '@ant-design/icons';
+import { Typography, Button, Card, List, InputNumber, Empty, Divider, Grid, BackTop, Alert, Tag } from 'antd';
+import { DeleteOutlined, LeftOutlined, UpOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useCartStore } from '../stores/cartStore';
 import type { CartItem } from '../stores/cartStore';
 import { useState, useEffect } from 'react';
 import { getSiteSettings } from '../services/siteSettingsService';
 
-const { Header, Content } = Layout;
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
 
 export default function CartPage() {
   const navigate = useNavigate();
   const screens = useBreakpoint();
-  const { items, updateQuantity, removeFromCart, getTotalPrice, getTotalItems } = useCartStore();
+  const { items, updateQuantity, removeFromCart, getTotalPrice } = useCartStore();
   const [checkoutEnabled, setCheckoutEnabled] = useState(true);
 
   useEffect(() => {
@@ -45,24 +44,7 @@ export default function CartPage() {
   };
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Header style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: screens.xs ? '0 12px' : screens.sm ? '0 20px' : '0 50px',
-        height: screens.xs ? 56 : 64,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', color: 'white', cursor: 'pointer' }} onClick={() => navigate('/')}>
-          <CoffeeOutlined style={{ fontSize: screens.xs ? 24 : screens.sm ? 28 : 32, marginRight: screens.xs ? 8 : 12 }} />
-          <Title level={screens.xs ? 5 : screens.sm ? 4 : 3} style={{ margin: 0, color: 'white', fontSize: screens.xs ? 16 : screens.sm ? 18 : 20 }}>品皇咖啡</Title>
-        </div>
-        <Badge count={getTotalItems()} showZero>
-          <ShoppingCartOutlined style={{ fontSize: screens.xs ? 20 : screens.sm ? 22 : 24, color: 'white' }} />
-        </Badge>
-      </Header>
-
-      <Content style={{ padding: screens.xs ? '16px' : screens.sm ? '24px' : '50px', maxWidth: 1200, margin: '0 auto', width: '100%' }}>
+    <div style={{ maxWidth: 1200, margin: '0 auto', padding: screens.xs ? '16px' : screens.sm ? '24px' : '40px 40px 80px', width: '100%' }}>
         <Button
           icon={<LeftOutlined />}
           onClick={() => navigate('/products')}
@@ -181,26 +163,15 @@ export default function CartPage() {
             </Card>
           </>
         )}
-      </Content>
-
-      {/* 回到頂端按鈕 */}
       <BackTop visibilityHeight={300}>
         <div style={{
-          height: 40,
-          width: 40,
-          lineHeight: '40px',
-          borderRadius: '50%',
-          backgroundColor: '#d4a574',
-          color: '#fff',
-          textAlign: 'center',
-          fontSize: 20,
-          boxShadow: '0 4px 12px rgba(212, 165, 116, 0.4)',
-          cursor: 'pointer',
-          transition: 'all 0.3s',
+          height: 40, width: 40, lineHeight: '40px', borderRadius: '50%',
+          backgroundColor: '#d4a574', color: '#fff', textAlign: 'center',
+          fontSize: 20, boxShadow: '0 4px 12px rgba(212,165,116,0.4)', cursor: 'pointer',
         }}>
           <UpOutlined />
         </div>
       </BackTop>
-    </Layout>
+    </div>
   );
 }

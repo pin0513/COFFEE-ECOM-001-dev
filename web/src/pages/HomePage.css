@@ -110,63 +110,173 @@
   transform: translateY(-2px);
 }
 
-/* ==================== Hero Section ==================== */
+/* ==================== Hero Section — Blue Bottle 風格全幅輪播 ==================== */
 
 .hero-section {
   position: relative;
-  height: 600px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-image: url('https://placehold.co/1920x800/f5ede3/d4a574/webp?text=Coffee+Beans+Hero');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  width: 100%;
+  height: 680px;
+  overflow: hidden;
+  background-color: #1a1007;
+  cursor: default;
 }
 
+/* 輪播軌道 — 水平排列，transition 切換 */
+.hero-track {
+  display: flex;
+  height: 100%;
+  transition: transform 0.7s cubic-bezier(0.77, 0, 0.175, 1);
+  will-change: transform;
+}
+
+/* 每一張 slide */
+.hero-slide {
+  position: relative;
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* 背景圖片 */
+.hero-slide-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 8s ease-out;
+}
+
+.hero-slide-bg-fallback {
+  background: linear-gradient(135deg, #2c1810 0%, #1a0f08 100%);
+}
+
+/* 底部 gradient overlay（深色，讓文字可讀） */
 .hero-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: linear-gradient(
-    rgba(245, 237, 227, 0.7),
-    rgba(245, 237, 227, 0.9)
+    to bottom,
+    rgba(0, 0, 0, 0.05) 0%,
+    rgba(0, 0, 0, 0.15) 40%,
+    rgba(0, 0, 0, 0.65) 100%
   );
-  backdrop-filter: blur(2px);
 }
 
+/* 文字區（左下角，Blue Bottle 風格） */
 .hero-content {
-  position: relative;
-  z-index: 1;
-  text-align: center;
-  padding: var(--spacing-10);
-  max-width: 800px;
+  position: absolute;
+  bottom: 80px;
+  left: 60px;
+  right: 50%;
+  z-index: 2;
 }
 
 .hero-title {
   font-family: var(--font-family-display);
-  font-size: var(--font-size-6xl);
+  font-size: clamp(32px, 4vw, 56px);
   font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-6) 0;
-  line-height: var(--line-height-tight);
+  color: #ffffff;
+  margin: 0 0 16px 0;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
 }
 
 .hero-subtitle {
   font-family: var(--font-family-base);
-  font-size: var(--font-size-xl);
+  font-size: clamp(15px, 1.5vw, 18px);
   font-weight: var(--font-weight-normal);
-  color: var(--color-text-secondary);
-  margin: 0 0 var(--spacing-10) 0;
+  color: rgba(255, 255, 255, 0.88);
+  margin: 0 0 32px 0;
+  line-height: 1.65;
+  max-width: 520px;
 }
 
-.hero-actions {
+/* CTA 按鈕 — Blue Bottle 白底實線框風格 */
+.hero-cta-btn {
+  display: inline-block;
+  min-width: 200px;
+  padding: 16px 32px;
+  font-family: var(--font-family-heading);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #1a1007;
+  background: #ffffff;
+  border: 2px solid #ffffff;
+  cursor: pointer;
+  transition: background 0.25s, color 0.25s, border-color 0.25s;
+  text-align: center;
+}
+
+.hero-cta-btn:hover {
+  background: transparent;
+  color: #ffffff;
+}
+
+/* ======= 左右箭頭（hover 才顯示，Blue Bottle 風格） ======= */
+.hero-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
   display: flex;
-  gap: var(--spacing-4);
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: #ffffff;
+  border: none;
+  cursor: pointer;
+  color: #1a1007;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s, background 0.2s;
+}
+
+.hero-arrow.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.hero-arrow:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.hero-arrow-left  { left: 0; }
+.hero-arrow-right { right: 0; }
+
+/* ======= 數字指示器（右下角，Blue Bottle 風格） ======= */
+.hero-indicators {
+  position: absolute;
+  bottom: 24px;
+  right: 40px;
+  z-index: 10;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.hero-indicator {
+  background: none;
+  border: none;
+  font-family: var(--font-family-heading);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s, font-weight 0.2s;
+  line-height: 1;
+}
+
+.hero-indicator.active {
+  color: #ffffff;
+  font-weight: 700;
 }
 
 /* ==================== Featured Products ==================== */
@@ -581,9 +691,15 @@
     padding: var(--spacing-16) 0;
   }
 
-  /* Hero */
+  /* Hero Carousel — Tablet */
   .hero-section {
-    height: 500px;
+    height: 520px;
+  }
+
+  .hero-content {
+    bottom: 60px;
+    left: 40px;
+    right: 40%;
   }
 
   .hero-title {
@@ -639,10 +755,15 @@
     font-size: var(--font-size-3xl);
   }
 
-  /* Hero */
+  /* Hero Carousel — Mobile */
   .hero-section {
-    height: 400px;
-    padding: var(--spacing-10) var(--spacing-4);
+    height: 480px;
+  }
+
+  .hero-content {
+    bottom: 48px;
+    left: 24px;
+    right: 24px;
   }
 
   .hero-title {
@@ -651,15 +772,18 @@
 
   .hero-subtitle {
     font-size: var(--font-size-base);
+    display: none;
   }
 
-  .hero-actions {
-    flex-direction: column;
-    width: 100%;
+  .hero-arrow {
+    width: 44px;
+    height: 44px;
   }
 
-  .hero-actions .btn {
-    width: 100%;
+  .hero-indicators {
+    bottom: 16px;
+    right: 24px;
+    gap: 14px;
   }
 
   /* Products */
@@ -728,6 +852,10 @@
 
 /* Very Small Mobile (< 480px) */
 @media (max-width: 479px) {
+  .hero-section {
+    height: 400px;
+  }
+
   .hero-title {
     font-size: var(--font-size-3xl);
   }

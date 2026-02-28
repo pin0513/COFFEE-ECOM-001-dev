@@ -131,6 +131,23 @@ public class Product
     public string? VariantLabel { get; set; }
 
     /// <summary>
+    /// 促銷標籤文字（null = 不顯示）
+    /// </summary>
+    public string? PromotionTag { get; set; }
+
+    /// <summary>
+    /// 需預付款（即期品、限量促銷）
+    /// 開啟後購物車只允許銀行轉帳付款
+    /// </summary>
+    public bool RequirePrePayment { get; set; } = false;
+
+    /// <summary>
+    /// 促銷截止時間（null = 無倒數）
+    /// 設定後前台商品卡顯示倒數計時
+    /// </summary>
+    public DateTime? PromotionEndAt { get; set; }
+
+    /// <summary>
     /// 商品屬性
     /// </summary>
     public List<ProductAttribute> Attributes { get; set; } = new();

@@ -23,6 +23,9 @@ export interface Product {
   subscriptionOptions: string | null;
   parentProductId: number | null;
   variantLabel: string | null;
+  promotionTag: string | null;
+  requirePrePayment: boolean;
+  promotionEndAt: string | null;
 }
 
 export interface ProductVariant {
@@ -48,6 +51,9 @@ export interface GetProductsParams {
   categoryId?: number;
   isActive?: boolean;
   featured?: boolean;
+  hasBulk?: boolean;
+  hasSub?: boolean;
+  hasPromo?: boolean;
 }
 
 export const getProducts = async (params?: GetProductsParams): Promise<PaginatedResponse<Product>> => {

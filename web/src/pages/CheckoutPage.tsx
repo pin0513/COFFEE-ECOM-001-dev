@@ -1,12 +1,11 @@
-import { Layout, Typography, Button, Card, Form, Input, Select, Divider, List, message, Grid, BackTop, Alert } from 'antd';
-import { CoffeeOutlined, LeftOutlined, UpOutlined, BankOutlined } from '@ant-design/icons';
+import { Typography, Button, Card, Form, Input, Select, Divider, List, message, Grid, BackTop, Alert } from 'antd';
+import { LeftOutlined, UpOutlined, BankOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useCartStore } from '../stores/cartStore';
 import { useState, useEffect } from 'react';
 import { createOrder } from '../services/orderService';
 import { getSiteSettings } from '../services/siteSettingsService';
 
-const { Header, Content } = Layout;
 const { Title, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
 
@@ -28,6 +27,9 @@ export default function CheckoutPage() {
   const [bankInfo, setBankInfo] = useState<BankAccountInfo | null>(null);
   const [form] = Form.useForm();
 
+  // 購物車含需預付款商品 → 鎖定銀行轉帳
+  const hasPrePayRequired = items.some(item => item.requirePrePayment);
+
   useEffect(() => {
     getSiteSettings().then(settings => {
       const bankOn = settings.payment_bank_transfer_enabled !== 'false';
@@ -36,7 +38,7 @@ export default function CheckoutPage() {
       setCashEnabled(cashOn);
 
       // 預設付款方式
-      if (cashOn) setPaymentMethod('cash');
+      if (cashOn && !hasPrePayRequired) setPaymentMethod('cash');
       else if (bankOn) setPaymentMethod('transfer');
 
       if (settings.bank_account_info) {
@@ -45,7 +47,14 @@ export default function CheckoutPage() {
         } catch { /* ignore */ }
       }
     }).catch(() => {});
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 若購物車含預付款商品，且目前選了 COD，自動切換到轉帳
+  useEffect(() => {
+    if (hasPrePayRequired && paymentMethod === 'cash') {
+      setPaymentMethod('transfer');
+    }
+  }, [hasPrePayRequired, paymentMethod]);
 
   const onFinish = async (values: Record<string, string>) => {
     if (paymentMethod === 'transfer' && !values.transferCode) {
@@ -92,26 +101,14 @@ export default function CheckoutPage() {
     return null;
   }
 
+  // 含預付款商品時禁用 COD
   const paymentOptions = [
-    ...(cashEnabled ? [{ label: '貨到付款', value: 'cash' }] : []),
+    ...(cashEnabled && !hasPrePayRequired ? [{ label: '貨到付款', value: 'cash' }] : []),
     ...(bankTransferEnabled ? [{ label: '銀行轉帳', value: 'transfer' }] : []),
   ];
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Header style={{
-        display: 'flex',
-        alignItems: 'center',
-        padding: screens.xs ? '0 12px' : screens.sm ? '0 20px' : '0 50px',
-        height: screens.xs ? 56 : 64,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', color: 'white', cursor: 'pointer' }} onClick={() => navigate('/')}>
-          <CoffeeOutlined style={{ fontSize: screens.xs ? 24 : 32, marginRight: screens.xs ? 8 : 12 }} />
-          <Title level={screens.xs ? 5 : 3} style={{ margin: 0, color: 'white', fontSize: screens.xs ? 16 : 20 }}>品皇咖啡</Title>
-        </div>
-      </Header>
-
-      <Content style={{ padding: screens.xs ? '16px' : screens.sm ? '24px' : '50px', maxWidth: 1200, margin: '0 auto', width: '100%' }}>
+    <div style={{ maxWidth: 1200, margin: '0 auto', padding: screens.xs ? '16px' : screens.sm ? '24px' : '40px 40px 80px', width: '100%' }}>
         <Button icon={<LeftOutlined />} onClick={() => navigate('/cart')} style={{ marginBottom: 20 }}>
           返回購物車
         </Button>
@@ -140,6 +137,15 @@ export default function CheckoutPage() {
               <Form.Item label="收件地址" name="address" rules={[{ required: true, message: '請輸入收件地址' }]}>
                 <Input.TextArea placeholder="請輸入完整地址" rows={3} />
               </Form.Item>
+
+              {hasPrePayRequired && (
+                <Alert
+                  type="warning"
+                  showIcon
+                  message="您的購物車含促銷限量商品，需完成付款後才能出貨，僅支援「銀行轉帳」付款"
+                  style={{ marginBottom: 16 }}
+                />
+              )}
 
               <Form.Item label="付款方式" name="paymentMethod" initialValue={paymentOptions[0]?.value}>
                 <Select
@@ -223,17 +229,15 @@ export default function CheckoutPage() {
             )}
           </Card>
         </div>
-      </Content>
-
       <BackTop visibilityHeight={300}>
         <div style={{
           height: 40, width: 40, lineHeight: '40px', borderRadius: '50%',
-          backgroundColor: '#d4a574', color: '#fff', textAlign: 'center', fontSize: 20,
-          boxShadow: '0 4px 12px rgba(212, 165, 116, 0.4)', cursor: 'pointer', transition: 'all 0.3s',
+          backgroundColor: '#d4a574', color: '#fff', textAlign: 'center',
+          fontSize: 20, boxShadow: '0 4px 12px rgba(212,165,116,0.4)', cursor: 'pointer',
         }}>
           <UpOutlined />
         </div>
       </BackTop>
-    </Layout>
+    </div>
   );
 }

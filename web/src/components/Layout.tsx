@@ -42,8 +42,8 @@ export default function Layout({ children }: LayoutProps) {
           <nav className={`main-nav ${mobileMenuOpen ? 'mobile-open' : ''}`}>
             <button className={`nav-link ${isActive('/') ? 'active' : ''}`} onClick={() => { navigate('/'); setMobileMenuOpen(false); }}>首頁</button>
             <button className={`nav-link ${isActive('/products') ? 'active' : ''}`} onClick={() => { navigate('/products'); setMobileMenuOpen(false); }}>商品</button>
-            <button className="nav-link" onClick={() => { navigate('/products'); setMobileMenuOpen(false); }}>關於我們</button>
-            <button className="nav-link" onClick={() => { navigate('/products'); setMobileMenuOpen(false); }}>聯絡我們</button>
+            <button className={`nav-link ${location.pathname.startsWith('/pages/about') ? 'active' : ''}`} onClick={() => { navigate('/pages/about'); setMobileMenuOpen(false); }}>關於我們</button>
+            <button className={`nav-link ${location.pathname.startsWith('/pages/contact') ? 'active' : ''}`} onClick={() => { navigate('/pages/contact'); setMobileMenuOpen(false); }}>聯絡我們</button>
           </nav>
 
           <div className="header-right">
@@ -70,13 +70,15 @@ export default function Layout({ children }: LayoutProps) {
               <ul className="footer-links">
                 <li><button onClick={() => navigate('/products')}>商品列表</button></li>
                 <li><button onClick={() => navigate('/cart')}>購物車</button></li>
+                <li><button onClick={() => navigate('/pages/shipping')}>配送說明</button></li>
               </ul>
             </div>
             <div className="footer-section">
               <h4 className="footer-heading">客戶服務</h4>
               <ul className="footer-links">
-                <li><button onClick={() => navigate('/')}>聯絡我們</button></li>
-                <li><button onClick={() => navigate('/')}>常見問題</button></li>
+                <li><button onClick={() => navigate('/pages/contact')}>聯絡我們</button></li>
+                <li><button onClick={() => navigate('/pages/faq')}>常見問題</button></li>
+                <li><button onClick={() => navigate('/pages/about')}>關於我們</button></li>
               </ul>
             </div>
             <div className="footer-section">

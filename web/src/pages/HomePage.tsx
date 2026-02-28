@@ -1,10 +1,20 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getProducts } from '../services/productService';
 import type { Product } from '../services/productService';
 import { apiClient, getImageUrl } from '../config/api';
 import { getSiteSettings } from '../services/siteSettingsService';
 import './HomePage.css';
+
+interface HeroBanner {
+  id: number;
+  title: string;
+  subTitle: string | null;
+  buttonText: string | null;
+  buttonUrl: string | null;
+  imageUrl: string | null;
+  sortOrder: number;
+}
 
 interface Category {
   id: number;
@@ -36,6 +46,37 @@ const SHOWCASE_CATEGORIES = [
   { match: '糖漿/醬料',      icon: '🍯', label: '糖漿',     en: 'Syrups'       },
 ];
 
+// 預設 fallback banners（API 無資料時使用）
+const DEFAULT_BANNERS: HeroBanner[] = [
+  {
+    id: 0,
+    title: '品皇咖啡',
+    subTitle: '專業烘焙，極致品味。精選世界各地優質咖啡豆。',
+    buttonText: '立即選購',
+    buttonUrl: '/products',
+    imageUrl: 'https://placehold.co/1920x700/2c1810/f5ede3/webp?text=Pin+Huang+Coffee',
+    sortOrder: 0,
+  },
+  {
+    id: -1,
+    title: '限時促銷特賣',
+    subTitle: '精選咖啡豆限量折扣，把握最後機會。',
+    buttonText: '查看優惠',
+    buttonUrl: '/products',
+    imageUrl: 'https://placehold.co/1920x700/3d2314/d4a574/webp?text=Special+Offers',
+    sortOrder: 1,
+  },
+  {
+    id: -2,
+    title: '訂閱享更多優惠',
+    subTitle: '定期訂購享折扣，每次配送省更多。',
+    buttonText: '了解訂閱',
+    buttonUrl: '/products',
+    imageUrl: 'https://placehold.co/1920x700/1a2e1a/8bc47e/webp?text=Subscribe+%26+Save',
+    sortOrder: 2,
+  },
+];
+
 export default function HomePage() {
   const navigate = useNavigate();
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
@@ -49,8 +90,57 @@ export default function HomePage() {
   const [email, setEmail] = useState('');
   const [subscribeSuccess, setSubscribeSuccess] = useState(false);
 
+  // Hero 輪播
+  const [heroBanners, setHeroBanners] = useState<HeroBanner[]>(DEFAULT_BANNERS);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [heroHovered, setHeroHovered] = useState(false);
+  const autoPlayRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const slideTo = useCallback((index: number) => {
+    setCurrentSlide(index);
+  }, []);
+
+  const slideNext = useCallback(() => {
+    setCurrentSlide(prev => (prev + 1) % heroBanners.length);
+  }, [heroBanners.length]);
+
+  const slidePrev = useCallback(() => {
+    setCurrentSlide(prev => (prev - 1 + heroBanners.length) % heroBanners.length);
+  }, [heroBanners.length]);
+
+  // 自動播放
+  useEffect(() => {
+    if (heroBanners.length <= 1) return;
+    autoPlayRef.current = setInterval(slideNext, 5000);
+    return () => { if (autoPlayRef.current) clearInterval(autoPlayRef.current); };
+  }, [heroBanners.length, slideNext]);
+
+  // Hover 暫停自動播放
+  const handleHeroMouseEnter = () => {
+    setHeroHovered(true);
+    if (autoPlayRef.current) clearInterval(autoPlayRef.current);
+  };
+  const handleHeroMouseLeave = () => {
+    setHeroHovered(false);
+    if (heroBanners.length > 1) {
+      autoPlayRef.current = setInterval(slideNext, 5000);
+    }
+  };
+
   // Intersection Observer for scroll animations
   const observerRef = useRef<IntersectionObserver | null>(null);
+
+  // 載入 Hero Banners
+  useEffect(() => {
+    apiClient.get<HeroBanner[]>('/hero-banners')
+      .then(res => {
+        if (res.data && res.data.length > 0) {
+          setHeroBanners(res.data);
+          setCurrentSlide(0);
+        }
+      })
+      .catch(() => {}); // 失敗則保留 DEFAULT_BANNERS
+  }, []);
 
   // 載入分類
   useEffect(() => {
@@ -128,27 +218,85 @@ export default function HomePage() {
 
   return (
     <div className="home-page">
-      {/* Hero Section */}
-      <section className="hero-section">
-        <div className="hero-overlay"></div>
-        <div className="hero-content">
-          <h1 className="hero-title">品皇咖啡 Pin Huang Coffee</h1>
-          <p className="hero-subtitle">專業烘焙，極致品味</p>
-          <div className="hero-actions">
-            <button
-              className="btn btn-primary"
-              onClick={() => navigate('/products')}
-            >
-              立即選購
-            </button>
-            <button
-              className="btn btn-secondary"
-              onClick={() => navigate('/products')}
-            >
-              了解更多
-            </button>
-          </div>
+      {/* Hero Section — Blue Bottle 風格全幅輪播 */}
+      <section
+        className="hero-section"
+        onMouseEnter={handleHeroMouseEnter}
+        onMouseLeave={handleHeroMouseLeave}
+      >
+        {/* 輪播軌道 */}
+        <div className="hero-track" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
+          {heroBanners.map((banner, idx) => (
+            <div key={banner.id} className="hero-slide" aria-hidden={idx !== currentSlide}>
+              {/* 背景圖 */}
+              {banner.imageUrl ? (
+                <img
+                  src={banner.imageUrl}
+                  alt={banner.title}
+                  className="hero-slide-bg"
+                  loading={idx === 0 ? 'eager' : 'lazy'}
+                />
+              ) : (
+                <div className="hero-slide-bg hero-slide-bg-fallback" />
+              )}
+              {/* 底部深色 gradient overlay */}
+              <div className="hero-overlay" />
+              {/* 文字區（左下） */}
+              <div className="hero-content">
+                <h1 className="hero-title">{banner.title}</h1>
+                {banner.subTitle && <p className="hero-subtitle">{banner.subTitle}</p>}
+                {banner.buttonText && (
+                  <button
+                    className="hero-cta-btn"
+                    onClick={() => navigate(banner.buttonUrl || '/products')}
+                  >
+                    {banner.buttonText.toUpperCase()}
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
+
+        {/* 左右箭頭（hover 才顯示） */}
+        {heroBanners.length > 1 && (
+          <>
+            <button
+              className={`hero-arrow hero-arrow-left${heroHovered ? ' visible' : ''}`}
+              onClick={slidePrev}
+              aria-label="上一張"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+            <button
+              className={`hero-arrow hero-arrow-right${heroHovered ? ' visible' : ''}`}
+              onClick={slideNext}
+              aria-label="下一張"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          </>
+        )}
+
+        {/* 數字指示器（右下角，Blue Bottle 風格） */}
+        {heroBanners.length > 1 && (
+          <div className="hero-indicators">
+            {heroBanners.map((_, idx) => (
+              <button
+                key={idx}
+                className={`hero-indicator${idx === currentSlide ? ' active' : ''}`}
+                onClick={() => slideTo(idx)}
+                aria-label={`第 ${idx + 1} 張`}
+              >
+                {String(idx + 1).padStart(2, '0')}
+              </button>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Categories Quick Nav — Hero 正下方，第一個入口 */}

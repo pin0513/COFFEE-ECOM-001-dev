@@ -18,6 +18,8 @@ public class AppDbContext : DbContext
     public DbSet<OrderItem> OrderItems { get; set; }
     public DbSet<Testimonial> Testimonials { get; set; }
     public DbSet<Store> Stores { get; set; }
+    public DbSet<HeroBanner> HeroBanners { get; set; }
+    public DbSet<ContentPage> ContentPages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -136,6 +138,14 @@ public class AppDbContext : DbContext
             e.HasKey(s => s.Id);
             e.Property(s => s.Name).HasMaxLength(100);
             e.Property(s => s.Phone).HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<ContentPage>(e =>
+        {
+            e.HasKey(p => p.Id);
+            e.HasIndex(p => p.Slug).IsUnique();
+            e.Property(p => p.Slug).HasMaxLength(100);
+            e.Property(p => p.TitleZhTW).HasMaxLength(200);
         });
     }
 }
