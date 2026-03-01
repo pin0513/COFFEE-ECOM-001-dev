@@ -29,8 +29,6 @@ export default function Layout({ children }: LayoutProps) {
   const siteName = settings.site_name || '品皇咖啡';
   const lineUrl = settings.line_client_url || '';
   const footerText = settings.footer_text || `© 2026 ${siteName}. All rights reserved.`;
-  const contactPhone = settings.contact_phone || '';
-  const contactAddress = settings.contact_address || '';
   const facebookUrl = settings.footer_social_facebook || '';
   const instagramUrl = settings.footer_social_instagram || '';
 
