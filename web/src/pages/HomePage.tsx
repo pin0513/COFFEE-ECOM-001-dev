@@ -232,7 +232,6 @@ export default function HomePage() {
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
     if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      // TODO: Implement newsletter API
       console.log('Subscribe email:', email);
       setSubscribeSuccess(true);
       setEmail('');

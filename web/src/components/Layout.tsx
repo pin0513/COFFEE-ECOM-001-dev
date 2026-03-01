@@ -80,8 +80,6 @@ export default function Layout({ children }: LayoutProps) {
             <div className="footer-section">
               <h3 className="footer-title">{siteName}</h3>
               <p className="footer-description">{settings.site_subtitle || '專業烘焙，極致品味'}</p>
-              {contactPhone && <p className="footer-description">📞 {contactPhone}</p>}
-              {contactAddress && <p className="footer-description">📍 {contactAddress}</p>}
             </div>
             <div className="footer-section">
               <h4 className="footer-heading">購物資訊</h4>
