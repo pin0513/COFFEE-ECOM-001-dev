@@ -348,8 +348,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Featured Products */}
-      <section className="section featured-products animate-on-scroll">
+      {/* Featured Products — 有精選商品（isFeatured / promotionTag / bulkOptions）才顯示 */}
+      {featuredProducts.length > 0 && <section className="section featured-products animate-on-scroll">
         <div className="container">
           <div className="section-header">
             <h2 className="section-title">精選商品</h2>
@@ -385,7 +385,7 @@ export default function HomePage() {
             </button>
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* Brand Story */}
       <section className="section brand-story animate-on-scroll">
