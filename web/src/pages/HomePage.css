@@ -920,3 +920,14 @@
   margin: 0 0 var(--spacing-2);
   line-height: 1.6;
 }
+
+.store-map-link {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.store-map-link:hover {
+  color: var(--color-brand-primary);
+  text-decoration: underline;
+}

@@ -462,7 +462,18 @@ export default function HomePage() {
                   )}
                   <div className="store-card-body">
                     <h3 className="store-name">{store.name}</h3>
-                    {store.address && <p className="store-detail">📍 {store.address}</p>}
+                    {store.address && (
+                      <p className="store-detail">
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.address)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="store-map-link"
+                        >
+                          📍 {store.address}
+                        </a>
+                      </p>
+                    )}
                     {store.phone && <p className="store-detail">📞 {store.phone}</p>}
                     {store.businessHours && <p className="store-detail">🕐 {store.businessHours}</p>}
                   </div>
