@@ -64,7 +64,9 @@ export default function PagesPage() {
         <h1 className="cp-title">{page.titleZhTW}</h1>
 
         <article className="cp-body">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{page.bodyZhTW}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {page.bodyZhTW.replace(/^#[^\n]*\n+/, '')}
+          </ReactMarkdown>
         </article>
 
         {page.updatedAt && (

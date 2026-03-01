@@ -1,5 +1,5 @@
-import { Layout, Typography, Button, Badge, InputNumber, message, Grid, Spin, BackTop } from 'antd';
-import { ShoppingCartOutlined, CoffeeOutlined, LeftOutlined, UpOutlined } from '@ant-design/icons';
+import { Typography, Button, InputNumber, message, Grid, Spin, BackTop } from 'antd';
+import { ShoppingCartOutlined, LeftOutlined, UpOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { getProductById, getProductVariants } from '../services/productService';
@@ -28,7 +28,6 @@ interface SubscriptionOpts {
   defaultFrequency: string;
 }
 
-const { Header, Content } = Layout;
 const { Title, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
 
@@ -48,7 +47,7 @@ export default function ProductDetailPage() {
   const [selectedFrequency, setSelectedFrequency] = useState<string>('');
   const [subscriptionAdded, setSubscriptionAdded] = useState(false);
 
-  const { addToCart, getTotalItems } = useCartStore();
+  const { addToCart } = useCartStore();
 
   useEffect(() => {
     getSiteSettings().then(s => setCheckoutEnabled(s.checkout_enabled !== 'false')).catch(() => {});
@@ -180,23 +179,7 @@ export default function ProductDetailPage() {
   };
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Header style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: screens.xs ? '0 12px' : '0 50px', height: screens.xs ? 56 : 64,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', color: 'white', cursor: 'pointer' }} onClick={() => navigate('/')}>
-          <CoffeeOutlined style={{ fontSize: screens.xs ? 24 : 32, marginRight: 12 }} />
-          <Title level={screens.xs ? 5 : 3} style={{ margin: 0, color: 'white', fontSize: screens.xs ? 16 : 20 }}>品皇咖啡</Title>
-        </div>
-        <Badge count={getTotalItems()} showZero>
-          <Button type="primary" size={screens.xs ? 'small' : 'middle'} icon={<ShoppingCartOutlined />} onClick={() => navigate('/cart')}>
-            {screens.xs ? '' : '購物車'}
-          </Button>
-        </Badge>
-      </Header>
-
-      <Content style={{ padding: screens.xs ? '16px' : '50px' }}>
+    <div style={{ padding: screens.xs ? '16px' : '50px' }}>
         <Button icon={<LeftOutlined />} onClick={() => navigate('/products')} style={{ marginBottom: 24 }}>
           返回商品列表
         </Button>
@@ -415,8 +398,6 @@ export default function ProductDetailPage() {
             )}
           </>
         )}
-      </Content>
-
       <BackTop visibilityHeight={300}>
         <div style={{
           height: 40, width: 40, lineHeight: '40px', borderRadius: '50%',
@@ -426,6 +407,6 @@ export default function ProductDetailPage() {
           <UpOutlined />
         </div>
       </BackTop>
-    </Layout>
+    </div>
   );
 }
