@@ -69,6 +69,40 @@ function PromoCard({ product, onClick }: { product: Product; onClick: () => void
   );
 }
 
+interface BulkTier { qty: number; label: string; discount: number; }
+
+/** 大量購買商品卡 */
+function BulkCard({ product, onClick }: { product: Product; onClick: () => void }) {
+  let tiers: BulkTier[] = [];
+  try {
+    if (product.bulkOptions) tiers = JSON.parse(product.bulkOptions);
+  } catch { /* ignore */ }
+
+  return (
+    <div className="bulk-card" onClick={onClick}>
+      <div className="bulk-card-image">
+        <img
+          src={getImageUrl(product.imageUrl) || 'https://placehold.co/200x200/e8f4e8/4a7c59/webp?text=Bulk'}
+          alt={product.name}
+          loading="lazy"
+        />
+        <span className="bulk-badge">多買優惠</span>
+      </div>
+      <div className="bulk-card-body">
+        <h3 className="bulk-card-name">{product.name}</h3>
+        <p className="bulk-card-price">NT$ {product.price.toLocaleString()} <span className="bulk-card-unit">/ {product.unit}</span></p>
+        {tiers.length > 0 && (
+          <div className="bulk-tiers">
+            {tiers.map((t, i) => (
+              <span key={i} className="bulk-tier-pill">{t.label}</span>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 interface HeroBanner {
   id: number;
   title: string;
@@ -137,6 +171,7 @@ export default function HomePage() {
   const navigate = useNavigate();
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [featuredTitle, setFeaturedTitle] = useState('精選商品');
+  const [bulkProducts, setBulkProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [stores, setStores] = useState<Store[]>([]);
@@ -207,7 +242,7 @@ export default function HomePage() {
       .catch(() => {});
   }, []);
 
-  // 載入精選/促銷商品（hasPromo → isFeatured → any active，保證有東西顯示）
+  // 載入限時優惠商品（hasPromo）
   useEffect(() => {
     getProducts({ page: 1, pageSize: 8, hasPromo: true, isActive: true })
       .then(res => {
@@ -231,6 +266,20 @@ export default function HomePage() {
         }
       })
       .catch(() => setFeaturedProducts([]));
+  }, []);
+
+  // 載入大量購買商品（hasBulk=true，isOrderable，無 promotionTag，排除已在限時優惠的）
+  useEffect(() => {
+    getProducts({ page: 1, pageSize: 100, hasBulk: true, isActive: true })
+      .then(res => {
+        const promoIds = new Set(featuredProducts.map(p => p.id));
+        const bulk = res.data.filter(
+          p => p.isOrderable && !p.promotionTag && !promoIds.has(p.id)
+        ).slice(0, 8);
+        setBulkProducts(bulk);
+      })
+      .catch(() => setBulkProducts([]));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 載入評價
@@ -277,7 +326,7 @@ export default function HomePage() {
     if (!observer) return;
     const elements = document.querySelectorAll('.animate-on-scroll:not(.animate-in)');
     elements.forEach((el) => observer.observe(el));
-  }, [testimonials, stores, featuredProducts]);
+  }, [testimonials, stores, featuredProducts, bulkProducts]);
 
   // Newsletter subscription
   const handleSubscribe = (e: React.FormEvent) => {
@@ -444,6 +493,32 @@ export default function HomePage() {
                 onClick={() => navigate('/products')}
               >
                 查看所有商品
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 大量購買促銷 */}
+      {bulkProducts.length > 0 && (
+        <section className="section bulk-section animate-on-scroll">
+          <div className="container">
+            <div className="section-header">
+              <h2 className="section-title">大量購買促銷</h2>
+              <p className="section-subtitle">BULK PURCHASE DISCOUNTS</p>
+            </div>
+            <div className="bulk-grid">
+              {bulkProducts.map(product => (
+                <BulkCard
+                  key={product.id}
+                  product={product}
+                  onClick={() => navigate(`/products/${product.id}`)}
+                />
+              ))}
+            </div>
+            <div className="section-action">
+              <button className="btn btn-outline" onClick={() => navigate('/products')}>
+                查看更多商品
               </button>
             </div>
           </div>
