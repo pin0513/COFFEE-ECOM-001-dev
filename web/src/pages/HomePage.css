@@ -1108,6 +1108,33 @@
   letter-spacing: 0.05em;
 }
 
+/* 首頁 promo card 倒數 */
+.promo-countdown {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(30, 10, 0, 0.6);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  letter-spacing: 0.04em;
+  backdrop-filter: blur(2px);
+}
+
+/* ≤ 2天：急迫紅色 + 呼吸動畫 */
+.promo-countdown.urgent {
+  background: rgba(200, 30, 30, 0.88);
+  font-size: 11px;
+  padding: 4px 10px;
+  animation: pulse-urgent 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-urgent {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.72; }
+}
+
 .promo-card-body {
   padding: var(--spacing-4);
   display: flex;

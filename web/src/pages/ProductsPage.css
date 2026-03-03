@@ -250,14 +250,29 @@
 /* 倒數 */
 .bb-countdown {
   position: absolute;
-  bottom: 10px;
-  right: 10px;
+  bottom: 8px;
+  right: 8px;
   font-size: 10px;
   color: white;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(30, 10, 0, 0.55);
   padding: 3px 8px;
   font-weight: 600;
+  letter-spacing: 0.03em;
   z-index: 2;
+  backdrop-filter: blur(2px);
+}
+
+/* ≤ 2天：急迫紅色倒數 */
+.bb-countdown.urgent {
+  background: rgba(200, 30, 30, 0.85);
+  font-size: 11px;
+  padding: 4px 9px;
+  animation: pulse-urgent 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-urgent {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.75; }
 }
 
 /* 文字區 */

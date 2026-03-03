@@ -6,6 +6,69 @@ import { apiClient, getImageUrl } from '../config/api';
 import { getSiteSettings } from '../services/siteSettingsService';
 import './HomePage.css';
 
+/** 倒數計時 hook（> 2天顯示天數，≤ 2天即時 HH:MM:SS，過期回 null） */
+function useCountdown(endAt: string | null | undefined): string | null {
+  const calc = (): string | null => {
+    if (!endAt) return null;
+    const diff = new Date(endAt).getTime() - Date.now();
+    if (diff <= 0) return null;
+    const days = Math.floor(diff / 86400000);
+    if (days >= 2) return `${days} 天後截止`;
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
+  const [label, setLabel] = useState<string | null>(calc);
+  useEffect(() => {
+    if (!endAt) { setLabel(null); return; }
+    const timer = setInterval(() => setLabel(calc()), 1000);
+    return () => clearInterval(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [endAt]);
+  return label;
+}
+
+/** 首頁促銷商品卡（需抽出元件才能在迴圈裡使用 hook） */
+function PromoCard({ product, onClick }: { product: Product; onClick: () => void }) {
+  const countdown = useCountdown(product.promotionEndAt);
+  const isUrgent = countdown !== null && !countdown.includes('天');
+
+  return (
+    <div className="promo-card" onClick={onClick}>
+      <div className="promo-card-image">
+        <img
+          src={getImageUrl(product.imageUrl) || 'https://placehold.co/200x200/f5ede3/d4a574/webp?text=Coffee'}
+          alt={product.name}
+          loading="lazy"
+        />
+        {product.promotionTag && (
+          <span className="promo-badge">{product.promotionTag}</span>
+        )}
+        {countdown && (
+          <span className={`promo-countdown${isUrgent ? ' urgent' : ''}`}>
+            ⏱ {countdown}
+          </span>
+        )}
+      </div>
+      <div className="promo-card-body">
+        <h3 className="promo-card-name">{product.name}</h3>
+        {product.originalPrice && product.originalPrice > product.price ? (
+          <div className="promo-price-group">
+            <span className="promo-price-original">NT$ {product.originalPrice.toLocaleString()}</span>
+            <span className="promo-price-sale">NT$ {product.price.toLocaleString()} <span className="promo-price-unit">/ {product.unit}</span></span>
+          </div>
+        ) : (
+          <p className="promo-card-price">NT$ {product.price.toLocaleString()} <span className="promo-price-unit">/ {product.unit}</span></p>
+        )}
+        {product.shortDescription && (
+          <p className="promo-card-desc">{product.shortDescription}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 interface HeroBanner {
   id: number;
   title: string;
@@ -367,36 +430,11 @@ export default function HomePage() {
 
             <div className="promo-grid">
               {featuredProducts.map((product) => (
-                <div
+                <PromoCard
                   key={product.id}
-                  className="promo-card"
+                  product={product}
                   onClick={() => navigate(`/products/${product.id}`)}
-                >
-                  <div className="promo-card-image">
-                    <img
-                      src={getImageUrl(product.imageUrl) || 'https://placehold.co/200x200/f5ede3/d4a574/webp?text=Coffee'}
-                      alt={product.name}
-                      loading="lazy"
-                    />
-                    {product.promotionTag && (
-                      <span className="promo-badge">{product.promotionTag}</span>
-                    )}
-                  </div>
-                  <div className="promo-card-body">
-                    <h3 className="promo-card-name">{product.name}</h3>
-                    {product.originalPrice && product.originalPrice > product.price ? (
-                      <div className="promo-price-group">
-                        <span className="promo-price-original">NT$ {product.originalPrice.toLocaleString()}</span>
-                        <span className="promo-price-sale">NT$ {product.price.toLocaleString()} <span className="promo-price-unit">/ {product.unit}</span></span>
-                      </div>
-                    ) : (
-                      <p className="promo-card-price">NT$ {product.price.toLocaleString()} <span className="promo-price-unit">/ {product.unit}</span></p>
-                    )}
-                    {product.shortDescription && (
-                      <p className="promo-card-desc">{product.shortDescription}</p>
-                    )}
-                  </div>
-                </div>
+                />
               ))}
             </div>
 

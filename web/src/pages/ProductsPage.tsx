@@ -10,24 +10,31 @@ import './ProductsPage.css';
 
 interface Category { id: number; name: string; productCount?: number; }
 
-/** 促銷倒數計時 hook */
-function useCountdown(endAt: string | null | undefined): string {
-  const [remaining, setRemaining] = useState('');
+/** 促銷倒數計時 hook
+ *  > 2 天 → "X 天後截止"（靜態文字）
+ *  ≤ 2 天 → 即時 "HH:MM:SS" 倒數
+ *  已過期 → null（不顯示）
+ */
+function useCountdown(endAt: string | null | undefined): string | null {
+  const calc = (): string | null => {
+    if (!endAt) return null;
+    const diff = new Date(endAt).getTime() - Date.now();
+    if (diff <= 0) return null;
+    const days = Math.floor(diff / 86400000);
+    if (days >= 2) return `${days} 天後截止`;
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
+  const [label, setLabel] = useState<string | null>(calc);
   useEffect(() => {
-    if (!endAt) { setRemaining(''); return; }
-    const tick = () => {
-      const diff = new Date(endAt).getTime() - Date.now();
-      if (diff <= 0) { setRemaining('已截止'); return; }
-      const h = Math.floor(diff / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      const s = Math.floor((diff % 60000) / 1000);
-      setRemaining(h > 0 ? `${h}h ${m}m` : `${m}m ${s}s`);
-    };
-    tick();
-    const timer = setInterval(tick, 1000);
+    if (!endAt) { setLabel(null); return; }
+    const timer = setInterval(() => setLabel(calc()), 1000);
     return () => clearInterval(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [endAt]);
-  return remaining;
+  return label;
 }
 
 /** Blue Bottle 風格商品卡 */
@@ -56,7 +63,8 @@ function ProductCard({ product, onAddToCart, onNavigate, checkoutEnabled }: {
     badgeText = 'FEATURED';
   }
 
-  const showCountdown = product.promotionEndAt && countdown && countdown !== '已截止';
+  const showCountdown = !!countdown;
+  const isUrgent = showCountdown && countdown !== null && !countdown.includes('天');
   const canAddToCart = checkoutEnabled && product.isOrderable && product.price > 0;
   const imgSrc = getImageUrl(product.imageUrl) || 'https://placehold.co/600x700/f0ece4/c5a882/webp?text=Coffee';
 
@@ -74,7 +82,7 @@ function ProductCard({ product, onAddToCart, onNavigate, checkoutEnabled }: {
       <div className="bb-card-image" onClick={() => onNavigate(product.id)}>
         <img src={imgSrc} alt={product.name} loading="lazy" />
         {badgeText && <span className={badgeClass}>{badgeText}</span>}
-        {showCountdown && <span className="bb-countdown">⏱ {countdown}</span>}
+        {showCountdown && <span className={`bb-countdown${isUrgent ? ' urgent' : ''}`}>⏱ {countdown}</span>}
       </div>
 
       {/* 文字區 */}
