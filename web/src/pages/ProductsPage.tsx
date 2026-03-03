@@ -83,7 +83,16 @@ function ProductCard({ product, onAddToCart, onNavigate, checkoutEnabled }: {
           <span className="bb-card-name" onClick={() => onNavigate(product.id)}>
             {product.name}
           </span>
-          <span className="bb-card-price">NT${product.price.toLocaleString()}</span>
+          <div className="bb-card-price-col">
+            {product.originalPrice && product.originalPrice > product.price ? (
+              <>
+                <span className="bb-card-price-original">NT${product.originalPrice.toLocaleString()}</span>
+                <span className="bb-card-price-sale">NT${product.price.toLocaleString()}<span className="bb-card-unit"> / {product.unit}</span></span>
+              </>
+            ) : (
+              <span className="bb-card-price">NT${product.price.toLocaleString()}<span className="bb-card-unit"> / {product.unit}</span></span>
+            )}
+          </div>
         </div>
         {product.categoryName && (
           <div className="bb-card-sub">{product.categoryName}</div>

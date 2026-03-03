@@ -27,6 +27,7 @@ export interface Product {
   requirePrePayment: boolean;
   promotionEndAt: string | null;
   brand?: string | null;
+  originalPrice?: number | null;
 }
 
 export interface ProductVariant {

@@ -153,6 +153,11 @@ public class Product
     public string? Brand { get; set; }
 
     /// <summary>
+    /// 原價（促銷時顯示劃掉的原價，null = 不顯示）
+    /// </summary>
+    public decimal? OriginalPrice { get; set; }
+
+    /// <summary>
     /// 商品屬性
     /// </summary>
     public List<ProductAttribute> Attributes { get; set; } = new();

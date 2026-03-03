@@ -32,6 +32,7 @@ interface Product {
   name: string;
   shortDescription: string | null;
   brand: string | null;
+  originalPrice: number | null;
   categoryId: number;
   categoryName: string | null;
   price: number;
@@ -186,6 +187,7 @@ export default function ProductManagement() {
       name: product.name,
       shortDescription: product.shortDescription,
       brand: product.brand ?? undefined,
+      originalPrice: product.originalPrice ?? undefined,
       categoryId: product.categoryId,
       price: product.price,
       unit: product.unit,
@@ -442,6 +444,9 @@ export default function ProductManagement() {
           </Form.Item>
           <Form.Item label="品牌" name="brand">
             <Input placeholder="選填，如：品皇、XXX" />
+          </Form.Item>
+          <Form.Item label="原價（促銷劃線用）" name="originalPrice">
+            <InputNumber min={0} style={{ width: '100%' }} placeholder="填入後顯示劃掉原價" />
           </Form.Item>
           <Form.Item label="分類" name="categoryId" rules={[{ required: true, message: '請選擇分類' }]}>
             <Select

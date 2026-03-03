@@ -1160,3 +1160,37 @@
 @media (max-width: 767px) {
   .bb-search-wrapper { padding: 0 16px 8px; }
 }
+
+/* ==================== 價格欄（含單位 + 折扣） ==================== */
+.bb-card-price-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  min-width: 0;
+}
+
+.bb-card-price-original {
+  text-decoration: line-through;
+  color: #aaa;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.bb-card-price-sale {
+  color: #e53e3e;
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.bb-card-unit {
+  font-size: 10px;
+  font-weight: 400;
+  color: #888;
+}
+
+.bb-card-price .bb-card-unit {
+  color: #999;
+}

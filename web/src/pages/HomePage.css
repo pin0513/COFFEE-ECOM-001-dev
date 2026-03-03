@@ -115,7 +115,7 @@
 .hero-section {
   position: relative;
   width: 100%;
-  height: 380px;
+  height: 460px;
   overflow: hidden;
   background-color: #1a1007;
   cursor: default;
@@ -168,7 +168,7 @@
 /* 文字區（左下角，Blue Bottle 風格） */
 .hero-content {
   position: absolute;
-  bottom: 80px;
+  bottom: 100px;
   left: 60px;
   right: 50%;
   z-index: 2;
@@ -277,6 +277,65 @@
 .hero-indicator.active {
   color: #ffffff;
   font-weight: 700;
+}
+
+/* ==================== Hero 底部搜尋列 ==================== */
+.hero-search-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 0 24px;
+  border-top: 1px solid rgba(0,0,0,0.08);
+}
+
+.hero-search-form {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  height: 52px;
+  gap: 10px;
+}
+
+.hero-search-icon {
+  flex-shrink: 0;
+  color: #aaa;
+}
+
+.hero-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  color: #1a1007;
+  background: transparent;
+  font-family: var(--font-family-base);
+}
+
+.hero-search-input::placeholder {
+  color: #bbb;
+}
+
+.hero-search-btn {
+  padding: 8px 20px;
+  background: #1a1007;
+  color: #fff;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background 0.2s;
+}
+
+.hero-search-btn:hover {
+  background: #4a3728;
 }
 
 /* ==================== Featured Products ==================== */
@@ -415,26 +474,38 @@
 /* ==================== Brand Story ==================== */
 
 .brand-story {
-  background-color: var(--color-bg-primary);
+  padding: 0;
 }
 
-.brand-story-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-16);
-  align-items: center;
+.brand-story-bg {
+  background-image: url('https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1920&q=60');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  position: relative;
+  padding: var(--spacing-20) 0;
 }
 
-.brand-story-image {
-  width: 100%;
-  overflow: hidden;
-  border-radius: var(--radius-2xl);
+.brand-story-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 8, 3, 0.72);
 }
 
-.brand-story-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.brand-story-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 640px;
+}
+
+.brand-story-label {
+  font-family: var(--font-family-heading);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: rgba(255,255,255,0.55);
+  margin: 0 0 16px 0;
+  text-transform: uppercase;
 }
 
 .brand-story-content {
@@ -445,14 +516,14 @@
   font-family: var(--font-family-display);
   font-size: var(--font-size-4xl);
   font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
+  color: #ffffff;
   margin: 0 0 var(--spacing-6) 0;
 }
 
 .brand-story-text {
   font-family: var(--font-family-base);
   font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
+  color: rgba(255,255,255,0.82);
   line-height: var(--line-height-loose);
   margin: 0 0 var(--spacing-4) 0;
 }
@@ -460,13 +531,14 @@
 .brand-story-link {
   font-family: var(--font-family-base);
   font-size: var(--font-size-sm);
-  color: var(--color-primary-500);
-  text-decoration: underline;
+  color: #fff;
+  border-bottom: 1px solid rgba(255,255,255,0.5);
+  text-decoration: none;
   transition: color var(--transition-fast);
 }
 
 .brand-story-link:hover {
-  color: var(--color-primary-600);
+  color: rgba(255,255,255,0.8);
 }
 
 /* ==================== Testimonials ==================== */
@@ -702,7 +774,7 @@
 
   /* Hero Carousel — Tablet */
   .hero-section {
-    height: 300px;
+    height: 380px;
   }
 
   .hero-content {
@@ -766,13 +838,17 @@
 
   /* Hero Carousel — Mobile */
   .hero-section {
-    height: 240px;
+    height: 300px;
   }
 
   .hero-content {
-    bottom: 48px;
     left: 24px;
     right: 24px;
+    bottom: 88px;
+  }
+
+  .hero-search-bar {
+    padding: 0 16px;
   }
 
   .hero-title {
@@ -862,7 +938,7 @@
 /* Very Small Mobile (< 480px) */
 @media (max-width: 479px) {
   .hero-section {
-    height: 200px;
+    height: 280px;
   }
 
   .hero-title {
@@ -931,48 +1007,6 @@
   color: var(--color-brand-primary);
   text-decoration: underline;
 }
-
-/* ==================== Hero 搜尋列 ==================== */
-.hero-search-section {
-  background: var(--color-bg-primary);
-  padding: var(--spacing-5) 0;
-  border-bottom: 1px solid var(--color-border-secondary);
-}
-
-.hero-search-form {
-  display: flex;
-  max-width: 560px;
-  margin: 0 auto;
-  border: 1.5px solid #c5b9a8;
-  border-radius: 40px;
-  overflow: hidden;
-  background: white;
-}
-
-.hero-search-input {
-  flex: 1;
-  padding: 10px 20px;
-  font-size: 15px;
-  border: none;
-  outline: none;
-  background: transparent;
-  color: #1a1a1a;
-}
-
-.hero-search-input::placeholder { color: #9e9e9e; }
-
-.hero-search-btn {
-  padding: 0 18px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: #6b5c4c;
-  display: flex;
-  align-items: center;
-  transition: color 0.2s;
-}
-
-.hero-search-btn:hover { color: var(--color-primary-500); }
 
 /* ==================== 快速分類 Pills ==================== */
 .quick-categories-section {
@@ -1111,9 +1145,30 @@
   overflow: hidden;
 }
 
-@media (max-width: 767px) {
-  .hero-search-form { max-width: 100%; margin: 0 var(--spacing-5); }
+.promo-price-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-bottom: 4px;
+}
+.promo-price-original {
+  text-decoration: line-through;
+  color: #bbb;
+  font-size: 11px;
+}
+.promo-price-sale {
+  color: #e53e3e;
+  font-weight: 700;
+  font-size: 14px;
+}
+.promo-price-unit {
+  font-size: 10px;
+  font-weight: 400;
+  color: inherit;
+  opacity: 0.7;
+}
 
+@media (max-width: 767px) {
   .quick-categories { padding: 0 var(--spacing-5); }
 
   .promo-grid {

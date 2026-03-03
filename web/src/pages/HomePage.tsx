@@ -43,8 +43,8 @@ interface Store {
 const DEFAULT_BANNERS: HeroBanner[] = [
   {
     id: 0,
-    title: '品皇咖啡',
-    subTitle: '專業烘焙，極致品味。精選世界各地優質咖啡豆。',
+    title: '世界頂級咖啡豆',
+    subTitle: '精選衣索比亞、牙買加、巴拿馬等莊園直送。下單即享專業烘焙，48小時新鮮出貨。',
     buttonText: '立即選購',
     buttonUrl: '/products',
     imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=1920&h=700&fit=crop&q=85',
@@ -52,18 +52,18 @@ const DEFAULT_BANNERS: HeroBanner[] = [
   },
   {
     id: -1,
-    title: '限時促銷特賣',
-    subTitle: '精選咖啡豆限量折扣，把握最後機會。',
-    buttonText: '查看優惠',
-    buttonUrl: '/products',
+    title: '限時優惠 最低85折',
+    subTitle: '本週精選咖啡豆限量特價，買越多省越多。多包組合購買享額外優惠。',
+    buttonText: '搶購優惠',
+    buttonUrl: '/products?hasPromo=true',
     imageUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=1920&h=700&fit=crop&q=85',
     sortOrder: 1,
   },
   {
     id: -2,
-    title: '訂閱享更多優惠',
-    subTitle: '定期訂購享折扣，每次配送省更多。',
-    buttonText: '了解訂閱',
+    title: '定期訂購 每月省更多',
+    subTitle: '設定定期配送，每次自動享 9 折優惠。忘記買咖啡的日子一去不復返。',
+    buttonText: '設定訂閱',
     buttonUrl: '/products',
     imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1920&h=700&fit=crop&q=85',
     sortOrder: 2,
@@ -72,7 +72,8 @@ const DEFAULT_BANNERS: HeroBanner[] = [
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const [promoProducts, setPromoProducts] = useState<Product[]>([]);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [featuredTitle, setFeaturedTitle] = useState('精選商品');
   const [categories, setCategories] = useState<Category[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [stores, setStores] = useState<Store[]>([]);
@@ -143,21 +144,33 @@ export default function HomePage() {
       .catch(() => {});
   }, []);
 
-  // 載入限時優惠商品（hasPromo 優先，fallback isFeatured）
+  // 載入精選/促銷商品（hasPromo → isFeatured → any active，保證有東西顯示）
   useEffect(() => {
     getProducts({ page: 1, pageSize: 8, hasPromo: true, isActive: true })
       .then(res => {
         if (res.data.length > 0) {
-          setPromoProducts(res.data);
+          setFeaturedProducts(res.data);
+          setFeaturedTitle('限時優惠');
         } else {
           return getProducts({ page: 1, pageSize: 8, featured: true, isActive: true })
-            .then(r => setPromoProducts(r.data));
+            .then(r => {
+              if (r.data.length > 0) {
+                setFeaturedProducts(r.data);
+                setFeaturedTitle('精選商品');
+              } else {
+                return getProducts({ page: 1, pageSize: 8, isActive: true })
+                  .then(r2 => {
+                    setFeaturedProducts(r2.data);
+                    setFeaturedTitle('熱門商品');
+                  });
+              }
+            });
         }
       })
-      .catch(() => setPromoProducts([]));
+      .catch(() => setFeaturedProducts([]));
   }, []);
 
-  // 載入評價（動態，從 API 取得）
+  // 載入評價
   useEffect(() => {
     apiClient.get<Testimonial[]>('/testimonials')
       .then(res => setTestimonials(res.data || []))
@@ -171,7 +184,7 @@ export default function HomePage() {
       .catch(() => setStores([]));
   }, []);
 
-  // 載入品牌故事（從 site-settings 取得）
+  // 載入品牌故事
   useEffect(() => {
     getSiteSettings()
       .then(settings => {
@@ -181,7 +194,7 @@ export default function HomePage() {
       .catch(() => {});
   }, []);
 
-  // Scroll animations — mount 時建立 observer，stores/testimonials 載入後補 observe
+  // Scroll animations
   useEffect(() => {
     observerRef.current = new IntersectionObserver(
       (entries) => {
@@ -201,7 +214,7 @@ export default function HomePage() {
     if (!observer) return;
     const elements = document.querySelectorAll('.animate-on-scroll:not(.animate-in)');
     elements.forEach((el) => observer.observe(el));
-  }, [testimonials, stores]);
+  }, [testimonials, stores, featuredProducts]);
 
   // Newsletter subscription
   const handleSubscribe = (e: React.FormEvent) => {
@@ -218,7 +231,7 @@ export default function HomePage() {
 
   return (
     <div className="home-page">
-      {/* Hero Section — Blue Bottle 風格全幅輪播 */}
+      {/* Hero Section — 全幅輪播，搜尋列整合在底部 */}
       <section
         className="hero-section"
         onMouseEnter={handleHeroMouseEnter}
@@ -228,7 +241,6 @@ export default function HomePage() {
         <div className="hero-track" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
           {heroBanners.map((banner, idx) => (
             <div key={banner.id} className="hero-slide" aria-hidden={idx !== currentSlide}>
-              {/* 背景圖 */}
               {banner.imageUrl ? (
                 <img
                   src={banner.imageUrl}
@@ -239,9 +251,7 @@ export default function HomePage() {
               ) : (
                 <div className="hero-slide-bg hero-slide-bg-fallback" />
               )}
-              {/* 底部深色 gradient overlay */}
               <div className="hero-overlay" />
-              {/* 文字區（左下） */}
               <div className="hero-content">
                 <h1 className="hero-title">{banner.title}</h1>
                 {banner.subTitle && <p className="hero-subtitle">{banner.subTitle}</p>}
@@ -258,7 +268,7 @@ export default function HomePage() {
           ))}
         </div>
 
-        {/* 左右箭頭（hover 才顯示） */}
+        {/* 左右箭頭 */}
         {heroBanners.length > 1 && (
           <>
             <button
@@ -282,7 +292,7 @@ export default function HomePage() {
           </>
         )}
 
-        {/* 數字指示器（右下角，Blue Bottle 風格） */}
+        {/* 數字指示器 */}
         {heroBanners.length > 1 && (
           <div className="hero-indicators">
             {heroBanners.map((_, idx) => (
@@ -297,11 +307,9 @@ export default function HomePage() {
             ))}
           </div>
         )}
-      </section>
 
-      {/* 搜尋列 — Hero 下方 */}
-      <section className="hero-search-section">
-        <div className="container">
+        {/* 搜尋列 — 整合在 Hero 底部 */}
+        <div className="hero-search-bar">
           <form
             className="hero-search-form"
             onSubmit={(e) => {
@@ -311,6 +319,10 @@ export default function HomePage() {
               }
             }}
           >
+            <svg className="hero-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
             <input
               type="text"
               className="hero-search-input"
@@ -318,17 +330,12 @@ export default function HomePage() {
               value={homeSearchKeyword}
               onChange={(e) => setHomeSearchKeyword(e.target.value)}
             />
-            <button type="submit" className="hero-search-btn" aria-label="搜尋">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"/>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
-            </button>
+            <button type="submit" className="hero-search-btn">搜尋</button>
           </form>
         </div>
       </section>
 
-      {/* 快速分類 Pills — Hero 下方 */}
+      {/* 快速分類 Pills */}
       {categories.filter(c => c.productCount > 0).length > 0 && (
         <section className="quick-categories-section">
           <div className="quick-categories">
@@ -347,17 +354,19 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* 限時優惠 */}
-      {promoProducts.length > 0 && (
+      {/* 精選/促銷商品 — 永遠顯示（有資料才 render） */}
+      {featuredProducts.length > 0 && (
         <section className="section promo-section animate-on-scroll">
           <div className="container">
             <div className="section-header">
-              <h2 className="section-title">限時優惠</h2>
-              <p className="section-subtitle">SPECIAL OFFERS</p>
+              <h2 className="section-title">{featuredTitle}</h2>
+              <p className="section-subtitle">
+                {featuredTitle === '限時優惠' ? 'SPECIAL OFFERS' : featuredTitle === '精選商品' ? 'FEATURED PRODUCTS' : 'POPULAR PRODUCTS'}
+              </p>
             </div>
 
             <div className="promo-grid">
-              {promoProducts.map((product) => (
+              {featuredProducts.map((product) => (
                 <div
                   key={product.id}
                   className="promo-card"
@@ -375,7 +384,14 @@ export default function HomePage() {
                   </div>
                   <div className="promo-card-body">
                     <h3 className="promo-card-name">{product.name}</h3>
-                    <p className="promo-card-price">NT$ {product.price.toLocaleString()}</p>
+                    {product.originalPrice && product.originalPrice > product.price ? (
+                      <div className="promo-price-group">
+                        <span className="promo-price-original">NT$ {product.originalPrice.toLocaleString()}</span>
+                        <span className="promo-price-sale">NT$ {product.price.toLocaleString()} <span className="promo-price-unit">/ {product.unit}</span></span>
+                      </div>
+                    ) : (
+                      <p className="promo-card-price">NT$ {product.price.toLocaleString()} <span className="promo-price-unit">/ {product.unit}</span></p>
+                    )}
                     {product.shortDescription && (
                       <p className="promo-card-desc">{product.shortDescription}</p>
                     )}
@@ -396,27 +412,21 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* Brand Story */}
+      {/* Brand Story — 全幅背景，無佔位圖 */}
       <section className="section brand-story animate-on-scroll">
-        <div className="container">
-          <div className="brand-story-grid">
-            <div className="brand-story-image">
-              <img
-                src="https://placehold.co/600x400/8c6236/ffffff/webp?text=Coffee+Roasting"
-                alt="Coffee Roasting"
-                loading="lazy"
-              />
-            </div>
-            <div className="brand-story-content">
+        <div className="brand-story-bg">
+          <div className="container">
+            <div className="brand-story-inner">
+              <p className="brand-story-label">OUR STORY</p>
               <h2 className="brand-story-title">{brandStoryTitle}</h2>
               <p className="brand-story-text">{brandStoryContent}</p>
-              <a href="/about" className="brand-story-link">閱讀更多</a>
+              <a href="/pages/about" className="brand-story-link">閱讀更多 →</a>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Testimonials — 動態，空陣列時不顯示 */}
+      {/* Testimonials */}
       {testimonials.length > 0 && (
         <section className="section testimonials animate-on-scroll">
           <div className="container">
@@ -424,7 +434,6 @@ export default function HomePage() {
               <h2 className="section-title">顧客怎麼說</h2>
               <p className="section-subtitle">CUSTOMER REVIEWS</p>
             </div>
-
             <div className="testimonial-grid">
               {testimonials.map(t => (
                 <div key={t.id} className="testimonial-card">
@@ -448,7 +457,7 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* Stores — 動態，空陣列時不顯示 */}
+      {/* Stores */}
       {stores.length > 0 && (
         <section className="section stores animate-on-scroll">
           <div className="container">
@@ -456,7 +465,6 @@ export default function HomePage() {
               <h2 className="section-title">門市資訊</h2>
               <p className="section-subtitle">OUR STORES</p>
             </div>
-
             <div className="stores-grid">
               {stores.map(store => (
                 <div key={store.id} className="store-card">
@@ -497,7 +505,6 @@ export default function HomePage() {
         <div className="container">
           <h2 className="newsletter-title">訂閱電子報，獲得最新優惠</h2>
           <p className="newsletter-subtitle">Subscribe for exclusive offers</p>
-
           {subscribeSuccess ? (
             <div className="newsletter-success">
               ✓ 訂閱成功！感謝您的訂閱
@@ -517,7 +524,6 @@ export default function HomePage() {
           )}
         </div>
       </section>
-
     </div>
   );
 }
