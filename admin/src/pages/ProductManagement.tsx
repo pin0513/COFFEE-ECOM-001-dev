@@ -31,6 +31,7 @@ interface Product {
   sku: string;
   name: string;
   shortDescription: string | null;
+  brand: string | null;
   categoryId: number;
   categoryName: string | null;
   price: number;
@@ -184,6 +185,7 @@ export default function ProductManagement() {
       sku: product.sku,
       name: product.name,
       shortDescription: product.shortDescription,
+      brand: product.brand ?? undefined,
       categoryId: product.categoryId,
       price: product.price,
       unit: product.unit,
@@ -437,6 +439,9 @@ export default function ProductManagement() {
           </Form.Item>
           <Form.Item label="產品敘述" name="shortDescription">
             <Input.TextArea rows={2} />
+          </Form.Item>
+          <Form.Item label="品牌" name="brand">
+            <Input placeholder="選填，如：品皇、XXX" />
           </Form.Item>
           <Form.Item label="分類" name="categoryId" rules={[{ required: true, message: '請選擇分類' }]}>
             <Select

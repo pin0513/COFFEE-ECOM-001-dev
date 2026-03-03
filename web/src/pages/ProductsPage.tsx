@@ -8,7 +8,7 @@ import { apiClient, getImageUrl } from '../config/api';
 import { getSiteSettings } from '../services/siteSettingsService';
 import './ProductsPage.css';
 
-interface Category { id: number; name: string; }
+interface Category { id: number; name: string; productCount?: number; }
 
 /** 促銷倒數計時 hook */
 function useCountdown(endAt: string | null | undefined): string {
@@ -114,6 +114,11 @@ export default function ProductsPage() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const pageTopRef = useRef<HTMLDivElement>(null);
 
+  // 搜尋
+  const [searchKeyword, setSearchKeyword] = useState(searchParams.get('keyword') || '');
+  const [debouncedKeyword, setDebouncedKeyword] = useState(searchParams.get('keyword') || '');
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // 草稿篩選（Drawer 內操作，Apply 才生效）
   const [draftCatId, setDraftCatId] = useState<number | null>(null);
   const [draftBulk, setDraftBulk] = useState(false);
@@ -123,7 +128,7 @@ export default function ProductsPage() {
   // 已套用的篩選
   const [filterBulk, setFilterBulk] = useState(false);
   const [filterSub, setFilterSub] = useState(false);
-  const [filterPromo, setFilterPromo] = useState(false);
+  const [filterPromo, setFilterPromo] = useState(searchParams.get('hasPromo') === 'true');
 
   const { addToCart } = useCartStore();
 
@@ -133,6 +138,13 @@ export default function ProductsPage() {
   useEffect(() => {
     getSiteSettings().then(s => setCheckoutEnabled(s.checkout_enabled !== 'false')).catch(() => {});
   }, []);
+
+  // 搜尋 debounce
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDebouncedKeyword(searchKeyword), 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [searchKeyword]);
 
   // Scroll-to-top visibility
   useEffect(() => {
@@ -153,6 +165,7 @@ export default function ProductsPage() {
       if (filterBulk) params.hasBulk = true;
       if (filterSub) params.hasSub = true;
       if (filterPromo) params.hasPromo = true;
+      if (debouncedKeyword.trim()) params.keyword = debouncedKeyword.trim();
       const response = await getProducts(params);
       setProducts(response.data);
     } catch {
@@ -160,7 +173,7 @@ export default function ProductsPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedCategoryId, filterBulk, filterSub, filterPromo]);
+  }, [selectedCategoryId, filterBulk, filterSub, filterPromo, debouncedKeyword]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
@@ -239,6 +252,31 @@ export default function ProductsPage() {
         </div>
       </div>
 
+      {/* 搜尋框 */}
+      <div className="bb-search-wrapper">
+        <div className="bb-search-box">
+          <svg className="bb-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            type="text"
+            className="bb-search-input"
+            placeholder="搜尋商品名稱、品牌..."
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+          />
+          {searchKeyword && (
+            <button className="bb-search-clear" onClick={() => setSearchKeyword('')} aria-label="清除搜尋">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* 分類快速篩選 Pills */}
       <div className="bb-category-pills">
         <button
@@ -247,15 +285,17 @@ export default function ProductsPage() {
         >
           全部
         </button>
-        {categories.map(c => (
-          <button
-            key={c.id}
-            className={`bb-cat-pill${selectedCategoryId === c.id ? ' active' : ''}`}
-            onClick={() => setSearchParams({ categoryId: String(c.id) })}
-          >
-            {c.name}
-          </button>
-        ))}
+        {categories
+          .filter(c => (c.productCount ?? 0) > 0)
+          .map(c => (
+            <button
+              key={c.id}
+              className={`bb-cat-pill${selectedCategoryId === c.id ? ' active' : ''}`}
+              onClick={() => setSearchParams({ categoryId: String(c.id) })}
+            >
+              {c.name} <span className="bb-cat-count">({c.productCount})</span>
+            </button>
+          ))}
       </div>
 
       {/* 商品 Grid */}

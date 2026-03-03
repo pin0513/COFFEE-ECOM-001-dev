@@ -19,7 +19,7 @@ interface HeroBanner {
 interface Category {
   id: number;
   name: string;
-  icon?: string;
+  productCount: number;
 }
 
 interface Testimonial {
@@ -38,39 +38,6 @@ interface Store {
   businessHours: string;
   imageUrl?: string;
 }
-
-// 首頁展示的 3 大分類（依 DB name 比對）
-const CoffeeBeanIcon = () => (
-  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <ellipse cx="24" cy="24" rx="14" ry="10" stroke="currentColor" strokeWidth="2.2" fill="none"/>
-    <path d="M24 14 C20 18 20 30 24 34" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none"/>
-    <ellipse cx="24" cy="24" rx="14" ry="10" stroke="currentColor" strokeWidth="2.2" fill="none" transform="rotate(30 24 24)"/>
-  </svg>
-);
-
-const EquipmentIcon = () => (
-  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <path d="M16 10 L16 38 Q16 40 18 40 L30 40 Q32 40 32 38 L32 10 Z" stroke="currentColor" strokeWidth="2.2" fill="none" strokeLinejoin="round"/>
-    <path d="M20 10 L20 6 M28 10 L28 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-    <path d="M32 18 Q38 18 38 24 Q38 30 32 30" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none"/>
-    <path d="M20 22 L28 22 M20 27 L28 27" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-  </svg>
-);
-
-const SyrupIcon = () => (
-  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <path d="M17 18 L15 38 Q15 40 17 40 L31 40 Q33 40 31 38 L29 18 Z" stroke="currentColor" strokeWidth="2.2" fill="none" strokeLinejoin="round"/>
-    <path d="M17 18 Q17 14 20 13 L28 13 Q31 14 31 18" stroke="currentColor" strokeWidth="2.2" fill="none" strokeLinejoin="round"/>
-    <path d="M22 13 L22 10 Q22 8 24 8 Q26 8 26 10 L26 13" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round"/>
-    <path d="M20 26 Q24 30 28 26" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" fill="none"/>
-  </svg>
-);
-
-const SHOWCASE_CATEGORIES = [
-  { match: '精品咖啡豆',     icon: <CoffeeBeanIcon />, label: '咖啡豆',   en: 'Coffee Beans' },
-  { match: '咖啡機/沖煮器材', icon: <EquipmentIcon />,  label: '沖煮器材', en: 'Equipment'    },
-  { match: '糖漿/醬料',      icon: <SyrupIcon />,      label: '糖漿',     en: 'Syrups'       },
-];
 
 // 預設 fallback banners（API 無資料時使用）
 const DEFAULT_BANNERS: HeroBanner[] = [
@@ -105,7 +72,7 @@ const DEFAULT_BANNERS: HeroBanner[] = [
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [promoProducts, setPromoProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [stores, setStores] = useState<Store[]>([]);
@@ -115,6 +82,7 @@ export default function HomePage() {
   );
   const [email, setEmail] = useState('');
   const [subscribeSuccess, setSubscribeSuccess] = useState(false);
+  const [homeSearchKeyword, setHomeSearchKeyword] = useState('');
 
   // Hero 輪播
   const [heroBanners, setHeroBanners] = useState<HeroBanner[]>(DEFAULT_BANNERS);
@@ -175,11 +143,18 @@ export default function HomePage() {
       .catch(() => {});
   }, []);
 
-  // 載入精選商品
+  // 載入限時優惠商品（hasPromo 優先，fallback isFeatured）
   useEffect(() => {
-    getProducts({ page: 1, pageSize: 4, featured: true, isActive: true })
-      .then(res => setFeaturedProducts(res.data))
-      .catch(() => setFeaturedProducts([]));
+    getProducts({ page: 1, pageSize: 8, hasPromo: true, isActive: true })
+      .then(res => {
+        if (res.data.length > 0) {
+          setPromoProducts(res.data);
+        } else {
+          return getProducts({ page: 1, pageSize: 8, featured: true, isActive: true })
+            .then(r => setPromoProducts(r.data));
+        }
+      })
+      .catch(() => setPromoProducts([]));
   }, []);
 
   // 載入評價（動態，從 API 取得）
@@ -324,68 +299,102 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* Categories Quick Nav — Hero 正下方，第一個入口 */}
-      <section className="section categories animate-on-scroll">
+      {/* 搜尋列 — Hero 下方 */}
+      <section className="hero-search-section">
         <div className="container">
-          <div className="section-header">
-            <h2 className="section-title">探索我們的產品</h2>
-            <p className="section-subtitle">EXPLORE OUR PRODUCTS</p>
-          </div>
-
-          <div className="category-grid">
-            {SHOWCASE_CATEGORIES.map(sc => {
-              const cat = categories.find(c => c.name === sc.match);
-              const url = cat ? `/products?categoryId=${cat.id}` : '/products';
-              return (
-                <div key={sc.match} className="category-card" onClick={() => navigate(url)}>
-                  <div className="category-icon">{sc.icon}</div>
-                  <h3 className="category-name">{sc.label}</h3>
-                  <p className="category-name-en">{sc.en}</p>
-                </div>
-              );
-            })}
-          </div>
+          <form
+            className="hero-search-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (homeSearchKeyword.trim()) {
+                navigate(`/products?keyword=${encodeURIComponent(homeSearchKeyword.trim())}`);
+              }
+            }}
+          >
+            <input
+              type="text"
+              className="hero-search-input"
+              placeholder="搜尋商品名稱、品牌..."
+              value={homeSearchKeyword}
+              onChange={(e) => setHomeSearchKeyword(e.target.value)}
+            />
+            <button type="submit" className="hero-search-btn" aria-label="搜尋">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            </button>
+          </form>
         </div>
       </section>
 
-      {/* Featured Products — 有精選商品（isFeatured / promotionTag / bulkOptions）才顯示 */}
-      {featuredProducts.length > 0 && <section className="section featured-products animate-on-scroll">
-        <div className="container">
-          <div className="section-header">
-            <h2 className="section-title">精選商品</h2>
-            <p className="section-subtitle">FEATURED PRODUCTS</p>
+      {/* 快速分類 Pills — Hero 下方 */}
+      {categories.filter(c => c.productCount > 0).length > 0 && (
+        <section className="quick-categories-section">
+          <div className="quick-categories">
+            {categories
+              .filter(c => c.productCount > 0)
+              .map(c => (
+                <button
+                  key={c.id}
+                  className="quick-cat-pill"
+                  onClick={() => navigate(`/products?categoryId=${c.id}`)}
+                >
+                  {c.name} <span className="quick-cat-count">({c.productCount})</span>
+                </button>
+              ))}
           </div>
+        </section>
+      )}
 
-          <div className="product-grid">
-            {featuredProducts.map((product) => (
-              <div
-                key={product.id}
-                className="product-card"
-                onClick={() => navigate(`/products/${product.id}`)}
-              >
-                <div className="product-image">
-                  <img
-                    src={getImageUrl(product.imageUrl) || 'https://placehold.co/400x400/f5ede3/d4a574/webp?text=Coffee'}
-                    alt={product.name}
-                    loading="lazy"
-                  />
+      {/* 限時優惠 */}
+      {promoProducts.length > 0 && (
+        <section className="section promo-section animate-on-scroll">
+          <div className="container">
+            <div className="section-header">
+              <h2 className="section-title">限時優惠</h2>
+              <p className="section-subtitle">SPECIAL OFFERS</p>
+            </div>
+
+            <div className="promo-grid">
+              {promoProducts.map((product) => (
+                <div
+                  key={product.id}
+                  className="promo-card"
+                  onClick={() => navigate(`/products/${product.id}`)}
+                >
+                  <div className="promo-card-image">
+                    <img
+                      src={getImageUrl(product.imageUrl) || 'https://placehold.co/200x200/f5ede3/d4a574/webp?text=Coffee'}
+                      alt={product.name}
+                      loading="lazy"
+                    />
+                    {product.promotionTag && (
+                      <span className="promo-badge">{product.promotionTag}</span>
+                    )}
+                  </div>
+                  <div className="promo-card-body">
+                    <h3 className="promo-card-name">{product.name}</h3>
+                    <p className="promo-card-price">NT$ {product.price.toLocaleString()}</p>
+                    {product.shortDescription && (
+                      <p className="promo-card-desc">{product.shortDescription}</p>
+                    )}
+                  </div>
                 </div>
-                <h3 className="product-name">{product.name}</h3>
-                <p className="product-price">NT$ {product.price}</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
-          <div className="section-action">
-            <button
-              className="btn btn-outline"
-              onClick={() => navigate('/products')}
-            >
-              查看更多商品
-            </button>
+            <div className="section-action">
+              <button
+                className="btn btn-outline"
+                onClick={() => navigate('/products')}
+              >
+                查看所有商品
+              </button>
+            </div>
           </div>
-        </div>
-      </section>}
+        </section>
+      )}
 
       {/* Brand Story */}
       <section className="section brand-story animate-on-scroll">

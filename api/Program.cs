@@ -230,6 +230,7 @@ app.MapPut("/api/categories/{id:int}", [Authorize] async (int id, [FromBody] Upd
 app.MapGet("/api/products", async (
     [FromQuery] int? categoryId, [FromQuery] bool? featured, [FromQuery] bool? isActive,
     [FromQuery] bool? hasBulk, [FromQuery] bool? hasSub, [FromQuery] bool? hasPromo,
+    [FromQuery] string? keyword,
     [FromQuery] int page = 1, [FromQuery] int pageSize = 20, AppDbContext db = null!) =>
 {
     if (page < 1) page = 1;
@@ -241,6 +242,13 @@ app.MapGet("/api/products", async (
     if (hasBulk == true) query = query.Where(p => p.BulkOptions != null);
     if (hasSub == true) query = query.Where(p => p.SubscriptionOptions != null);
     if (hasPromo == true) query = query.Where(p => p.PromotionTag != null);
+    if (!string.IsNullOrWhiteSpace(keyword))
+    {
+        var kw = $"%{keyword}%";
+        query = query.Where(p => EF.Functions.ILike(p.Name, kw) ||
+            (p.Brand != null && EF.Functions.ILike(p.Brand, kw)) ||
+            EF.Functions.ILike(p.Sku, kw));
+    }
     var total = await query.CountAsync();
     var products = await query.OrderBy(p => p.SortOrder).ThenBy(p => p.Id)
         .Skip((page - 1) * pageSize).Take(pageSize)
@@ -250,7 +258,7 @@ app.MapGet("/api/products", async (
             p.Price, p.ImageUrl, p.IsActive, p.IsFeatured, p.IsOrderable, p.InventoryEnabled,
             p.StockQuantity, p.Unit, p.SpecData, p.SortOrder, p.CreatedAt,
             p.BulkOptions, p.SubscriptionOptions, p.ParentProductId, p.VariantLabel,
-            p.PromotionTag, p.RequirePrePayment, p.PromotionEndAt })
+            p.PromotionTag, p.RequirePrePayment, p.PromotionEndAt, p.Brand })
         .ToListAsync();
     return Results.Ok(new { Data = products, Page = page, PageSize = pageSize, TotalCount = total,
         TotalPages = (int)Math.Ceiling((double)total / pageSize) });
@@ -265,7 +273,7 @@ app.MapGet("/api/products/{id:int}", async (int id, AppDbContext db) =>
         p.Price, p.ImageUrl, p.IsActive, p.IsFeatured,
         p.IsOrderable, p.InventoryEnabled, p.StockQuantity, p.Unit, p.SpecData, p.SortOrder, p.CreatedAt, p.UpdatedAt,
         p.BulkOptions, p.SubscriptionOptions, p.ParentProductId, p.VariantLabel,
-        p.PromotionTag, p.RequirePrePayment, p.PromotionEndAt });
+        p.PromotionTag, p.RequirePrePayment, p.PromotionEndAt, p.Brand });
 }).WithName("GetProductById").WithTags("Products");
 
 app.MapPost("/api/products", [Authorize] async ([FromBody] UpsertProductRequest req, AppDbContext db) =>
@@ -286,6 +294,7 @@ app.MapPost("/api/products", [Authorize] async ([FromBody] UpsertProductRequest 
         PromotionTag = string.IsNullOrEmpty(req.PromotionTag) ? null : req.PromotionTag,
         RequirePrePayment = req.RequirePrePayment ?? false,
         PromotionEndAt = req.PromotionEndAt,
+        Brand = string.IsNullOrEmpty(req.Brand) ? null : req.Brand,
     };
     db.Products.Add(product);
     await db.SaveChangesAsync();
@@ -316,6 +325,7 @@ app.MapPut("/api/products/{id:int}", [Authorize] async (int id, [FromBody] Upser
     if (req.PromotionTag != null) product.PromotionTag = req.PromotionTag == "" ? null : req.PromotionTag;
     if (req.RequirePrePayment.HasValue) product.RequirePrePayment = req.RequirePrePayment.Value;
     if (req.PromotionEndAt != null) product.PromotionEndAt = req.PromotionEndAt;
+    if (req.Brand != null) product.Brand = req.Brand == "" ? null : req.Brand;
     product.UpdatedAt = DateTime.UtcNow;
     await db.SaveChangesAsync();
     return Results.Ok(new { product.Id });
@@ -1091,7 +1101,8 @@ public record UpsertProductRequest(
     bool? IsActive, bool? IsFeatured, bool? IsOrderable, bool? InventoryEnabled, int? SortOrder,
     string? SpecData, string? BulkOptions, string? SubscriptionOptions,
     int? ParentProductId, string? VariantLabel,
-    string? PromotionTag, bool? RequirePrePayment, DateTime? PromotionEndAt);
+    string? PromotionTag, bool? RequirePrePayment, DateTime? PromotionEndAt,
+    string? Brand);
 public record UpdateCategoryRequest(string? Name, string? Description, string? SpecTemplate, string? Icon, int? SortOrder);
 public record ProductTogglesRequest(bool? IsOrderable, bool? InventoryEnabled, bool? IsActive);
 public record BatchProductRequest(List<int> Ids, bool? IsOrderable, bool? IsActive, bool? IsFeatured);

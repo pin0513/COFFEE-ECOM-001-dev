@@ -148,6 +148,11 @@ public class Product
     public DateTime? PromotionEndAt { get; set; }
 
     /// <summary>
+    /// 品牌
+    /// </summary>
+    public string? Brand { get; set; }
+
+    /// <summary>
     /// 商品屬性
     /// </summary>
     public List<ProductAttribute> Attributes { get; set; } = new();

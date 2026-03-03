@@ -221,6 +221,10 @@ export default function ProductDetailPage() {
                 )}
                 <Title level={2} style={{ marginBottom: 8, lineHeight: 1.3 }}>{product.name}</Title>
 
+                {product.brand && (
+                  <p style={{ fontSize: 13, color: '#7a6254', marginBottom: 8 }}>品牌：{product.brand}</p>
+                )}
+
                 {product.shortDescription && (
                   <p style={{ fontSize: 15, color: '#b5895a', marginBottom: 16, fontStyle: 'italic' }}>
                     {product.shortDescription}

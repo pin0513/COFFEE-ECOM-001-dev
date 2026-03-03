@@ -26,6 +26,7 @@ export interface Product {
   promotionTag: string | null;
   requirePrePayment: boolean;
   promotionEndAt: string | null;
+  brand?: string | null;
 }
 
 export interface ProductVariant {
@@ -54,6 +55,7 @@ export interface GetProductsParams {
   hasBulk?: boolean;
   hasSub?: boolean;
   hasPromo?: boolean;
+  keyword?: string;
 }
 
 export const getProducts = async (params?: GetProductsParams): Promise<PaginatedResponse<Product>> => {

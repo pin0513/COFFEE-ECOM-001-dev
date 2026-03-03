@@ -212,7 +212,7 @@
 /* 圖片區 */
 .bb-card-image {
   position: relative;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
   background: #f0ece4;
   cursor: pointer;
@@ -445,7 +445,9 @@
   .bb-page-title { font-size: 22px; }
 }
 @media (max-width: 479px) {
-  .bb-grid { grid-template-columns: 1fr; }
+  .bb-grid { grid-template-columns: repeat(2, 1fr); gap: 16px 8px; }
+  .bb-card-name { font-size: 12px; }
+  .bb-card-price { font-size: 12px; }
 }
 
 /* ==================== 購買模式篩選 Chips（舊版，保留備用） ==================== */
@@ -1103,4 +1105,58 @@
     width: 40px;
     height: 40px;
   }
+}
+
+/* ── 搜尋框 ─────────────────────────────── */
+.bb-search-wrapper {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 40px 12px;
+}
+
+.bb-search-box {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid #c5b9a8;
+  border-radius: 4px;
+  background: white;
+  padding: 0 12px;
+  gap: 8px;
+}
+
+.bb-search-icon { color: #9e9e9e; flex-shrink: 0; }
+
+.bb-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  padding: 10px 0;
+  color: #1a1a1a;
+  background: transparent;
+}
+
+.bb-search-input::placeholder { color: #9e9e9e; }
+
+.bb-search-clear {
+  background: none;
+  border: none;
+  color: #9e9e9e;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.bb-search-clear:hover { color: #1a1a1a; }
+
+/* 分類計數 */
+.bb-cat-count { font-size: 11px; opacity: 0.65; }
+
+@media (max-width: 1023px) {
+  .bb-search-wrapper { padding-left: 24px; padding-right: 24px; }
+}
+
+@media (max-width: 767px) {
+  .bb-search-wrapper { padding: 0 16px 8px; }
 }
