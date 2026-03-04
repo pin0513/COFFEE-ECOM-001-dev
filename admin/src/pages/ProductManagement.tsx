@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   Card, Table, Button, Modal, Form, Input, InputNumber, Select,
-  Switch, Space, message, Upload, Tag, Dropdown, Divider, Checkbox, DatePicker,
+  Switch, Space, message, Upload, Tag, Dropdown, Divider, DatePicker,
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, UploadOutlined, ImportOutlined, LoadingOutlined, DownOutlined, MinusCircleOutlined } from '@ant-design/icons';
 import type { UploadFile, UploadProps } from 'antd';
@@ -70,10 +70,6 @@ export default function ProductManagement() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [allowBulk, setAllowBulk] = useState(false);
   const [bulkTiers, setBulkTiers] = useState<BulkTier[]>([]);
-  const [allowSubscription, setAllowSubscription] = useState(false);
-  const [subDiscount, setSubDiscount] = useState(10);
-  const [subFreqs, setSubFreqs] = useState<string[]>(['每兩週', '每月']);
-  const [subDefault, setSubDefault] = useState('每兩週');
   const [requirePrePayment, setRequirePrePayment] = useState(false);
   const [form] = Form.useForm();
 
@@ -165,21 +161,6 @@ export default function ProductManagement() {
       setBulkTiers([]);
     }
 
-    if (product.subscriptionOptions) {
-      try {
-        const opts = JSON.parse(product.subscriptionOptions);
-        setAllowSubscription(true);
-        setSubDiscount(opts.discount ?? 10);
-        setSubFreqs(opts.frequencies ?? ['每兩週', '每月']);
-        setSubDefault(opts.defaultFrequency ?? '每兩週');
-      } catch { setAllowSubscription(false); }
-    } else {
-      setAllowSubscription(false);
-      setSubDiscount(10);
-      setSubFreqs(['每兩週', '每月']);
-      setSubDefault('每兩週');
-    }
-
     setRequirePrePayment(product.requirePrePayment ?? false);
 
     form.setFieldsValue({
@@ -210,10 +191,6 @@ export default function ProductManagement() {
     setSelectedCategoryId(null);
     setAllowBulk(false);
     setBulkTiers([]);
-    setAllowSubscription(false);
-    setSubDiscount(10);
-    setSubFreqs(['每兩週', '每月']);
-    setSubDefault('每兩週');
     setRequirePrePayment(false);
     form.resetFields();
     form.setFieldsValue({ isActive: true, isOrderable: true, inventoryEnabled: false, unit: '磅' });
@@ -261,8 +238,7 @@ export default function ProductManagement() {
     // 購買模式序列化
     cleanValues.bulkOptions = allowBulk && bulkTiers.length > 0
       ? JSON.stringify(bulkTiers) : '';
-    cleanValues.subscriptionOptions = allowSubscription
-      ? JSON.stringify({ discount: subDiscount, frequencies: subFreqs, defaultFrequency: subDefault }) : '';
+    cleanValues.subscriptionOptions = '';
 
     // Variants
     cleanValues.parentProductId = (cleanValues.parentProductId as number | undefined) ?? 0;
@@ -561,44 +537,6 @@ export default function ProductManagement() {
               </div>
             )}
           </div>
-          <div style={{ marginBottom: 12 }}>
-            <Space align="center" style={{ marginBottom: allowSubscription ? 8 : 0 }}>
-              <Switch checked={allowSubscription} onChange={setAllowSubscription} size="small" />
-              <span>定期訂購</span>
-            </Space>
-            {allowSubscription && (
-              <div style={{ marginLeft: 32, marginTop: 8 }}>
-                <Space direction="vertical" style={{ width: '100%' }}>
-                  <Space>
-                    <span>訂購折扣：</span>
-                    <InputNumber value={subDiscount} min={1} max={99} onChange={v => setSubDiscount(v ?? 10)} />
-                    <span>%</span>
-                  </Space>
-                  <div>
-                    <span>可選頻率：</span>
-                    <Checkbox.Group
-                      value={subFreqs}
-                      options={['每週', '每兩週', '每月']}
-                      onChange={(vals) => {
-                        setSubFreqs(vals as string[]);
-                        if (!vals.includes(subDefault)) setSubDefault(vals[0] as string ?? '每月');
-                      }}
-                    />
-                  </div>
-                  <Space>
-                    <span>預設頻率：</span>
-                    <Select
-                      value={subDefault}
-                      onChange={setSubDefault}
-                      style={{ width: 120 }}
-                      options={subFreqs.map(f => ({ label: f, value: f }))}
-                    />
-                  </Space>
-                </Space>
-              </div>
-            )}
-          </div>
-
           {/* 促銷設定 */}
           <Divider style={{ margin: '8px 0 16px' }}>促銷設定</Divider>
           <Form.Item label="促銷標籤文字" name="promotionTag" help="如：即期特惠、限時特賣（留空不顯示）">

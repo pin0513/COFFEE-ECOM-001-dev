@@ -156,15 +156,6 @@ const DEFAULT_BANNERS: HeroBanner[] = [
     imageUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=1920&h=700&fit=crop&q=85',
     sortOrder: 1,
   },
-  {
-    id: -2,
-    title: '定期訂購 每月省更多',
-    subTitle: '設定定期配送，每次自動享 9 折優惠。忘記買咖啡的日子一去不復返。',
-    buttonText: '設定訂閱',
-    buttonUrl: '/products',
-    imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1920&h=700&fit=crop&q=85',
-    sortOrder: 2,
-  },
 ];
 
 export default function HomePage() {

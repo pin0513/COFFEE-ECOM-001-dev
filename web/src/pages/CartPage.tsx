@@ -29,17 +29,6 @@ export default function CartPage() {
     if (item.purchaseMode === 'bulk' && item.discountRate) {
       return <Tag color="orange" style={{ marginLeft: 4 }}>大量購買 -{item.discountRate}%</Tag>;
     }
-    if (item.purchaseMode === 'subscription') {
-      return (
-        <>
-          <Tag color="green" style={{ marginLeft: 4 }}>
-            定期訂購{item.subscriptionFrequency ? ` ${item.subscriptionFrequency}` : ''}
-            {item.discountRate ? ` -${item.discountRate}%` : ''}
-          </Tag>
-          <div style={{ fontSize: 11, color: '#999', marginTop: 2 }}>將與您確認配送時程</div>
-        </>
-      );
-    }
     return null;
   };
 

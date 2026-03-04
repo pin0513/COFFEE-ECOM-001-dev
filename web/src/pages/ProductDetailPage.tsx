@@ -22,11 +22,6 @@ interface BulkTier {
   discount: number;
 }
 
-interface SubscriptionOpts {
-  discount: number;
-  frequencies: string[];
-  defaultFrequency: string;
-}
 
 const { Title, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
@@ -44,9 +39,6 @@ export default function ProductDetailPage() {
   // 購買模式
   const [purchaseMode, setPurchaseMode] = useState<PurchaseMode>('oneTime');
   const [selectedTier, setSelectedTier] = useState<BulkTier | null>(null);
-  const [selectedFrequency, setSelectedFrequency] = useState<string>('');
-  const [subscriptionAdded, setSubscriptionAdded] = useState(false);
-
   const { addToCart } = useCartStore();
 
   useEffect(() => {
@@ -62,15 +54,6 @@ export default function ProductDetailPage() {
         setProduct(data);
         setPurchaseMode('oneTime');
         setSelectedTier(null);
-        setSubscriptionAdded(false);
-
-        // 定期訂購預設頻率
-        if (data.subscriptionOptions) {
-          try {
-            const opts: SubscriptionOpts = JSON.parse(data.subscriptionOptions);
-            setSelectedFrequency(opts.defaultFrequency ?? '');
-          } catch { setSelectedFrequency(''); }
-        }
 
         // 取得變體
         if (data.parentProductId || data.variantLabel) {
@@ -94,21 +77,13 @@ export default function ProductDetailPage() {
     try { return JSON.parse(product.bulkOptions); } catch { return []; }
   })() : [];
 
-  const subOpts: SubscriptionOpts | null = product?.subscriptionOptions ? (() => {
-    try { return JSON.parse(product.subscriptionOptions); } catch { return null; }
-  })() : null;
-
   const hasBulk = bulkTiers.length > 0;
-  const hasSub = subOpts !== null;
 
   // 計算折扣後價格
   const getFinalPrice = (): number => {
     if (!product) return 0;
     if (purchaseMode === 'bulk' && selectedTier) {
       return Math.round(product.price * (1 - selectedTier.discount / 100));
-    }
-    if (purchaseMode === 'subscription' && subOpts) {
-      return Math.round(product.price * (1 - subOpts.discount / 100));
     }
     return product.price;
   };
@@ -119,7 +94,6 @@ export default function ProductDetailPage() {
   const handlePurchaseModeChange = (mode: PurchaseMode) => {
     setPurchaseMode(mode);
     if (mode !== 'bulk') setSelectedTier(null);
-    setSubscriptionAdded(false);
   };
 
   const handleAddToCart = () => {
@@ -127,9 +101,8 @@ export default function ProductDetailPage() {
     if (!checkoutEnabled) { message.warning('網站目前暫停接受訂單'); return; }
     if (product.price === 0) { message.warning('此商品尚未設定售價'); return; }
     if (purchaseMode === 'bulk' && !selectedTier) { message.warning('請選擇大量購買方案'); return; }
-    if (purchaseMode === 'subscription' && !selectedFrequency) { message.warning('請選擇訂購頻率'); return; }
 
-    const cartId = `${product.id}:${purchaseMode}${purchaseMode === 'bulk' && selectedTier ? `:${selectedTier.qty}` : ''}${purchaseMode === 'subscription' ? `:${selectedFrequency}` : ''}`;
+    const cartId = `${product.id}:${purchaseMode}${purchaseMode === 'bulk' && selectedTier ? `:${selectedTier.qty}` : ''}`;
 
     for (let i = 0; i < quantity; i++) {
       addToCart({
@@ -142,17 +115,12 @@ export default function ProductDetailPage() {
         category: product.categoryName || '',
         description: product.shortDescription || product.description || '',
         purchaseMode,
-        discountRate: purchaseMode === 'bulk' ? selectedTier?.discount : purchaseMode === 'subscription' ? subOpts?.discount : undefined,
-        subscriptionFrequency: purchaseMode === 'subscription' ? selectedFrequency : undefined,
+        discountRate: purchaseMode === 'bulk' ? selectedTier?.discount : undefined,
         requirePrePayment: product.requirePrePayment,
       });
     }
 
-    if (purchaseMode === 'subscription') {
-      setSubscriptionAdded(true);
-    } else {
-      message.success(`${product.name} x${quantity} 已加入購物車`);
-    }
+    message.success(`${product.name} x${quantity} 已加入購物車`);
     setQuantity(1);
   };
 
@@ -174,7 +142,6 @@ export default function ProductDetailPage() {
     if (p.price === 0) return '尚未設定售價';
     if (!p.isOrderable) return '暫停販售';
     if (purchaseMode === 'bulk' && !selectedTier) return '請先選擇方案';
-    if (purchaseMode === 'subscription') return '加入訂閱';
     return '加入購物車';
   };
 
@@ -251,7 +218,7 @@ export default function ProductDetailPage() {
                 )}
 
                 {/* 購買模式 */}
-                {(hasBulk || hasSub) && (
+                {hasBulk && (
                   <div className="purchase-mode-section">
                     <div className="purchase-mode-label">購買方式</div>
                     <div className="purchase-mode-selector">
@@ -263,25 +230,13 @@ export default function ProductDetailPage() {
                         <div className="mode-subtitle">NT$ {product.price.toLocaleString()}</div>
                       </div>
 
-                      {hasBulk && (
-                        <div
-                          className={`purchase-mode-option${purchaseMode === 'bulk' ? ' selected' : ''}`}
-                          onClick={() => handlePurchaseModeChange('bulk')}
-                        >
-                          <div className="mode-title">大量購買</div>
-                          <div className="mode-subtitle">最高省 {Math.max(...bulkTiers.map(t => t.discount))}%</div>
-                        </div>
-                      )}
-
-                      {hasSub && (
-                        <div
-                          className={`purchase-mode-option${purchaseMode === 'subscription' ? ' selected' : ''}`}
-                          onClick={() => handlePurchaseModeChange('subscription')}
-                        >
-                          <div className="mode-title">定期訂購</div>
-                          <div className="mode-subtitle">省 {subOpts!.discount}%</div>
-                        </div>
-                      )}
+                      <div
+                        className={`purchase-mode-option${purchaseMode === 'bulk' ? ' selected' : ''}`}
+                        onClick={() => handlePurchaseModeChange('bulk')}
+                      >
+                        <div className="mode-title">大量購買</div>
+                        <div className="mode-subtitle">最高省 {Math.max(...bulkTiers.map(t => t.discount))}%</div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -301,27 +256,6 @@ export default function ProductDetailPage() {
                           <div className="bulk-discount-badge">-{tier.discount}%</div>
                         </div>
                       ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* 定期訂購頻率 */}
-                {purchaseMode === 'subscription' && hasSub && (
-                  <div className="subscription-section">
-                    <div className="subscription-section-label">訂購頻率</div>
-                    <div className="frequency-grid">
-                      {subOpts!.frequencies.map(freq => (
-                        <div
-                          key={freq}
-                          className={`frequency-card${selectedFrequency === freq ? ' selected' : ''}`}
-                          onClick={() => setSelectedFrequency(freq)}
-                        >
-                          {freq}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="subscription-note">
-                      訂購需求送出後，我們將與您確認配送時程
                     </div>
                   </div>
                 )}
@@ -346,7 +280,7 @@ export default function ProductDetailPage() {
                       <div className="price-original">NT$ {product.price.toLocaleString()}</div>
                       <div className="price-final">NT$ {finalPrice.toLocaleString()}</div>
                       <div className="price-savings">
-                        省下 NT$ {(product.price - finalPrice).toLocaleString()}（-{purchaseMode === 'bulk' && selectedTier ? selectedTier.discount : subOpts?.discount}%）
+                        省下 NT$ {(product.price - finalPrice).toLocaleString()}（-{selectedTier?.discount}%）
                       </div>
                     </>
                   ) : (
@@ -366,12 +300,6 @@ export default function ProductDetailPage() {
                   {getAddToCartLabel(product)}
                 </Button>
 
-                {/* 定期訂購成功提示 */}
-                {subscriptionAdded && (
-                  <div className="subscription-confirm">
-                    ✓ 訂購需求已加入，我們會與您確認配送時程
-                  </div>
-                )}
               </div>
             </div>
 

@@ -46,7 +46,7 @@ function ProductCard({ product, onAddToCart, onNavigate, checkoutEnabled }: {
 }) {
   const countdown = useCountdown(product.promotionEndAt);
 
-  // Badge 優先序：promotionTag > bulk > subscription > featured
+  // Badge 優先序：promotionTag > bulk > featured
   let badgeClass = '';
   let badgeText = '';
   if (product.promotionTag) {
@@ -55,9 +55,6 @@ function ProductCard({ product, onAddToCart, onNavigate, checkoutEnabled }: {
   } else if (product.bulkOptions) {
     badgeClass = 'bb-badge bulk';
     badgeText = 'BEST SELLER';
-  } else if (product.subscriptionOptions) {
-    badgeClass = 'bb-badge sub';
-    badgeText = 'SUBSCRIBE';
   } else if (product.isFeatured) {
     badgeClass = 'bb-badge featured';
     badgeText = 'FEATURED';
@@ -139,12 +136,10 @@ export default function ProductsPage() {
   // 草稿篩選（Drawer 內操作，Apply 才生效）
   const [draftCatId, setDraftCatId] = useState<number | null>(null);
   const [draftBulk, setDraftBulk] = useState(false);
-  const [draftSub, setDraftSub] = useState(false);
   const [draftPromo, setDraftPromo] = useState(false);
 
   // 已套用的篩選
   const [filterBulk, setFilterBulk] = useState(false);
-  const [filterSub, setFilterSub] = useState(false);
   const [filterPromo, setFilterPromo] = useState(searchParams.get('hasPromo') === 'true');
 
   const { addToCart } = useCartStore();
@@ -180,7 +175,6 @@ export default function ProductsPage() {
       const params: Record<string, unknown> = { page: 1, pageSize: 100, isActive: true };
       if (selectedCategoryId) params.categoryId = selectedCategoryId;
       if (filterBulk) params.hasBulk = true;
-      if (filterSub) params.hasSub = true;
       if (filterPromo) params.hasPromo = true;
       if (debouncedKeyword.trim()) params.keyword = debouncedKeyword.trim();
       const response = await getProducts(params);
@@ -190,7 +184,7 @@ export default function ProductsPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedCategoryId, filterBulk, filterSub, filterPromo, debouncedKeyword]);
+  }, [selectedCategoryId, filterBulk, filterPromo, debouncedKeyword]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
@@ -214,7 +208,6 @@ export default function ProductsPage() {
   const openFilter = () => {
     setDraftCatId(selectedCategoryId);
     setDraftBulk(filterBulk);
-    setDraftSub(filterSub);
     setDraftPromo(filterPromo);
     setFilterDrawerOpen(true);
   };
@@ -223,7 +216,6 @@ export default function ProductsPage() {
     if (draftCatId === null) setSearchParams({});
     else setSearchParams({ categoryId: String(draftCatId) });
     setFilterBulk(draftBulk);
-    setFilterSub(draftSub);
     setFilterPromo(draftPromo);
     setFilterDrawerOpen(false);
   };
@@ -231,14 +223,12 @@ export default function ProductsPage() {
   const clearFilter = () => {
     setDraftCatId(null);
     setDraftBulk(false);
-    setDraftSub(false);
     setDraftPromo(false);
   };
 
   const activeFilterCount =
     (selectedCategoryId ? 1 : 0) +
     (filterBulk ? 1 : 0) +
-    (filterSub ? 1 : 0) +
     (filterPromo ? 1 : 0);
 
   const currentCategory = categories.find(c => c.id === selectedCategoryId);
@@ -321,7 +311,7 @@ export default function ProductsPage() {
       ) : products.length === 0 ? (
         <div className="bb-empty">
           <p>目前沒有符合條件的商品，請調整篩選條件</p>
-          <button className="bb-empty-reset" onClick={() => { setSearchParams({}); setFilterBulk(false); setFilterSub(false); setFilterPromo(false); }}>
+          <button className="bb-empty-reset" onClick={() => { setSearchParams({}); setFilterBulk(false); setFilterPromo(false); }}>
             清除篩選
           </button>
         </div>
@@ -377,10 +367,6 @@ export default function ProductsPage() {
           <label className="bb-filter-checkbox">
             <input type="checkbox" checked={draftBulk} onChange={e => setDraftBulk(e.target.checked)} />
             <span>多買優惠</span>
-          </label>
-          <label className="bb-filter-checkbox">
-            <input type="checkbox" checked={draftSub} onChange={e => setDraftSub(e.target.checked)} />
-            <span>可訂閱</span>
           </label>
           <label className="bb-filter-checkbox">
             <input type="checkbox" checked={draftPromo} onChange={e => setDraftPromo(e.target.checked)} />
