@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Spin, Button } from 'antd';
 import { LeftOutlined } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
@@ -51,6 +52,11 @@ export default function PagesPage() {
   }
 
   return (
+    <>
+    <Helmet>
+      <title>{page.titleZhTW} | 品皇咖啡</title>
+      <meta name="description" content={page.bodyZhTW.replace(/[#*\[\]]/g, '').substring(0, 160)} />
+    </Helmet>
     <div className="cp-page">
       <div className="cp-container">
         <Button
@@ -76,5 +82,6 @@ export default function PagesPage() {
         )}
       </div>
     </div>
+    </>
   );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { getProducts } from '../services/productService';
 import type { Product } from '../services/productService';
 import { apiClient, getImageUrl } from '../config/api';
@@ -333,6 +334,15 @@ export default function HomePage() {
   const renderStars = (rating: number) => '⭐'.repeat(Math.min(5, Math.max(1, rating)));
 
   return (
+    <>
+    <Helmet>
+      <title>品皇咖啡 | 台灣精品咖啡豆直營專賣</title>
+      <meta name="description" content="品皇咖啡提供精選台灣精品咖啡豆，包含阿拉比卡單品、義式配方豆、即期特價品等。產地直送，品質保證。" />
+      <meta property="og:title" content="品皇咖啡 | 台灣精品咖啡豆直營專賣" />
+      <meta property="og:description" content="品皇咖啡提供精選台灣精品咖啡豆，包含阿拉比卡單品、義式配方豆、即期特價品等。產地直送，品質保證。" />
+      <meta property="og:url" content="https://pinhung.com/" />
+      <meta property="og:type" content="website" />
+    </Helmet>
     <div className="home-page">
       {/* Hero Section — 全幅輪播，搜尋列整合在底部 */}
       <section
@@ -629,5 +639,6 @@ export default function HomePage() {
         </div>
       </section>
     </div>
+    </>
   );
 }

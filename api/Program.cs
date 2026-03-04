@@ -1079,6 +1079,55 @@ app.MapPatch("/api/pages/{id:int}/toggle", [Authorize] async (int id, AppDbConte
     return Results.Ok(new { page.Id, page.IsPublished });
 }).WithName("ToggleContentPage").WithTags("ContentPages");
 
+// ── 社群爬蟲 OG Meta Endpoint ──────────────────────────────────────────────
+// FB/LINE/Telegram 等爬蟲不執行 JavaScript，需要後端直接回傳含 OG tags 的 HTML
+// Nginx 偵測到社群 User-Agent 時 proxy 到此 endpoint
+app.MapGet("/api/meta/products/{id:int}", async (int id, AppDbContext db, IConfiguration config) =>
+{
+    var p = await db.Products.Include(x => x.Category).FirstOrDefaultAsync(x => x.Id == id);
+    if (p == null) return Results.NotFound();
+
+    var domain = config["AppDomain"] ?? "https://pinhung.com";
+    var imageUrl = string.IsNullOrEmpty(p.ImageUrl)
+        ? $"{domain}/uploads/og-cover.jpg"
+        : (p.ImageUrl.StartsWith("http") ? p.ImageUrl : $"{domain}{p.ImageUrl}");
+    var description = !string.IsNullOrEmpty(p.ShortDescription) ? p.ShortDescription
+        : (!string.IsNullOrEmpty(p.Description) ? p.Description[..Math.Min(160, p.Description.Length)] : "品皇咖啡精選優質咖啡豆，品質保證。");
+    var title = $"{p.Name} | 品皇咖啡";
+    var url = $"{domain}/products/{p.Id}";
+
+    var html = $"""
+        <!DOCTYPE html>
+        <html lang="zh-TW">
+        <head>
+          <meta charset="UTF-8" />
+          <title>{System.Net.WebUtility.HtmlEncode(title)}</title>
+          <meta name="description" content="{System.Net.WebUtility.HtmlEncode(description)}" />
+          <meta property="og:type" content="product" />
+          <meta property="og:site_name" content="品皇咖啡" />
+          <meta property="og:title" content="{System.Net.WebUtility.HtmlEncode(title)}" />
+          <meta property="og:description" content="{System.Net.WebUtility.HtmlEncode(description)}" />
+          <meta property="og:image" content="{imageUrl}" />
+          <meta property="og:url" content="{url}" />
+          <meta property="og:locale" content="zh_TW" />
+          <meta property="product:price:amount" content="{p.Price}" />
+          <meta property="product:price:currency" content="TWD" />
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:title" content="{System.Net.WebUtility.HtmlEncode(title)}" />
+          <meta name="twitter:description" content="{System.Net.WebUtility.HtmlEncode(description)}" />
+          <meta name="twitter:image" content="{imageUrl}" />
+          <link rel="canonical" href="{url}" />
+          <meta http-equiv="refresh" content="0;url={url}" />
+        </head>
+        <body>
+          <p>正在跳轉到商品頁面... <a href="{url}">{System.Net.WebUtility.HtmlEncode(p.Name)}</a></p>
+        </body>
+        </html>
+        """;
+
+    return Results.Content(html, "text/html; charset=utf-8");
+}).WithName("GetProductMetaHtml").WithTags("Meta");
+
 app.Run();
 
 public record CreateCustomerRequest(string Email, string? Name, string? Phone, string? Address, string? DisplayName, string? FirebaseUid);

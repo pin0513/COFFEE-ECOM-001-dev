@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Drawer, message } from 'antd';
 import { useCartStore } from '../stores/cartStore';
 import { getProducts } from '../services/productService';
@@ -238,7 +239,23 @@ export default function ProductsPage() {
     pageTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  const helmetTitle = currentCategory
+    ? `${currentCategory.name} | 品皇咖啡`
+    : '所有商品 | 品皇咖啡';
+  const helmetDesc = currentCategory
+    ? `瀏覽品皇咖啡${currentCategory.name}系列，精選優質咖啡豆，品質保證。`
+    : '瀏覽品皇咖啡所有商品，精選阿拉比卡單品、義式配方豆、即期特價品等。';
+
   return (
+    <>
+    <Helmet>
+      <title>{helmetTitle}</title>
+      <meta name="description" content={helmetDesc} />
+      <meta property="og:title" content={helmetTitle} />
+      <meta property="og:description" content={helmetDesc} />
+      <meta property="og:url" content="https://pinhung.com/products" />
+      <meta property="og:type" content="website" />
+    </Helmet>
     <div className="bb-products-page">
       {/* 頁面頂部錨點（scroll-to-top 目標） */}
       <div ref={pageTopRef} />
@@ -389,5 +406,6 @@ export default function ProductsPage() {
         </button>
       )}
     </div>
+    </>
   );
 }

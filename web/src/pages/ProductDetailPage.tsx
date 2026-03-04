@@ -1,6 +1,7 @@
 import { Typography, Button, InputNumber, message, Grid, Spin, BackTop } from 'antd';
 import { ShoppingCartOutlined, LeftOutlined, UpOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useState, useEffect } from 'react';
 import { getProductById, getProductVariants } from '../services/productService';
 import type { Product, ProductVariant } from '../services/productService';
@@ -145,7 +146,41 @@ export default function ProductDetailPage() {
     return '加入購物車';
   };
 
+  const ogImage = product ? (getImageUrl(product.imageUrl) || 'https://pinhung.com/uploads/og-cover.jpg') : 'https://pinhung.com/uploads/og-cover.jpg';
+  const ogTitle = product ? `${product.name} | 品皇咖啡` : '商品詳情 | 品皇咖啡';
+  const ogDesc = product ? (product.shortDescription || product.description || '品皇咖啡精選優質咖啡豆，品質保證。') : '品皇咖啡精選優質咖啡豆，品質保證。';
+  const productJsonLd = product ? JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: ogDesc,
+    image: ogImage,
+    brand: { '@type': 'Brand', name: '品皇咖啡' },
+    offers: {
+      '@type': 'Offer',
+      priceCurrency: 'TWD',
+      price: product.price,
+      availability: product.isOrderable ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      url: `https://pinhung.com/products/${product.id}`,
+    },
+  }) : null;
+
   return (
+    <>
+    {product && (
+      <Helmet>
+        <title>{ogTitle}</title>
+        <meta name="description" content={ogDesc} />
+        <meta property="og:title" content={ogTitle} />
+        <meta property="og:description" content={ogDesc} />
+        <meta property="og:image" content={ogImage} />
+        <meta property="og:url" content={`https://pinhung.com/products/${product.id}`} />
+        <meta property="og:type" content="product" />
+        <meta property="product:price:amount" content={String(product.price)} />
+        <meta property="product:price:currency" content="TWD" />
+        {productJsonLd && <script type="application/ld+json">{productJsonLd}</script>}
+      </Helmet>
+    )}
     <div style={{ padding: screens.xs ? '16px' : '50px' }}>
         <Button icon={<LeftOutlined />} onClick={() => navigate('/products')} style={{ marginBottom: 24 }}>
           返回商品列表
@@ -340,5 +375,6 @@ export default function ProductDetailPage() {
         </div>
       </BackTop>
     </div>
+    </>
   );
 }

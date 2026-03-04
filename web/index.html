@@ -1,10 +1,86 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-TW">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>web</title>
+
+    <!-- ── 基本 SEO ────────────────────────────────────────────── -->
+    <title>品皇咖啡 | 台灣精品咖啡豆直營專賣</title>
+    <meta name="description" content="品皇咖啡提供精選台灣精品咖啡豆，包含阿拉比卡單品、義式配方豆、即期特價品等。產地直送，品質保證。" />
+    <meta name="keywords" content="品皇咖啡,精品咖啡,咖啡豆,阿拉比卡,台灣咖啡,單品咖啡,義式咖啡豆,咖啡專賣" />
+    <meta name="author" content="品皇咖啡" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://pinhung.com/" />
+
+    <!-- ── Open Graph（FB / LINE / 社群分享）────────────────────── -->
+    <meta property="og:type"        content="website" />
+    <meta property="og:site_name"   content="品皇咖啡" />
+    <meta property="og:locale"      content="zh_TW" />
+    <meta property="og:url"         content="https://pinhung.com/" />
+    <meta property="og:title"       content="品皇咖啡 | 台灣精品咖啡豆直營專賣" />
+    <meta property="og:description" content="品皇咖啡提供精選台灣精品咖啡豆，包含阿拉比卡單品、義式配方豆、即期特價品等。產地直送，品質保證。" />
+    <meta property="og:image"       content="https://pinhung.com/uploads/og-cover.jpg" />
+    <meta property="og:image:width"  content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt"   content="品皇咖啡 精品咖啡豆" />
+
+    <!-- ── Twitter Card ──────────────────────────────────────────── -->
+    <meta name="twitter:card"        content="summary_large_image" />
+    <meta name="twitter:title"       content="品皇咖啡 | 台灣精品咖啡豆直營專賣" />
+    <meta name="twitter:description" content="品皇咖啡提供精選台灣精品咖啡豆，包含阿拉比卡單品、義式配方豆、即期特價品等。" />
+    <meta name="twitter:image"       content="https://pinhung.com/uploads/og-cover.jpg" />
+
+    <!-- ── 行動裝置 ──────────────────────────────────────────────── -->
+    <meta name="theme-color" content="#6F4E37" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="品皇咖啡" />
+
+    <!-- ── Favicon ───────────────────────────────────────────────── -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- ── JSON-LD：組織結構化資料 ──────────────────────────────── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "品皇咖啡",
+      "alternateName": "PinHuang Coffee",
+      "url": "https://pinhung.com",
+      "logo": "https://pinhung.com/uploads/logo/logo.webp",
+      "description": "台灣精品咖啡豆直營專賣，提供阿拉比卡單品、義式配方豆、即期特價品等。",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "02-2999-0000",
+        "contactType": "customer service",
+        "availableLanguage": "zh-TW"
+      },
+      "sameAs": [
+        "https://www.facebook.com/pinhungcoffee",
+        "https://www.instagram.com/pinhungcoffee"
+      ]
+    }
+    </script>
+
+    <!-- ── JSON-LD：WebSite（含 SearchAction）───────────────────── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "品皇咖啡",
+      "url": "https://pinhung.com",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://pinhung.com/products?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
