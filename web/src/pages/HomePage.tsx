@@ -504,8 +504,8 @@ export default function HomePage() {
         <section className="section bulk-section animate-on-scroll">
           <div className="container">
             <div className="section-header">
-              <h2 className="section-title">大量購買促銷</h2>
-              <p className="section-subtitle">BULK PURCHASE DISCOUNTS</p>
+              <h2 className="section-title">買越多省越多</h2>
+              <p className="section-subtitle">BULK PURCHASE SAVINGS</p>
             </div>
             <div className="bulk-grid">
               {bulkProducts.map(product => (
