@@ -59,6 +59,7 @@ export default function Layout({ children }: LayoutProps) {
             <button className={`nav-link ${isActive('/') ? 'active' : ''}`} onClick={() => { navigate('/'); setMobileMenuOpen(false); }}>首頁</button>
             <button className={`nav-link ${isActive('/products') ? 'active' : ''}`} onClick={() => { navigate('/products'); setMobileMenuOpen(false); }}>商品</button>
             <button className={`nav-link ${location.pathname.startsWith('/pages/about') ? 'active' : ''}`} onClick={() => { navigate('/pages/about'); setMobileMenuOpen(false); }}>關於我們</button>
+            <button className={`nav-link ${location.pathname.startsWith('/pages/faq') ? 'active' : ''}`} onClick={() => { navigate('/pages/faq'); setMobileMenuOpen(false); }}>常見問答</button>
             <button className={`nav-link ${location.pathname.startsWith('/pages/contact') ? 'active' : ''}`} onClick={() => { navigate('/pages/contact'); setMobileMenuOpen(false); }}>聯絡我們</button>
           </nav>
 
