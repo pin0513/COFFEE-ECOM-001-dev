@@ -1,7 +1,5 @@
 import { useState, useRef } from 'react';
 import { Modal, Tabs, Form, Input, Button, Divider, message } from 'antd';
-import { signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider, isDemoMode } from '../config/firebase';
 import { useCustomerAuthStore } from '../stores/customerAuthStore';
 import type { CustomerProfile } from '../stores/customerAuthStore';
 import { API_BASE_URL } from '../config/api';
@@ -96,20 +94,13 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
   };
 
   const handleGoogleLogin = async () => {
-    if (isDemoMode || !auth || !googleProvider) {
-      message.info('Demo 模式：Google 登入不可用');
-      return;
-    }
-    setLoading(true);
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const idToken = await result.user.getIdToken();
-      const data = await apiPost<AuthResponse>('/auth/customer/google', { idToken });
-      handleLoginSuccess(data);
-    } catch (err: unknown) {
-      message.error((err as Error).message || 'Google 登入失敗');
-    } finally {
-      setLoading(false);
+      const res = await fetch(`${API_BASE_URL}/auth/customer/google-url`);
+      const data = await res.json();
+      if (!data.url) { message.error('Google 登入初始化失敗'); return; }
+      window.location.href = data.url;
+    } catch {
+      message.error('Google 登入初始化失敗');
     }
   };
 

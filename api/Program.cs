@@ -1621,45 +1621,79 @@ app.MapPost("/api/auth/customer/login", async ([FromBody] CustomerLoginRequest r
     });
 }).WithName("CustomerLogin").WithTags("CustomerAuth");
 
-// POST /api/auth/customer/google — Firebase ID token → 找/建 Customer → JWT
-app.MapPost("/api/auth/customer/google", async ([FromBody] CustomerGoogleRequest req, AppDbContext db) =>
+// GET /api/auth/customer/google-url — 取得 Google OAuth URL
+app.MapGet("/api/auth/customer/google-url", (IConfiguration config) =>
 {
-    if (string.IsNullOrEmpty(req.IdToken)) return Results.BadRequest(new { message = "ID Token 不可為空" });
+    var googleConfig = config.GetSection("GoogleLogin");
+    var clientId = googleConfig["ClientId"] ?? "";
+    var redirectUri = googleConfig["RedirectUri"] ?? "";
+    var state = Guid.NewGuid().ToString("N");
+    var scope = Uri.EscapeDataString("openid email profile");
+    var url = $"https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id={clientId}&redirect_uri={Uri.EscapeDataString(redirectUri)}&state={state}&scope={scope}&access_type=offline&prompt=select_account";
+    return Results.Ok(new { url, state });
+}).WithName("CustomerGoogleUrl").WithTags("CustomerAuth");
 
-    // 驗證 Firebase ID Token
+// GET /api/auth/customer/google/callback — Google OAuth callback
+app.MapGet("/api/auth/customer/google/callback", async (string code, string state, AppDbContext db, IConfiguration config) =>
+{
+    var googleConfig = config.GetSection("GoogleLogin");
+    var clientId = googleConfig["ClientId"] ?? "";
+    var clientSecret = googleConfig["ClientSecret"] ?? "";
+    var redirectUri = googleConfig["RedirectUri"] ?? "";
+    var frontendBase = config["AppDomain"] ?? "http://localhost:5173";
+
     string googleSub, email, name;
     try
     {
         using var http = new System.Net.Http.HttpClient();
-        var resp = await http.GetStringAsync($"https://www.googleapis.com/oauth2/v3/tokeninfo?id_token={req.IdToken}");
-        using var doc = System.Text.Json.JsonDocument.Parse(resp);
-        var root = doc.RootElement;
-        googleSub = root.GetProperty("sub").GetString() ?? throw new Exception("Missing sub");
-        email = root.GetProperty("email").GetString() ?? throw new Exception("Missing email");
-        name = root.TryGetProperty("name", out var n) ? (n.GetString() ?? email.Split('@')[0]) : email.Split('@')[0];
+
+        // 換 access token
+        var tokenResp = await http.PostAsync("https://oauth2.googleapis.com/token",
+            new System.Net.Http.FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["grant_type"] = "authorization_code",
+                ["code"] = code,
+                ["redirect_uri"] = redirectUri,
+                ["client_id"] = clientId,
+                ["client_secret"] = clientSecret
+            }));
+        var tokenJson = await tokenResp.Content.ReadAsStringAsync();
+        using var tokenDoc = System.Text.Json.JsonDocument.Parse(tokenJson);
+        if (tokenDoc.RootElement.TryGetProperty("error", out var errEl))
+            throw new Exception(errEl.GetString() ?? "Token exchange failed");
+
+        var idToken = tokenDoc.RootElement.GetProperty("id_token").GetString() ?? "";
+
+        // 解析 id_token（Base64URL decode payload）
+        var parts = idToken.Split('.');
+        var payload = parts[1].Replace('-', '+').Replace('_', '/');
+        payload = payload.PadRight(payload.Length + (4 - payload.Length % 4) % 4, '=');
+        var payloadJson = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payload));
+        using var payloadDoc = System.Text.Json.JsonDocument.Parse(payloadJson);
+        googleSub = payloadDoc.RootElement.GetProperty("sub").GetString() ?? throw new Exception("Missing sub");
+        email = payloadDoc.RootElement.GetProperty("email").GetString() ?? throw new Exception("Missing email");
+        name = payloadDoc.RootElement.TryGetProperty("name", out var n)
+            ? (n.GetString() ?? email.Split('@')[0])
+            : email.Split('@')[0];
     }
     catch (Exception ex)
     {
-        return Results.BadRequest(new { message = $"Google Token 驗證失敗: {ex.Message}" });
+        return Results.Redirect($"{frontendBase}/auth/callback?error={Uri.EscapeDataString(ex.Message)}");
     }
 
-    // 找或建 Customer
     var customer = await db.Customers.FirstOrDefaultAsync(c => c.GoogleId == googleSub)
         ?? await db.Customers.FirstOrDefaultAsync(c => c.Email == email);
 
+    bool isNew = customer == null;
     if (customer == null)
     {
         var cnt = await db.Customers.CountAsync();
         customer = new Customer
         {
             CustomerNumber = $"C{cnt + 1:00000}",
-            Name = name,
-            Email = email,
-            Phone = "",
-            PasswordHash = "",
-            GoogleId = googleSub,
-            IsEmailVerified = true,
-            CreatedAt = DateTime.UtcNow
+            Name = name, Email = email, Phone = "",
+            PasswordHash = "", GoogleId = googleSub,
+            IsEmailVerified = true, CreatedAt = DateTime.UtcNow
         };
         db.Customers.Add(customer);
     }
@@ -1671,14 +1705,9 @@ app.MapPost("/api/auth/customer/google", async ([FromBody] CustomerGoogleRequest
     customer.LastLoginAt = DateTime.UtcNow;
     await db.SaveChangesAsync();
 
-    var token = GenerateCustomerJwt(customer);
-    var isProfileComplete = !string.IsNullOrEmpty(customer.Name) && !string.IsNullOrEmpty(customer.Phone) && !string.IsNullOrEmpty(customer.Address);
-    return Results.Ok(new
-    {
-        token,
-        customer = new { customer.Id, customer.Name, customer.Email, customer.Phone, customer.Address, isProfileComplete }
-    });
-}).WithName("CustomerGoogle").WithTags("CustomerAuth");
+    var jwt = GenerateCustomerJwt(customer);
+    return Results.Redirect($"{frontendBase}/auth/callback?token={jwt}&isNew={isNew.ToString().ToLower()}");
+}).WithName("CustomerGoogleCallback").WithTags("CustomerAuth");
 
 // GET /api/auth/customer/line-url — 取得 LINE Auth URL
 app.MapGet("/api/auth/customer/line-url", (IConfiguration config) =>
@@ -1737,6 +1766,8 @@ app.MapGet("/api/auth/customer/line/callback", async (string code, string state,
             if (parts.Length >= 2)
             {
                 var payload = parts[1];
+                // Base64URL → 標準 Base64
+                payload = payload.Replace('-', '+').Replace('_', '/');
                 payload = payload.PadRight(payload.Length + (4 - payload.Length % 4) % 4, '=');
                 var payloadJson = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payload));
                 using var payloadDoc = System.Text.Json.JsonDocument.Parse(payloadJson);
@@ -1865,5 +1896,4 @@ public record UpsertContentPageRequest(string? Slug, string? TitleZhTW, string? 
 public record CustomerRegisterRequest(string Email, string Password, string? Name);
 public record CustomerVerifyOtpRequest(string Email, string Code);
 public record CustomerLoginRequest(string Email, string Password);
-public record CustomerGoogleRequest(string IdToken);
 public record CustomerUpdateProfileRequest(string? Name, string? Phone, string? Address);
