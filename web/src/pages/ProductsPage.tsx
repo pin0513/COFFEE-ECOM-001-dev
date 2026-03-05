@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, Fragment } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Drawer, message } from 'antd';
@@ -9,7 +9,8 @@ import { apiClient, getImageUrl } from '../config/api';
 import { getSiteSettings } from '../services/siteSettingsService';
 import './ProductsPage.css';
 
-interface Category { id: number; name: string; productCount?: number; }
+interface SubCategory { id: number; name: string; productCount?: number; }
+interface Category { id: number; name: string; productCount?: number; children?: SubCategory[]; }
 
 /** 促銷倒數計時 hook
  *  > 2 天 → "X 天後截止"（靜態文字）
@@ -232,7 +233,9 @@ export default function ProductsPage() {
     (filterBulk ? 1 : 0) +
     (filterPromo ? 1 : 0);
 
-  const currentCategory = categories.find(c => c.id === selectedCategoryId);
+  const currentCategory = categories.find(c => c.id === selectedCategoryId)
+    ?? categories.flatMap(c => c.children ?? []).find(sc => sc.id === selectedCategoryId)
+    ?? null;
   const pageTitle = currentCategory ? currentCategory.name : '我們的咖啡';
 
   const scrollToTop = () => {
@@ -301,7 +304,7 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      {/* 分類快速篩選 Pills */}
+      {/* 分類快速篩選 Pills — 第一層 */}
       <div className="bb-category-pills">
         <button
           className={`bb-cat-pill${!selectedCategoryId ? ' active' : ''}`}
@@ -310,17 +313,50 @@ export default function ProductsPage() {
           全部
         </button>
         {categories
-          .filter(c => (c.productCount ?? 0) > 0)
-          .map(c => (
-            <button
-              key={c.id}
-              className={`bb-cat-pill${selectedCategoryId === c.id ? ' active' : ''}`}
-              onClick={() => setSearchParams({ categoryId: String(c.id) })}
-            >
-              {c.name} <span className="bb-cat-count">({c.productCount})</span>
-            </button>
-          ))}
+          .filter(c => (c.productCount ?? 0) > 0 || (c.children?.some(sc => (sc.productCount ?? 0) > 0)))
+          .map(c => {
+            const totalCount = (c.productCount ?? 0) + (c.children?.reduce((s, sc) => s + (sc.productCount ?? 0), 0) ?? 0);
+            const isParentActive = selectedCategoryId === c.id || c.children?.some(sc => sc.id === selectedCategoryId);
+            return (
+              <button
+                key={c.id}
+                className={`bb-cat-pill${isParentActive ? ' active' : ''}`}
+                onClick={() => setSearchParams({ categoryId: String(c.id) })}
+              >
+                {c.name} <span className="bb-cat-count">({totalCount})</span>
+              </button>
+            );
+          })}
       </div>
+
+      {/* 分類快速篩選 Pills — 第二層（子分類，僅當選中有 children 的父分類時顯示）*/}
+      {(() => {
+        const activePar = categories.find(c =>
+          selectedCategoryId === c.id || c.children?.some(sc => sc.id === selectedCategoryId)
+        );
+        if (!activePar?.children?.length) return null;
+        return (
+          <div className="bb-subcategory-pills">
+            <button
+              className={`bb-subcat-pill${selectedCategoryId === activePar.id ? ' active' : ''}`}
+              onClick={() => setSearchParams({ categoryId: String(activePar.id) })}
+            >
+              全部{activePar.name}
+            </button>
+            {activePar.children
+              .filter(sc => (sc.productCount ?? 0) > 0)
+              .map(sc => (
+                <button
+                  key={sc.id}
+                  className={`bb-subcat-pill${selectedCategoryId === sc.id ? ' active' : ''}`}
+                  onClick={() => setSearchParams({ categoryId: String(sc.id) })}
+                >
+                  {sc.name} <span className="bb-cat-count">({sc.productCount})</span>
+                </button>
+              ))}
+          </div>
+        );
+      })()}
 
       {/* 商品 Grid */}
       {loading ? (
@@ -371,10 +407,18 @@ export default function ProductsPage() {
             <span>全部商品</span>
           </label>
           {categories.map(c => (
-            <label key={c.id} className="bb-filter-radio">
-              <input type="radio" name="cat" checked={draftCatId === c.id} onChange={() => setDraftCatId(c.id)} />
-              <span>{c.name}</span>
-            </label>
+            <Fragment key={c.id}>
+              <label className="bb-filter-radio">
+                <input type="radio" name="cat" checked={draftCatId === c.id} onChange={() => setDraftCatId(c.id)} />
+                <span>{c.name}</span>
+              </label>
+              {c.children?.map(sc => (
+                <label key={sc.id} className="bb-filter-radio bb-filter-radio--sub">
+                  <input type="radio" name="cat" checked={draftCatId === sc.id} onChange={() => setDraftCatId(sc.id)} />
+                  <span>└ {sc.name}</span>
+                </label>
+              ))}
+            </Fragment>
           ))}
         </div>
 

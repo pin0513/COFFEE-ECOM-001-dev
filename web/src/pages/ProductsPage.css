@@ -193,6 +193,34 @@
 .bb-cat-pill:hover { border-color: #1a1a1a; color: #1a1a1a; }
 .bb-cat-pill.active { background: #1a1a1a; color: white; border-color: #1a1a1a; }
 
+/* 子分類 Pills（第二層）*/
+.bb-subcategory-pills {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 40px 12px 56px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.bb-subcategory-pills::-webkit-scrollbar { display: none; }
+
+.bb-subcat-pill {
+  flex-shrink: 0;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid #d4c5b2;
+  border-radius: 20px;
+  background: white;
+  color: #7a6e64;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.02em;
+}
+.bb-subcat-pill:hover { border-color: #d4a574; color: #d4a574; }
+.bb-subcat-pill.active { background: #d4a574; color: white; border-color: #d4a574; }
+
 /* 商品 Grid — 3 欄 */
 .bb-grid {
   max-width: 1280px;
@@ -414,6 +442,15 @@
   height: 16px;
   cursor: pointer;
 }
+/* 子分類縮排 radio */
+.bb-filter-radio--sub {
+  padding-left: 24px;
+  font-size: 11px;
+  color: #666;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-weight: 500;
+}
 .bb-drawer-footer {
   display: flex;
   gap: 12px;
@@ -450,12 +487,15 @@
   .bb-grid { grid-template-columns: repeat(2, 1fr); gap: 32px 20px; }
   .bb-page-header-inner,
   .bb-category-pills,
+  .bb-subcategory-pills,
   .bb-grid { padding-left: 24px; padding-right: 24px; }
+  .bb-subcategory-pills { padding-left: 36px; }
   .bb-page-title { font-size: 26px; }
 }
 @media (max-width: 767px) {
   .bb-page-header-inner { padding: 24px 16px 16px; }
   .bb-category-pills { padding: 12px 16px; }
+  .bb-subcategory-pills { padding: 0 16px 10px 28px; }
   .bb-grid { grid-template-columns: repeat(2, 1fr); gap: 24px 12px; padding: 20px 16px 60px; }
   .bb-page-title { font-size: 22px; }
 }

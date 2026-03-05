@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Card, Table, Button, Modal, Form, Input, message, Tag, Tooltip } from 'antd';
-import { EditOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { Card, Table, Button, Modal, Form, Input, message, Tag, Tooltip, Select } from 'antd';
+import { EditOutlined, QuestionCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { apiClient } from '../config/api';
 
 interface SpecField {
@@ -8,6 +8,15 @@ interface SpecField {
   label: string;
   type: 'text' | 'select' | 'number';
   options?: string[];
+}
+
+interface ChildCategory {
+  id: number;
+  name: string;
+  code: string;
+  icon: string | null;
+  sortOrder: number;
+  productCount: number;
 }
 
 interface Category {
@@ -19,6 +28,22 @@ interface Category {
   sortOrder: number;
   productCount: number;
   specTemplate: string | null;
+  parentId?: number | null;
+  children?: ChildCategory[];
+}
+
+// 展平後的表格行
+interface TableRow {
+  id: number;
+  name: string;
+  code: string;
+  icon: string | null;
+  sortOrder: number;
+  productCount: number;
+  specTemplate: string | null;
+  parentId?: number | null;
+  isChild: boolean;
+  _raw?: Category | ChildCategory;
 }
 
 const DEFAULT_TEMPLATES: Record<string, SpecField[]> = {
@@ -74,18 +99,60 @@ const DEFAULT_TEMPLATES: Record<string, SpecField[]> = {
 
 export default function CategoryManagement() {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [tableRows, setTableRows] = useState<TableRow[]>([]);
   const [loading, setLoading] = useState(false);
-  const [editingCat, setEditingCat] = useState<Category | null>(null);
+
+  // 編輯
+  const [editingRow, setEditingRow] = useState<TableRow | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [specJson, setSpecJson] = useState('');
   const [jsonError, setJsonError] = useState('');
   const [form] = Form.useForm();
 
+  // 新增
+  const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [createForm] = Form.useForm();
+
+  const flattenTree = (tree: Category[]): TableRow[] => {
+    const rows: TableRow[] = [];
+    for (const cat of tree) {
+      rows.push({
+        id: cat.id,
+        name: cat.name,
+        code: cat.code,
+        icon: cat.icon,
+        sortOrder: cat.sortOrder,
+        productCount: cat.productCount,
+        specTemplate: cat.specTemplate,
+        parentId: null,
+        isChild: false,
+        _raw: cat,
+      });
+      for (const child of cat.children ?? []) {
+        rows.push({
+          id: child.id,
+          name: child.name,
+          code: child.code,
+          icon: child.icon,
+          sortOrder: child.sortOrder,
+          productCount: child.productCount,
+          specTemplate: null,
+          parentId: cat.id,
+          isChild: true,
+          _raw: child,
+        });
+      }
+    }
+    return rows;
+  };
+
   const fetchCategories = async () => {
     setLoading(true);
     try {
       const res = await apiClient.get('/categories');
-      setCategories(res.data);
+      const tree: Category[] = res.data;
+      setCategories(tree);
+      setTableRows(flattenTree(tree));
     } catch {
       message.error('載入分類失敗');
     } finally {
@@ -95,32 +162,46 @@ export default function CategoryManagement() {
 
   useEffect(() => { fetchCategories(); }, []);
 
-  const handleEdit = (cat: Category) => {
-    setEditingCat(cat);
-    form.setFieldsValue({ name: cat.name, description: cat.description, icon: cat.icon });
-    const template = cat.specTemplate || JSON.stringify(DEFAULT_TEMPLATES[cat.code] || [], null, 2);
+  const handleEdit = (row: TableRow) => {
+    setEditingRow(row);
+    form.setFieldsValue({
+      name: row.name,
+      description: (row._raw as Category)?.description ?? '',
+      icon: row.icon,
+      parentId: row.parentId ?? undefined,
+    });
+    const template = row.specTemplate || JSON.stringify(DEFAULT_TEMPLATES[row.code] || [], null, 2);
     setSpecJson(template);
     setJsonError('');
     setModalVisible(true);
   };
 
   const handleSave = async () => {
-    if (!editingCat) return;
-    try {
-      JSON.parse(specJson); // validate JSON
-    } catch {
-      setJsonError('JSON 格式錯誤，請修正後再儲存');
-      return;
+    if (!editingRow) return;
+    if (!editingRow.isChild) {
+      try {
+        JSON.parse(specJson);
+      } catch {
+        setJsonError('JSON 格式錯誤，請修正後再儲存');
+        return;
+      }
     }
 
     try {
       const values = await form.validateFields();
-      await apiClient.put(`/categories/${editingCat.id}`, {
+      const payload: Record<string, unknown> = {
         name: values.name,
         description: values.description,
         icon: values.icon,
-        specTemplate: specJson,
-      });
+      };
+      if (!editingRow.isChild) {
+        payload.specTemplate = specJson;
+      }
+      // parentId: 0 = 清除（升至頂層）
+      if (values.parentId !== undefined) {
+        payload.parentId = values.parentId;
+      }
+      await apiClient.put(`/categories/${editingRow.id}`, payload);
       message.success('分類已更新');
       setModalVisible(false);
       fetchCategories();
@@ -129,9 +210,31 @@ export default function CategoryManagement() {
     }
   };
 
+  const handleCreate = async () => {
+    try {
+      const values = await createForm.validateFields();
+      await apiClient.post('/categories', {
+        name: values.name,
+        code: values.code,
+        description: values.description || '',
+        icon: values.icon || '',
+        color: '',
+        parentId: values.parentId ?? null,
+        sortOrder: values.sortOrder ?? 99,
+        specTemplate: null,
+      });
+      message.success('分類已建立');
+      setCreateModalVisible(false);
+      createForm.resetFields();
+      fetchCategories();
+    } catch {
+      message.error('建立失敗');
+    }
+  };
+
   const handleApplyDefault = () => {
-    if (!editingCat) return;
-    const def = DEFAULT_TEMPLATES[editingCat.code] || [];
+    if (!editingRow) return;
+    const def = DEFAULT_TEMPLATES[editingRow.code] || [];
     setSpecJson(JSON.stringify(def, null, 2));
     setJsonError('');
   };
@@ -147,10 +250,35 @@ export default function CategoryManagement() {
   };
 
   const columns = [
-    { title: '圖示', dataIndex: 'icon', key: 'icon', width: 50, render: (v: string) => v || '—' },
-    { title: '分類名稱', dataIndex: 'name', key: 'name', width: 160 },
-    { title: '代碼', dataIndex: 'code', key: 'code', width: 140, render: (v: string) => <Tag>{v}</Tag> },
-    { title: '商品數', dataIndex: 'productCount', key: 'productCount', width: 80 },
+    {
+      title: '圖示',
+      dataIndex: 'icon',
+      key: 'icon',
+      width: 50,
+      render: (v: string) => v || '—',
+    },
+    {
+      title: '分類名稱',
+      key: 'name',
+      width: 180,
+      render: (_: unknown, row: TableRow) =>
+        row.isChild
+          ? <span style={{ paddingLeft: 16, color: '#888', fontSize: 13 }}>└ {row.name}</span>
+          : <span style={{ fontWeight: 600 }}>{row.name}</span>,
+    },
+    {
+      title: '代碼',
+      dataIndex: 'code',
+      key: 'code',
+      width: 150,
+      render: (v: string, row: TableRow) => <Tag color={row.isChild ? 'default' : 'blue'}>{v}</Tag>,
+    },
+    {
+      title: '商品數',
+      dataIndex: 'productCount',
+      key: 'productCount',
+      width: 80,
+    },
     {
       title: (
         <span>
@@ -161,10 +289,11 @@ export default function CategoryManagement() {
         </span>
       ),
       key: 'specTemplate',
-      render: (_: unknown, cat: Category) => {
-        if (!cat.specTemplate) return <Tag color="orange">未設定</Tag>;
+      render: (_: unknown, row: TableRow) => {
+        if (row.isChild) return <span style={{ color: '#ccc', fontSize: 12 }}>繼承父分類</span>;
+        if (!row.specTemplate) return <Tag color="orange">未設定</Tag>;
         try {
-          const fields: SpecField[] = JSON.parse(cat.specTemplate);
+          const fields: SpecField[] = JSON.parse(row.specTemplate);
           return <span style={{ fontSize: 12, color: '#666' }}>{fields.map(f => f.label).join('、')}</span>;
         } catch {
           return <Tag color="red">JSON 錯誤</Tag>;
@@ -175,24 +304,33 @@ export default function CategoryManagement() {
       title: '操作',
       key: 'action',
       width: 100,
-      render: (_: unknown, cat: Category) => (
-        <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(cat)}>編輯</Button>
+      render: (_: unknown, row: TableRow) => (
+        <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(row)}>編輯</Button>
       ),
     },
   ];
 
   return (
-    <Card title="分類管理">
+    <Card
+      title="分類管理"
+      extra={
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => { createForm.resetFields(); setCreateModalVisible(true); }}>
+          新增分類
+        </Button>
+      }
+    >
       <Table
         columns={columns}
-        dataSource={categories}
+        dataSource={tableRows}
         rowKey="id"
         loading={loading}
         pagination={false}
+        rowClassName={(row: TableRow) => row.isChild ? 'cat-row-child' : ''}
       />
 
+      {/* 編輯 Modal */}
       <Modal
-        title={`編輯分類：${editingCat?.name}`}
+        title={`編輯分類：${editingRow?.name}`}
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         onOk={handleSave}
@@ -210,26 +348,70 @@ export default function CategoryManagement() {
           <Form.Item label="描述" name="description">
             <Input.TextArea rows={2} />
           </Form.Item>
+          <Form.Item label="父分類（留空 = 頂層）" name="parentId">
+            <Select allowClear placeholder="選擇父分類（設為子分類）">
+              {categories.map(c => (
+                <Select.Option key={c.id} value={c.id}>{c.icon} {c.name}</Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
         </Form>
 
-        <div style={{ marginTop: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <strong>規格欄位定義（SpecTemplate JSON）</strong>
-            <Button size="small" onClick={handleApplyDefault}>套用預設欄位</Button>
+        {!editingRow?.isChild && (
+          <div style={{ marginTop: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <strong>規格欄位定義（SpecTemplate JSON）</strong>
+              <Button size="small" onClick={handleApplyDefault}>套用預設欄位</Button>
+            </div>
+            <div style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>
+              格式：<code>{'[{"key":"origin","label":"產地","type":"text"}]'}</code>
+              　type 可為 text / select / number，select 需加 options 陣列
+            </div>
+            <Input.TextArea
+              value={specJson}
+              onChange={e => handleJsonChange(e.target.value)}
+              rows={10}
+              style={{ fontFamily: 'monospace', fontSize: 12 }}
+              status={jsonError ? 'error' : undefined}
+            />
+            {jsonError && <div style={{ color: '#ff4d4f', marginTop: 4, fontSize: 12 }}>{jsonError}</div>}
           </div>
-          <div style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>
-            格式：<code>{'[{"key":"origin","label":"產地","type":"text"}]'}</code>
-            　type 可為 text / select / number，select 需加 options 陣列
-          </div>
-          <Input.TextArea
-            value={specJson}
-            onChange={e => handleJsonChange(e.target.value)}
-            rows={10}
-            style={{ fontFamily: 'monospace', fontSize: 12 }}
-            status={jsonError ? 'error' : undefined}
-          />
-          {jsonError && <div style={{ color: '#ff4d4f', marginTop: 4, fontSize: 12 }}>{jsonError}</div>}
-        </div>
+        )}
+      </Modal>
+
+      {/* 新增 Modal */}
+      <Modal
+        title="新增分類"
+        open={createModalVisible}
+        onCancel={() => setCreateModalVisible(false)}
+        onOk={handleCreate}
+        okText="建立"
+        cancelText="取消"
+      >
+        <Form form={createForm} layout="vertical">
+          <Form.Item label="分類名稱" name="name" rules={[{ required: true, message: '請輸入分類名稱' }]}>
+            <Input placeholder="例：全自動咖啡機" />
+          </Form.Item>
+          <Form.Item label="代碼（英文大寫）" name="code" rules={[{ required: true, message: '請輸入代碼' }]}>
+            <Input placeholder="例：AUTO_MACHINE" style={{ textTransform: 'uppercase' }} />
+          </Form.Item>
+          <Form.Item label="父分類（留空 = 頂層分類）" name="parentId">
+            <Select allowClear placeholder="選擇父分類（設為子分類）">
+              {categories.map(c => (
+                <Select.Option key={c.id} value={c.id}>{c.icon} {c.name}</Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item label="圖示（Emoji）" name="icon">
+            <Input placeholder="例：🤖" style={{ width: 100 }} />
+          </Form.Item>
+          <Form.Item label="排序（數字越小越前）" name="sortOrder">
+            <Input type="number" placeholder="99" style={{ width: 120 }} />
+          </Form.Item>
+          <Form.Item label="描述" name="description">
+            <Input.TextArea rows={2} placeholder="選填" />
+          </Form.Item>
+        </Form>
       </Modal>
     </Card>
   );

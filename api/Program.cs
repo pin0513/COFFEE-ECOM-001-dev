@@ -201,16 +201,65 @@ app.MapDelete("/api/admins/{id:int}", [Authorize] async (int id, AppDbContext db
 
 // Categories
 app.MapGet("/api/categories", async (AppDbContext db) =>
-    Results.Ok(await db.Categories.Where(c => c.IsActive && c.ParentId == null).OrderBy(c => c.SortOrder)
-        .Select(c => new { c.Id, c.Name, c.Code, c.Description, c.Icon, c.Color, c.SortOrder, c.SpecTemplate,
-            ProductCount = db.Products.Count(p => p.CategoryId == c.Id && p.IsActive) }).ToListAsync()))
-.WithName("GetCategories").WithTags("Categories");
+{
+    var parents = await db.Categories
+        .Where(c => c.IsActive && c.ParentId == null)
+        .OrderBy(c => c.SortOrder)
+        .ToListAsync();
+
+    var childMap = await db.Categories
+        .Where(c => c.IsActive && c.ParentId != null)
+        .OrderBy(c => c.SortOrder)
+        .ToListAsync();
+
+    var productCounts = await db.Products
+        .Where(p => p.IsActive)
+        .GroupBy(p => p.CategoryId)
+        .Select(g => new { CategoryId = g.Key, Count = g.Count() })
+        .ToDictionaryAsync(x => x.CategoryId, x => x.Count);
+
+    var result = parents.Select(p => new
+    {
+        p.Id, p.Name, p.Code, p.Description, p.Icon, p.Color, p.SortOrder, p.SpecTemplate,
+        ProductCount = productCounts.GetValueOrDefault(p.Id, 0),
+        Children = childMap
+            .Where(c => c.ParentId == p.Id)
+            .Select(c => new
+            {
+                c.Id, c.Name, c.Code, c.Icon, c.SortOrder,
+                ProductCount = productCounts.GetValueOrDefault(c.Id, 0)
+            }).ToList()
+    });
+    return Results.Ok(result);
+}).WithName("GetCategories").WithTags("Categories");
 
 app.MapGet("/api/categories/{id:int}", async (int id, AppDbContext db) =>
 {
     var cat = await db.Categories.FindAsync(id);
     return cat == null ? Results.NotFound() : Results.Ok(cat);
 }).WithName("GetCategoryById").WithTags("Categories");
+
+app.MapPost("/api/categories", [Authorize] async ([FromBody] CreateCategoryRequest req, AppDbContext db) =>
+{
+    if (string.IsNullOrEmpty(req.Name)) return Results.BadRequest(new { Message = "分類名稱不可為空" });
+    if (string.IsNullOrEmpty(req.Code)) return Results.BadRequest(new { Message = "分類代碼不可為空" });
+    if (req.ParentId.HasValue)
+    {
+        var parent = await db.Categories.FindAsync(req.ParentId.Value);
+        if (parent == null) return Results.BadRequest(new { Message = "父分類不存在" });
+        if (parent.ParentId != null) return Results.BadRequest(new { Message = "最多支援兩層分類" });
+    }
+    var cat = new Category
+    {
+        Name = req.Name, Code = req.Code.ToUpper(),
+        Description = req.Description, Icon = req.Icon, Color = req.Color,
+        ParentId = req.ParentId, SortOrder = req.SortOrder,
+        SpecTemplate = req.SpecTemplate, IsActive = true, CreatedAt = DateTime.UtcNow
+    };
+    db.Categories.Add(cat);
+    await db.SaveChangesAsync();
+    return Results.Created($"/api/categories/{cat.Id}", new { cat.Id, cat.Name, cat.Code, cat.ParentId });
+}).WithName("CreateCategory").WithTags("Categories");
 
 app.MapPut("/api/categories/{id:int}", [Authorize] async (int id, [FromBody] UpdateCategoryRequest req, AppDbContext db) =>
 {
@@ -221,9 +270,18 @@ app.MapPut("/api/categories/{id:int}", [Authorize] async (int id, [FromBody] Upd
     if (req.SpecTemplate != null) cat.SpecTemplate = req.SpecTemplate;
     if (req.Icon != null) cat.Icon = req.Icon;
     if (req.SortOrder.HasValue) cat.SortOrder = req.SortOrder.Value;
+    if (req.ParentId.HasValue)
+    {
+        if (req.ParentId.Value == 0) cat.ParentId = null;  // 0 = 清除父分類
+        else
+        {
+            var parent = await db.Categories.FindAsync(req.ParentId.Value);
+            if (parent != null && parent.ParentId == null) cat.ParentId = req.ParentId.Value;
+        }
+    }
     cat.UpdatedAt = DateTime.UtcNow;
     await db.SaveChangesAsync();
-    return Results.Ok(new { cat.Id, cat.Name, cat.SpecTemplate });
+    return Results.Ok(new { cat.Id, cat.Name, cat.ParentId, cat.SpecTemplate });
 }).WithName("UpdateCategory").WithTags("Categories");
 
 // Products
@@ -236,7 +294,15 @@ app.MapGet("/api/products", async (
     if (page < 1) page = 1;
     if (pageSize < 1 || pageSize > 100) pageSize = 20;
     var query = db.Products.Include(p => p.Category).AsQueryable();
-    if (categoryId.HasValue) query = query.Where(p => p.CategoryId == categoryId.Value);
+    if (categoryId.HasValue)
+    {
+        var childIds = await db.Categories
+            .Where(c => c.ParentId == categoryId.Value && c.IsActive)
+            .Select(c => c.Id).ToListAsync();
+        query = childIds.Any()
+            ? query.Where(p => p.CategoryId == categoryId.Value || childIds.Contains(p.CategoryId))
+            : query.Where(p => p.CategoryId == categoryId.Value);
+    }
     if (featured.HasValue) query = query.Where(p => p.IsFeatured == featured.Value);
     if (isActive.HasValue) query = query.Where(p => p.IsActive == isActive.Value);
     if (hasBulk == true) query = query.Where(p => p.BulkOptions != null);
@@ -1154,7 +1220,8 @@ public record UpsertProductRequest(
     int? ParentProductId, string? VariantLabel,
     string? PromotionTag, bool? RequirePrePayment, DateTime? PromotionEndAt,
     string? Brand, decimal? OriginalPrice);
-public record UpdateCategoryRequest(string? Name, string? Description, string? SpecTemplate, string? Icon, int? SortOrder);
+public record UpdateCategoryRequest(string? Name, string? Description, string? SpecTemplate, string? Icon, int? SortOrder, int? ParentId);
+public record CreateCategoryRequest(string Name, string Code, string? Description, string? Icon, string? Color, int? ParentId, int SortOrder, string? SpecTemplate);
 public record ProductTogglesRequest(bool? IsOrderable, bool? InventoryEnabled, bool? IsActive);
 public record BatchProductRequest(List<int> Ids, bool? IsOrderable, bool? IsActive, bool? IsFeatured);
 public record SiteSettingItem(string Key, string? Value);
