@@ -20,6 +20,7 @@ public class AppDbContext : DbContext
     public DbSet<Store> Stores { get; set; }
     public DbSet<HeroBanner> HeroBanners { get; set; }
     public DbSet<ContentPage> ContentPages { get; set; }
+    public DbSet<CustomerOtp> CustomerOtps { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -146,6 +147,13 @@ public class AppDbContext : DbContext
             e.HasIndex(p => p.Slug).IsUnique();
             e.Property(p => p.Slug).HasMaxLength(100);
             e.Property(p => p.TitleZhTW).HasMaxLength(200);
+        });
+
+        modelBuilder.Entity<CustomerOtp>(e =>
+        {
+            e.HasKey(o => o.Id);
+            e.Property(o => o.Email).HasMaxLength(256);
+            e.Property(o => o.Code).HasMaxLength(10);
         });
     }
 }

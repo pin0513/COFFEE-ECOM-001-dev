@@ -5,6 +5,7 @@ import { useCartStore } from '../stores/cartStore';
 import { useState, useEffect } from 'react';
 import { createOrder, createEcpayCheckout, createLinePayRequest } from '../services/orderService';
 import { getSiteSettings } from '../services/siteSettingsService';
+import { useCustomerAuthStore } from '../stores/customerAuthStore';
 
 const { Title, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
@@ -20,6 +21,7 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
   const screens = useBreakpoint();
   const { items, getTotalPrice, clearCart } = useCartStore();
+  const { isLoggedIn, customer } = useCustomerAuthStore();
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<string>('cash');
   const [bankTransferEnabled, setBankTransferEnabled] = useState(true);
@@ -56,6 +58,18 @@ export default function CheckoutPage() {
       }
     }).catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 已登入時自動帶入個人資料
+  useEffect(() => {
+    if (isLoggedIn && customer) {
+      form.setFieldsValue({
+        name: customer.name || undefined,
+        email: customer.email || undefined,
+        phone: customer.phone || undefined,
+        address: customer.address || undefined,
+      });
+    }
+  }, [isLoggedIn, customer, form]);
 
   // 若購物車含預付款商品，且目前選了 COD，自動切換到轉帳
   useEffect(() => {
@@ -152,6 +166,14 @@ export default function CheckoutPage() {
           gap: 24
         }}>
           <Card title="收件 / 付款資訊">
+            {!isLoggedIn && (
+              <Alert
+                type="info"
+                showIcon
+                message="登入後可自動帶入收件資料"
+                style={{ marginBottom: 16 }}
+              />
+            )}
             <Form layout="vertical" form={form} onFinish={onFinish}>
               <Form.Item label="收件人姓名" name="name" rules={[{ required: true, message: '請輸入收件人姓名' }]}>
                 <Input placeholder="請輸入姓名" />

@@ -1,11 +1,16 @@
 import { type ReactNode, useState, useEffect, useMemo } from 'react';
+import { Dropdown, Avatar, message } from 'antd';
+import { UserOutlined, LogoutOutlined, ProfileOutlined } from '@ant-design/icons';
 
 interface FooterLink { label: string; url: string; }
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useCartStore } from '../stores/cartStore';
+import { useCustomerAuthStore } from '../stores/customerAuthStore';
 import { getSiteSettings } from '../services/siteSettingsService';
 import type { SiteSettings } from '../services/siteSettingsService';
 import BottomNavBar from './BottomNavBar';
+import LoginModal from './LoginModal';
+import ProfileCompletionModal from './ProfileCompletionModal';
 import './Layout.css';
 
 interface LayoutProps {
@@ -16,29 +21,39 @@ export default function Layout({ children }: LayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { items } = useCartStore();
+  const { isLoggedIn, customer, clearAuth } = useCustomerAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [settings, setSettings] = useState<Partial<SiteSettings>>({});
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [settings, setSettings] = useState<Partial<SiteSettings>>();
 
   const cartItemCount = items.reduce((sum: number, item: { quantity: number }) => sum + item.quantity, 0);
   const isActive = (path: string) => location.pathname === path;
+
+  // 登入後若資料不完整，彈出填資料 Modal
+  useEffect(() => {
+    if (isLoggedIn && customer && !customer.isProfileComplete) {
+      setShowProfileModal(true);
+    }
+  }, [isLoggedIn, customer]);
 
   useEffect(() => {
     getSiteSettings().then(setSettings).catch(() => {});
   }, []);
 
-  const siteName = settings.site_name || '品皇咖啡';
-  const lineUrl = settings.line_client_url || '';
-  const footerText = settings.footer_text || `© 2026 ${siteName}. All rights reserved.`;
-  const facebookUrl = settings.footer_social_facebook || '';
-  const instagramUrl = settings.footer_social_instagram || '';
+  const siteName = settings?.site_name || '品皇咖啡';
+  const lineUrl = settings?.line_client_url || '';
+  const footerText = settings?.footer_text || `© 2026 ${siteName}. All rights reserved.`;
+  const facebookUrl = settings?.footer_social_facebook || '';
+  const instagramUrl = settings?.footer_social_instagram || '';
 
   const shoppingLinks = useMemo<FooterLink[]>(() => {
-    try { return JSON.parse(settings.footer_links_shopping || '[]'); } catch { return []; }
-  }, [settings.footer_links_shopping]);
+    try { return JSON.parse(settings?.footer_links_shopping || '[]'); } catch { return []; }
+  }, [settings?.footer_links_shopping]);
 
   const serviceLinks = useMemo<FooterLink[]>(() => {
-    try { return JSON.parse(settings.footer_links_service || '[]'); } catch { return []; }
-  }, [settings.footer_links_service]);
+    try { return JSON.parse(settings?.footer_links_service || '[]'); } catch { return []; }
+  }, [settings?.footer_links_service]);
 
   const handleFooterLink = (url: string) => {
     if (!url) return;
@@ -63,7 +78,46 @@ export default function Layout({ children }: LayoutProps) {
             <button className={`nav-link ${location.pathname.startsWith('/pages/contact') ? 'active' : ''}`} onClick={() => { navigate('/pages/contact'); setMobileMenuOpen(false); }}>聯絡我們</button>
           </nav>
 
-          <div className="header-right">
+          <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {isLoggedIn && customer ? (
+              <Dropdown
+                menu={{
+                  items: [
+                    { key: 'name', label: customer.name, disabled: true },
+                    { type: 'divider' },
+                    {
+                      key: 'profile',
+                      icon: <ProfileOutlined />,
+                      label: '完善資料',
+                      onClick: () => setShowProfileModal(true),
+                    },
+                    {
+                      key: 'logout',
+                      icon: <LogoutOutlined />,
+                      label: '登出',
+                      onClick: () => {
+                        clearAuth();
+                        message.success('已登出');
+                      },
+                    },
+                  ],
+                }}
+                placement="bottomRight"
+              >
+                <Avatar
+                  icon={<UserOutlined />}
+                  style={{ cursor: 'pointer', background: '#d4a574' }}
+                />
+              </Dropdown>
+            ) : (
+              <button
+                className="nav-link"
+                onClick={() => setShowLoginModal(true)}
+                style={{ fontSize: 13 }}
+              >
+                登入 / 註冊
+              </button>
+            )}
             <button className="cart-button" onClick={() => navigate('/cart')} aria-label="購物車">
               🛒{cartItemCount > 0 && <span className="cart-badge">{cartItemCount}</span>}
             </button>
@@ -78,7 +132,7 @@ export default function Layout({ children }: LayoutProps) {
           <div className="footer-grid">
             <div className="footer-section">
               <h3 className="footer-title">{siteName}</h3>
-              <p className="footer-description">{settings.site_subtitle || '專業烘焙，極致品味'}</p>
+              <p className="footer-description">{settings?.site_subtitle || '專業烘焙，極致品味'}</p>
             </div>
             <div className="footer-section">
               <h4 className="footer-heading">購物資訊</h4>
@@ -160,6 +214,12 @@ export default function Layout({ children }: LayoutProps) {
       {mobileMenuOpen && <div className="mobile-menu-overlay" onClick={() => setMobileMenuOpen(false)} />}
 
       <BottomNavBar />
+
+      <LoginModal open={showLoginModal} onClose={() => setShowLoginModal(false)} />
+      <ProfileCompletionModal
+        open={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+      />
     </div>
   );
 }

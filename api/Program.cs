@@ -1459,6 +1459,365 @@ app.MapGet("/api/meta/products/{id:int}", async (int id, AppDbContext db, IConfi
     return Results.Content(html, "text/html; charset=utf-8");
 }).WithName("GetProductMetaHtml").WithTags("Meta");
 
+// ── Customer Auth ─────────────────────────────────────────────────────────────
+
+string GenerateCustomerJwt(Customer customer)
+{
+    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
+    var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+    var claims = new[]
+    {
+        new Claim(ClaimTypes.NameIdentifier, customer.Id.ToString()),
+        new Claim(ClaimTypes.Email, customer.Email),
+        new Claim(ClaimTypes.Name, customer.Name),
+        new Claim(ClaimTypes.Role, "customer"),
+    };
+    var token = new JwtSecurityToken(
+        issuer: jwtIssuer, audience: jwtAudience, claims: claims,
+        expires: DateTime.UtcNow.AddDays(30), signingCredentials: creds);
+    return new JwtSecurityTokenHandler().WriteToken(token);
+}
+
+// POST /api/auth/customer/register — Email 註冊，送 OTP
+app.MapPost("/api/auth/customer/register", async ([FromBody] CustomerRegisterRequest req, AppDbContext db, IConfiguration config) =>
+{
+    if (string.IsNullOrEmpty(req.Email)) return Results.BadRequest(new { message = "Email 不可為空" });
+    if (string.IsNullOrEmpty(req.Password) || req.Password.Length < 6)
+        return Results.BadRequest(new { message = "密碼長度至少 6 碼" });
+
+    if (await db.Customers.AnyAsync(c => c.Email == req.Email && c.IsEmailVerified))
+        return Results.Conflict(new { message = "此 Email 已註冊" });
+
+    // 清除舊 OTP
+    var oldOtps = db.CustomerOtps.Where(o => o.Email == req.Email);
+    db.CustomerOtps.RemoveRange(oldOtps);
+
+    var code = new Random().Next(1000, 9999).ToString();
+    db.CustomerOtps.Add(new CustomerOtp
+    {
+        Email = req.Email,
+        Code = code,
+        ExpiresAt = DateTime.UtcNow.AddMinutes(10),
+        CreatedAt = DateTime.UtcNow
+    });
+    await db.SaveChangesAsync();
+
+    // 儲存暫時密碼（未驗證狀態）
+    var pendingCustomer = await db.Customers.FirstOrDefaultAsync(c => c.Email == req.Email);
+    if (pendingCustomer == null)
+    {
+        var cnt = await db.Customers.CountAsync();
+        pendingCustomer = new Customer
+        {
+            CustomerNumber = $"C{cnt + 1:00000}",
+            Name = req.Name ?? req.Email.Split('@')[0],
+            Email = req.Email,
+            Phone = "",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password),
+            IsEmailVerified = false,
+            CreatedAt = DateTime.UtcNow
+        };
+        db.Customers.Add(pendingCustomer);
+    }
+    else
+    {
+        pendingCustomer.PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password);
+        if (!string.IsNullOrEmpty(req.Name)) pendingCustomer.Name = req.Name;
+        pendingCustomer.UpdatedAt = DateTime.UtcNow;
+    }
+    await db.SaveChangesAsync();
+
+    var debugMode = config.GetValue<bool>("SmtpSettings:DebugMode");
+    if (debugMode)
+        return Results.Ok(new { message = "OTP 已產生（Debug 模式）", otp = code });
+
+    // 寄 OTP 信
+    _ = Task.Run(async () =>
+    {
+        try
+        {
+            var smtpHost = config["SmtpSettings:Host"];
+            var smtpUser = config["SmtpSettings:Username"];
+            var smtpPass = config["SmtpSettings:Password"];
+            var smtpFrom = config["SmtpSettings:FromEmail"];
+            var smtpPort = int.TryParse(config["SmtpSettings:Port"], out var p) ? p : 587;
+            var fromName = config["SmtpSettings:FromName"] ?? "品皇咖啡";
+            if (string.IsNullOrEmpty(smtpHost) || string.IsNullOrEmpty(smtpFrom)) return;
+            using var client = new System.Net.Mail.SmtpClient(smtpHost, smtpPort)
+            {
+                EnableSsl = true,
+                Credentials = new System.Net.NetworkCredential(smtpUser, smtpPass)
+            };
+            using var msg = new System.Net.Mail.MailMessage
+            {
+                From = new System.Net.Mail.MailAddress(smtpFrom, fromName),
+                Subject = "【品皇咖啡】Email 驗證碼",
+                Body = $"您的驗證碼為：{code}\n此驗證碼 10 分鐘內有效，請勿分享給他人。"
+            };
+            msg.To.Add(req.Email);
+            await client.SendMailAsync(msg);
+        }
+        catch (Exception ex) { Console.WriteLine($"[OTP Email] 發送失敗: {ex.Message}"); }
+    });
+
+    return Results.Ok(new { message = "驗證碼已寄出" });
+}).WithName("CustomerRegister").WithTags("CustomerAuth");
+
+// POST /api/auth/customer/verify-otp — 驗證 OTP，建立正式帳號
+app.MapPost("/api/auth/customer/verify-otp", async ([FromBody] CustomerVerifyOtpRequest req, AppDbContext db) =>
+{
+    if (string.IsNullOrEmpty(req.Email) || string.IsNullOrEmpty(req.Code))
+        return Results.BadRequest(new { message = "Email 和驗證碼不可為空" });
+
+    var otp = await db.CustomerOtps
+        .Where(o => o.Email == req.Email && o.Code == req.Code && !o.IsUsed && o.ExpiresAt > DateTime.UtcNow)
+        .OrderByDescending(o => o.CreatedAt)
+        .FirstOrDefaultAsync();
+
+    if (otp == null) return Results.BadRequest(new { message = "驗證碼錯誤或已過期" });
+
+    otp.IsUsed = true;
+
+    var customer = await db.Customers.FirstOrDefaultAsync(c => c.Email == req.Email);
+    if (customer == null) return Results.BadRequest(new { message = "找不到帳號，請重新註冊" });
+
+    customer.IsEmailVerified = true;
+    customer.LastLoginAt = DateTime.UtcNow;
+    customer.UpdatedAt = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+
+    var token = GenerateCustomerJwt(customer);
+    var isProfileComplete = !string.IsNullOrEmpty(customer.Name) && !string.IsNullOrEmpty(customer.Phone) && !string.IsNullOrEmpty(customer.Address);
+    return Results.Ok(new
+    {
+        token,
+        customer = new { customer.Id, customer.Name, customer.Email, customer.Phone, customer.Address, isProfileComplete }
+    });
+}).WithName("CustomerVerifyOtp").WithTags("CustomerAuth");
+
+// POST /api/auth/customer/login — Email + 密碼登入
+app.MapPost("/api/auth/customer/login", async ([FromBody] CustomerLoginRequest req, AppDbContext db) =>
+{
+    if (string.IsNullOrEmpty(req.Email) || string.IsNullOrEmpty(req.Password))
+        return Results.BadRequest(new { message = "Email 和密碼不可為空" });
+
+    var customer = await db.Customers.FirstOrDefaultAsync(c => c.Email == req.Email && c.IsActive);
+    if (customer == null || string.IsNullOrEmpty(customer.PasswordHash))
+        return Results.Unauthorized();
+    if (!BCrypt.Net.BCrypt.Verify(req.Password, customer.PasswordHash))
+        return Results.Unauthorized();
+    if (!customer.IsEmailVerified)
+        return Results.BadRequest(new { message = "Email 尚未驗證，請先完成驗證" });
+
+    customer.LastLoginAt = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+
+    var token = GenerateCustomerJwt(customer);
+    var isProfileComplete = !string.IsNullOrEmpty(customer.Name) && !string.IsNullOrEmpty(customer.Phone) && !string.IsNullOrEmpty(customer.Address);
+    return Results.Ok(new
+    {
+        token,
+        customer = new { customer.Id, customer.Name, customer.Email, customer.Phone, customer.Address, isProfileComplete }
+    });
+}).WithName("CustomerLogin").WithTags("CustomerAuth");
+
+// POST /api/auth/customer/google — Firebase ID token → 找/建 Customer → JWT
+app.MapPost("/api/auth/customer/google", async ([FromBody] CustomerGoogleRequest req, AppDbContext db) =>
+{
+    if (string.IsNullOrEmpty(req.IdToken)) return Results.BadRequest(new { message = "ID Token 不可為空" });
+
+    // 驗證 Firebase ID Token
+    string googleSub, email, name;
+    try
+    {
+        using var http = new System.Net.Http.HttpClient();
+        var resp = await http.GetStringAsync($"https://www.googleapis.com/oauth2/v3/tokeninfo?id_token={req.IdToken}");
+        using var doc = System.Text.Json.JsonDocument.Parse(resp);
+        var root = doc.RootElement;
+        googleSub = root.GetProperty("sub").GetString() ?? throw new Exception("Missing sub");
+        email = root.GetProperty("email").GetString() ?? throw new Exception("Missing email");
+        name = root.TryGetProperty("name", out var n) ? (n.GetString() ?? email.Split('@')[0]) : email.Split('@')[0];
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { message = $"Google Token 驗證失敗: {ex.Message}" });
+    }
+
+    // 找或建 Customer
+    var customer = await db.Customers.FirstOrDefaultAsync(c => c.GoogleId == googleSub)
+        ?? await db.Customers.FirstOrDefaultAsync(c => c.Email == email);
+
+    if (customer == null)
+    {
+        var cnt = await db.Customers.CountAsync();
+        customer = new Customer
+        {
+            CustomerNumber = $"C{cnt + 1:00000}",
+            Name = name,
+            Email = email,
+            Phone = "",
+            PasswordHash = "",
+            GoogleId = googleSub,
+            IsEmailVerified = true,
+            CreatedAt = DateTime.UtcNow
+        };
+        db.Customers.Add(customer);
+    }
+    else
+    {
+        if (string.IsNullOrEmpty(customer.GoogleId)) customer.GoogleId = googleSub;
+        customer.UpdatedAt = DateTime.UtcNow;
+    }
+    customer.LastLoginAt = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+
+    var token = GenerateCustomerJwt(customer);
+    var isProfileComplete = !string.IsNullOrEmpty(customer.Name) && !string.IsNullOrEmpty(customer.Phone) && !string.IsNullOrEmpty(customer.Address);
+    return Results.Ok(new
+    {
+        token,
+        customer = new { customer.Id, customer.Name, customer.Email, customer.Phone, customer.Address, isProfileComplete }
+    });
+}).WithName("CustomerGoogle").WithTags("CustomerAuth");
+
+// GET /api/auth/customer/line-url — 取得 LINE Auth URL
+app.MapGet("/api/auth/customer/line-url", (IConfiguration config) =>
+{
+    var lineConfig = config.GetSection("LineLogin");
+    var channelId = lineConfig["ChannelId"] ?? "";
+    var redirectUri = lineConfig["RedirectUri"] ?? "";
+    var state = Guid.NewGuid().ToString("N");
+    var url = $"https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id={channelId}&redirect_uri={Uri.EscapeDataString(redirectUri)}&state={state}&scope=profile%20openid%20email";
+    return Results.Ok(new { url, state });
+}).WithName("CustomerLineUrl").WithTags("CustomerAuth");
+
+// GET /api/auth/customer/line/callback — LINE OAuth callback
+app.MapGet("/api/auth/customer/line/callback", async (string code, string state, AppDbContext db, IConfiguration config) =>
+{
+    var lineConfig = config.GetSection("LineLogin");
+    var channelId = lineConfig["ChannelId"] ?? "";
+    var channelSecret = lineConfig["ChannelSecret"] ?? "";
+    var redirectUri = lineConfig["RedirectUri"] ?? "";
+    var frontendBase = config["AppDomain"] ?? "http://localhost:5173";
+
+    // 換 access token
+    using var http = new System.Net.Http.HttpClient();
+    var tokenResp = await http.PostAsync("https://api.line.me/oauth2/v2.1/token",
+        new System.Net.Http.FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["grant_type"] = "authorization_code",
+            ["code"] = code,
+            ["redirect_uri"] = redirectUri,
+            ["client_id"] = channelId,
+            ["client_secret"] = channelSecret
+        }));
+
+    var tokenJson = await tokenResp.Content.ReadAsStringAsync();
+    string lineId, lineEmail, lineName;
+    try
+    {
+        using var doc = System.Text.Json.JsonDocument.Parse(tokenJson);
+        var accessToken = doc.RootElement.GetProperty("access_token").GetString() ?? "";
+
+        // 取 profile
+        using var profReq = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Get, "https://api.line.me/v2/profile");
+        profReq.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+        var profResp = await http.SendAsync(profReq);
+        var profJson = await profResp.Content.ReadAsStringAsync();
+        using var profDoc = System.Text.Json.JsonDocument.Parse(profJson);
+        lineId = profDoc.RootElement.GetProperty("userId").GetString() ?? throw new Exception("Missing userId");
+        lineName = profDoc.RootElement.TryGetProperty("displayName", out var dn) ? (dn.GetString() ?? "會員") : "會員";
+
+        // email 從 id_token 取（若有 openid scope）
+        lineEmail = "";
+        if (doc.RootElement.TryGetProperty("id_token", out var idTokenEl))
+        {
+            var idToken = idTokenEl.GetString() ?? "";
+            var parts = idToken.Split('.');
+            if (parts.Length >= 2)
+            {
+                var payload = parts[1];
+                payload = payload.PadRight(payload.Length + (4 - payload.Length % 4) % 4, '=');
+                var payloadJson = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payload));
+                using var payloadDoc = System.Text.Json.JsonDocument.Parse(payloadJson);
+                if (payloadDoc.RootElement.TryGetProperty("email", out var emailEl))
+                    lineEmail = emailEl.GetString() ?? "";
+            }
+        }
+        if (string.IsNullOrEmpty(lineEmail)) lineEmail = $"{lineId}@line.user";
+    }
+    catch (Exception ex)
+    {
+        return Results.Redirect($"{frontendBase}/auth/callback?error={Uri.EscapeDataString(ex.Message)}");
+    }
+
+    var customer = await db.Customers.FirstOrDefaultAsync(c => c.LineId == lineId)
+        ?? await db.Customers.FirstOrDefaultAsync(c => c.Email == lineEmail);
+
+    bool isNew = customer == null;
+    if (customer == null)
+    {
+        var cnt = await db.Customers.CountAsync();
+        customer = new Customer
+        {
+            CustomerNumber = $"C{cnt + 1:00000}",
+            Name = lineName,
+            Email = lineEmail,
+            Phone = "",
+            PasswordHash = "",
+            LineId = lineId,
+            IsEmailVerified = true,
+            CreatedAt = DateTime.UtcNow
+        };
+        db.Customers.Add(customer);
+    }
+    else
+    {
+        if (string.IsNullOrEmpty(customer.LineId)) customer.LineId = lineId;
+        customer.UpdatedAt = DateTime.UtcNow;
+    }
+    customer.LastLoginAt = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+
+    var jwt = GenerateCustomerJwt(customer);
+    return Results.Redirect($"{frontendBase}/auth/callback?token={jwt}&isNew={isNew.ToString().ToLower()}");
+}).WithName("CustomerLineCallback").WithTags("CustomerAuth");
+
+// GET /api/customer/me — 取得登入客戶個人資料
+app.MapGet("/api/customer/me", async (ClaimsPrincipal user, AppDbContext db) =>
+{
+    var role = user.FindFirstValue(ClaimTypes.Role);
+    if (role != "customer") return Results.Forbid();
+    var idStr = user.FindFirstValue(ClaimTypes.NameIdentifier);
+    if (!int.TryParse(idStr, out var id)) return Results.Unauthorized();
+    var customer = await db.Customers.FindAsync(id);
+    if (customer == null || !customer.IsActive) return Results.Unauthorized();
+    var isProfileComplete = !string.IsNullOrEmpty(customer.Name) && !string.IsNullOrEmpty(customer.Phone) && !string.IsNullOrEmpty(customer.Address);
+    return Results.Ok(new
+    {
+        customer.Id, customer.Name, customer.Email, customer.Phone, customer.Address,
+        customer.CustomerNumber, customer.RegisteredAt, isProfileComplete
+    });
+}).RequireAuthorization().WithName("CustomerGetMe").WithTags("CustomerAuth");
+
+// PUT /api/customer/me — 更新個人資料
+app.MapPut("/api/customer/me", async (ClaimsPrincipal user, [FromBody] CustomerUpdateProfileRequest req, AppDbContext db) =>
+{
+    var role = user.FindFirstValue(ClaimTypes.Role);
+    if (role != "customer") return Results.Forbid();
+    var idStr = user.FindFirstValue(ClaimTypes.NameIdentifier);
+    if (!int.TryParse(idStr, out var id)) return Results.Unauthorized();
+    var customer = await db.Customers.FindAsync(id);
+    if (customer == null || !customer.IsActive) return Results.Unauthorized();
+    if (!string.IsNullOrEmpty(req.Name)) customer.Name = req.Name;
+    if (!string.IsNullOrEmpty(req.Phone)) customer.Phone = req.Phone;
+    if (req.Address != null) customer.Address = req.Address;
+    customer.UpdatedAt = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+    var isProfileComplete = !string.IsNullOrEmpty(customer.Name) && !string.IsNullOrEmpty(customer.Phone) && !string.IsNullOrEmpty(customer.Address);
+    return Results.Ok(new { customer.Id, customer.Name, customer.Email, customer.Phone, customer.Address, isProfileComplete });
+}).RequireAuthorization().WithName("CustomerUpdateProfile").WithTags("CustomerAuth");
+
 app.Run();
 
 public record CreateCustomerRequest(string Email, string? Name, string? Phone, string? Address, string? DisplayName, string? FirebaseUid);
@@ -1503,3 +1862,8 @@ public record UpsertTestimonialRequest(string? Content, string? AuthorName, int 
 public record UpsertStoreRequest(string? Name, string? Address, string? Phone, string? BusinessHours, string? ImageUrl, bool? IsVisible, int? SortOrder);
 public record UpsertHeroBannerRequest(string? Title, string? SubTitle, string? ButtonText, string? ButtonUrl, string? ImageUrl, bool? IsActive, int? SortOrder);
 public record UpsertContentPageRequest(string? Slug, string? TitleZhTW, string? BodyZhTW, bool? IsPublished, int? SortOrder);
+public record CustomerRegisterRequest(string Email, string Password, string? Name);
+public record CustomerVerifyOtpRequest(string Email, string Code);
+public record CustomerLoginRequest(string Email, string Password);
+public record CustomerGoogleRequest(string IdToken);
+public record CustomerUpdateProfileRequest(string? Name, string? Phone, string? Address);

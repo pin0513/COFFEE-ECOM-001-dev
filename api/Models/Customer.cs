@@ -46,6 +46,16 @@ public class Customer
     public string PasswordHash { get; set; } = string.Empty;
 
     /// <summary>
+    /// Google 登入 sub
+    /// </summary>
+    public string? GoogleId { get; set; }
+
+    /// <summary>
+    /// LINE 登入 userId
+    /// </summary>
+    public string? LineId { get; set; }
+
+    /// <summary>
     /// 地址
     /// </summary>
     public string? Address { get; set; }
