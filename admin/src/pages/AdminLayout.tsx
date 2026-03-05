@@ -27,6 +27,7 @@ import TestimonialManagement from './TestimonialManagement';
 import StoreManagement from './StoreManagement';
 import HeroBannerManagement from './HeroBannerManagement';
 import ContentPageManagement from './ContentPageManagement';
+import CustomerManagement from './CustomerManagement';
 
 const { Header, Sider, Content } = Layout;
 
@@ -66,6 +67,7 @@ export default function AdminLayout() {
       case 'stores': return <StoreManagement />;
       case 'hero-banners': return <HeroBannerManagement />;
       case 'content-pages': return <ContentPageManagement />;
+      case 'customers': return <CustomerManagement />;
       default: return <Dashboard />;
     }
   };
@@ -90,6 +92,7 @@ export default function AdminLayout() {
             { key: 'products', icon: <ShoppingOutlined />, label: '商品管理' },
             { key: 'categories', icon: <AppstoreOutlined />, label: '分類管理' },
             { key: 'orders', icon: <ShoppingCartOutlined />, label: '訂單管理' },
+            { key: 'customers', icon: <UserOutlined />, label: '會員管理' },
             { key: 'hero-banners', icon: <PictureOutlined />, label: 'Banner 管理' },
             { key: 'testimonials', icon: <StarOutlined />, label: '評價管理' },
             { key: 'stores', icon: <EnvironmentOutlined />, label: '門市管理' },

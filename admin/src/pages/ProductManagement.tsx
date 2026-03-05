@@ -18,6 +18,7 @@ interface Category {
   id: number;
   name: string;
   specTemplate?: string | null;
+  children?: { id: number; name: string; specTemplate?: string | null }[];
 }
 
 interface BulkTier {
@@ -89,7 +90,17 @@ export default function ProductManagement() {
   const fetchCategories = async () => {
     try {
       const res = await apiClient.get('/categories');
-      setCategories(res.data || []);
+      const tree: Category[] = res.data || [];
+      const flat: Category[] = [];
+      for (const parent of tree) {
+        flat.push(parent);
+        if (parent.children?.length) {
+          for (const child of parent.children) {
+            flat.push({ id: child.id, name: `└ ${child.name}`, specTemplate: child.specTemplate });
+          }
+        }
+      }
+      setCategories(flat);
     } catch {
       console.error('Failed to fetch categories');
     }

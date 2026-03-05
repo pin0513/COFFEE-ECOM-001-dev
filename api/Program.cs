@@ -628,12 +628,15 @@ app.MapPost("/api/customers", async ([FromBody] CreateCustomerRequest req, AppDb
     return Results.Created($"/api/customers/{customer.Id}", new { customer.Id, customer.Email, customer.Name });
 }).WithName("CreateCustomer").WithTags("Customers");
 
-app.MapGet("/api/customers", [Authorize] async (AppDbContext db, [FromQuery] int page = 1, [FromQuery] int pageSize = 20) =>
+app.MapGet("/api/customers", [Authorize] async (AppDbContext db, [FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? keyword = null) =>
 {
     if (page < 1) page = 1;
     if (pageSize < 1 || pageSize > 100) pageSize = 20;
-    var total = await db.Customers.CountAsync();
-    var customers = await db.Customers
+    var query = db.Customers.AsQueryable();
+    if (!string.IsNullOrWhiteSpace(keyword))
+        query = query.Where(c => c.Name.Contains(keyword) || c.Email.Contains(keyword));
+    var total = await query.CountAsync();
+    var customers = await query
         .OrderByDescending(c => c.CreatedAt)
         .Skip((page - 1) * pageSize).Take(pageSize)
         .Select(c => new { c.Id, c.CustomerNumber, c.Name, c.Email, c.Phone, c.Address, c.Type, c.IsActive, c.CreatedAt,
