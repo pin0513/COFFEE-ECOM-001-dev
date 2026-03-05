@@ -27,6 +27,9 @@ public static class DbSeeder
 
         // 補充既有 DB 缺少的 footer 連結設定（升級用，不影響新 DB）
         await EnsureFooterLinksAsync(db);
+
+        // 補充金流相關 SiteSettings key（升級用）
+        await EnsurePaymentGatewayKeysAsync(db);
     }
 
     private static async Task SeedAdminsAsync(AppDbContext db)
@@ -104,6 +107,23 @@ public static class DbSeeder
             ["footer_links_service"]  = "[{\"label\":\"聯絡我們\",\"url\":\"/pages/contact\"},{\"label\":\"常見問題\",\"url\":\"/pages/faq\"},{\"label\":\"關於我們\",\"url\":\"/pages/about\"}]",
             ["footer_social_facebook"] = "",
             ["footer_social_instagram"] = "",
+        };
+        foreach (var (key, val) in defaults)
+        {
+            if (!await db.SiteSettings.AnyAsync(s => s.Key == key))
+            {
+                db.SiteSettings.Add(new SiteSetting { Key = key, Value = val, UpdatedAt = DateTime.UtcNow });
+            }
+        }
+        await db.SaveChangesAsync();
+    }
+
+    private static async Task EnsurePaymentGatewayKeysAsync(AppDbContext db)
+    {
+        var defaults = new Dictionary<string, string>
+        {
+            ["payment_ecpay_enabled"] = "false",
+            ["payment_linepay_enabled"] = "false",
         };
         foreach (var (key, val) in defaults)
         {

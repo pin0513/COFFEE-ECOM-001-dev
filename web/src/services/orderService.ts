@@ -112,3 +112,19 @@ export const updateOrderStatus = async (id: number, data: UpdateOrderStatusDto):
 export const deleteOrder = async (id: number): Promise<void> => {
   await apiClient.delete(`/orders/${id}`);
 };
+
+/**
+ * 建立 ECPay 結帳 Form HTML
+ */
+export const createEcpayCheckout = async (orderId: number): Promise<{ formHtml: string }> => {
+  const response = await apiClient.post<{ formHtml: string }>(`/payment/ecpay/checkout?orderId=${orderId}`);
+  return response.data;
+};
+
+/**
+ * 建立 LINE Pay 付款請求，取得 paymentUrl
+ */
+export const createLinePayRequest = async (orderId: number): Promise<{ paymentUrl: string }> => {
+  const response = await apiClient.post<{ paymentUrl: string }>(`/payment/linepay/request?orderId=${orderId}`);
+  return response.data;
+};

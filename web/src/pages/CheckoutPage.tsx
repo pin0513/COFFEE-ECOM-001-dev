@@ -3,7 +3,7 @@ import { LeftOutlined, UpOutlined, BankOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useCartStore } from '../stores/cartStore';
 import { useState, useEffect } from 'react';
-import { createOrder } from '../services/orderService';
+import { createOrder, createEcpayCheckout, createLinePayRequest } from '../services/orderService';
 import { getSiteSettings } from '../services/siteSettingsService';
 
 const { Title, Paragraph } = Typography;
@@ -24,6 +24,8 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<string>('cash');
   const [bankTransferEnabled, setBankTransferEnabled] = useState(true);
   const [cashEnabled, setCashEnabled] = useState(true);
+  const [ecpayEnabled, setEcpayEnabled] = useState(false);
+  const [linepayEnabled, setLinepayEnabled] = useState(false);
   const [bankInfo, setBankInfo] = useState<BankAccountInfo | null>(null);
   const [form] = Form.useForm();
 
@@ -32,14 +34,20 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     getSiteSettings().then(settings => {
-      const bankOn = settings.payment_bank_transfer_enabled !== 'false';
-      const cashOn = settings.payment_cash_enabled !== 'false';
+      const bankOn    = settings.payment_bank_transfer_enabled !== 'false';
+      const cashOn    = settings.payment_cash_enabled !== 'false';
+      const ecpayOn   = settings.payment_ecpay_enabled === 'true';
+      const linepayOn = settings.payment_linepay_enabled === 'true';
       setBankTransferEnabled(bankOn);
       setCashEnabled(cashOn);
+      setEcpayEnabled(ecpayOn);
+      setLinepayEnabled(linepayOn);
 
       // 預設付款方式
-      if (cashOn && !hasPrePayRequired) setPaymentMethod('cash');
+      if (ecpayOn) setPaymentMethod('ecpay');
+      else if (cashOn && !hasPrePayRequired) setPaymentMethod('cash');
       else if (bankOn) setPaymentMethod('transfer');
+      else if (linepayOn) setPaymentMethod('linepay');
 
       if (settings.bank_account_info) {
         try {
@@ -72,13 +80,34 @@ export default function CheckoutPage() {
           quantity: item.quantity,
         })),
         discountAmount: 0,
-        paymentMethod: paymentMethod === 'transfer' ? 'BankTransfer' : 'Cash',
+        paymentMethod: paymentMethod === 'transfer' ? 'BankTransfer'
+          : paymentMethod === 'ecpay' ? 'CreditCard'
+          : paymentMethod === 'linepay' ? 'LinePay'
+          : 'Cash',
         recipientName: values.name,
         recipientPhone: values.phone,
         shippingAddress: values.address,
         notes: values.note || undefined,
         transferCode: paymentMethod === 'transfer' ? values.transferCode : undefined,
       });
+
+      // 依付款方式分流
+      if (paymentMethod === 'ecpay') {
+        clearCart();
+        const { formHtml } = await createEcpayCheckout(order.id);
+        const div = document.createElement('div');
+        div.innerHTML = formHtml;
+        document.body.appendChild(div);
+        const form = div.querySelector('form');
+        if (form) form.submit();
+        return;
+      }
+      if (paymentMethod === 'linepay') {
+        clearCart();
+        const { paymentUrl } = await createLinePayRequest(order.id);
+        window.location.href = paymentUrl;
+        return;
+      }
 
       message.success(`訂單已成立！訂單編號：${order.orderNumber}`);
       clearCart();
@@ -103,6 +132,8 @@ export default function CheckoutPage() {
 
   // 含預付款商品時禁用 COD
   const paymentOptions = [
+    ...(ecpayEnabled ? [{ label: '信用卡 / ATM / 超商代碼（綠界）', value: 'ecpay' }] : []),
+    ...(linepayEnabled ? [{ label: 'LINE Pay', value: 'linepay' }] : []),
     ...(cashEnabled && !hasPrePayRequired ? [{ label: '貨到付款', value: 'cash' }] : []),
     ...(bankTransferEnabled ? [{ label: '銀行轉帳', value: 'transfer' }] : []),
   ];

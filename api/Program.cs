@@ -867,6 +867,268 @@ app.MapPatch("/api/orders/{id:int}/status", [Authorize] async (int id, [FromBody
     return Results.Ok(new { order.Id, Status = order.Status.ToString(), PaymentStatus = order.PaymentStatus.ToString() });
 }).WithName("UpdateOrderStatus").WithTags("Orders");
 
+// ── Payment Gateway ──────────────────────────────────────────────────────────
+
+// POST /api/payment/ecpay/checkout?orderId=xxx — 回傳 ECPay 自動提交 HTML Form
+app.MapPost("/api/payment/ecpay/checkout", async (int orderId, AppDbContext db, IConfiguration config) =>
+{
+    var order = await db.Orders.Include(o => o.Items).FirstOrDefaultAsync(o => o.Id == orderId);
+    if (order == null) return Results.NotFound(new { error = "訂單不存在" });
+
+    var ecpay = config.GetSection("ECPay");
+    var merchantId   = ecpay["MerchantId"] ?? "";
+    var hashKey      = ecpay["HashKey"]    ?? "";
+    var hashIV       = ecpay["HashIV"]     ?? "";
+    var isProduction = ecpay.GetValue<bool>("IsProduction");
+    var returnUrl    = ecpay["ReturnUrl"]       ?? "";
+    var resultUrl    = ecpay["OrderResultUrl"]  ?? "";
+
+    var actionUrl = isProduction
+        ? "https://payment.ecpay.com.tw/Cashier/AioCheckout/index"
+        : "https://payment-stage.ecpay.com.tw/Cashier/AioCheckout/index";
+
+    // 綠界 MerchantTradeNo 限 20 碼英數
+    var tradeNo = $"PH{order.Id:D10}{DateTimeOffset.UtcNow.ToUnixTimeSeconds() % 100000:D5}";
+    if (tradeNo.Length > 20) tradeNo = tradeNo[..20];
+
+    var itemNames = order.Items.Select(i => $"{i.ProductName ?? "商品"} x{i.Quantity}").ToList();
+    var itemName  = string.Join("#", itemNames);
+    if (itemName.Length > 400) itemName = itemName[..400];
+
+    var parameters = new SortedDictionary<string, string>
+    {
+        ["MerchantID"]        = merchantId,
+        ["MerchantTradeNo"]   = tradeNo,
+        ["MerchantTradeDate"] = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"),
+        ["PaymentType"]       = "aio",
+        ["TotalAmount"]       = ((int)order.TotalAmount).ToString(),
+        ["TradeDesc"]         = "品皇咖啡訂購",
+        ["ItemName"]          = itemName,
+        ["ReturnURL"]         = returnUrl,
+        ["OrderResultURL"]    = resultUrl,
+        ["ChoosePayment"]     = "ALL",
+        ["EncryptType"]       = "1",
+    };
+
+    parameters["CheckMacValue"] = EcpayCheckMacValue(parameters, hashKey, hashIV);
+
+    // 儲存 tradeNo 供後續核對
+    order.EcpayTradeNo = tradeNo;
+    order.UpdatedAt = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+
+    var formHtml = BuildEcpayForm(actionUrl, parameters);
+    return Results.Ok(new { formHtml });
+}).WithName("EcpayCheckout").WithTags("Payment");
+
+// POST /api/payment/ecpay/notify — ECPay 非同步通知（更新付款狀態）
+app.MapPost("/api/payment/ecpay/notify", async (HttpRequest request, AppDbContext db, IConfiguration config) =>
+{
+    var form = await request.ReadFormAsync();
+    var rtnCode      = form["RtnCode"].ToString();
+    var tradeNo      = form["MerchantTradeNo"].ToString();
+    var checkMac     = form["CheckMacValue"].ToString();
+
+    var ecpay  = config.GetSection("ECPay");
+    var hashKey = ecpay["HashKey"] ?? "";
+    var hashIV  = ecpay["HashIV"]  ?? "";
+
+    // 驗證 CheckMacValue
+    var allFields = form.Keys
+        .Where(k => k != "CheckMacValue")
+        .ToDictionary(k => k, k => form[k].ToString());
+    var sortedFields = new SortedDictionary<string, string>(allFields);
+    var expected = EcpayCheckMacValue(sortedFields, hashKey, hashIV);
+
+    if (!string.Equals(expected, checkMac, StringComparison.OrdinalIgnoreCase))
+        return Results.Content("0|Error", "text/plain");
+
+    var order = await db.Orders.FirstOrDefaultAsync(o => o.EcpayTradeNo == tradeNo);
+    if (order != null && rtnCode == "1")
+    {
+        order.PaymentStatus = PaymentStatus.Paid;
+        order.Status = OrderStatus.Paid;
+        order.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+    }
+    return Results.Content("1|OK", "text/plain");
+}).WithName("EcpayNotify").WithTags("Payment");
+
+// GET /api/payment/ecpay/return — ECPay 同步返回（redirect to 前台結果頁）
+app.MapGet("/api/payment/ecpay/return", (HttpRequest request, IConfiguration config) =>
+{
+    var rtnCode = request.Query["RtnCode"].ToString();
+    var frontendBase = config["AppDomain"] ?? "http://localhost:5173";
+    var redirectUrl = rtnCode == "1"
+        ? $"{frontendBase}/payment/return?status=success&method=ecpay&rtnCode={rtnCode}"
+        : $"{frontendBase}/payment/return?status=fail&method=ecpay&rtnCode={rtnCode}";
+    return Results.Redirect(redirectUrl);
+}).WithName("EcpayReturn").WithTags("Payment");
+
+// POST /api/payment/linepay/request?orderId=xxx — 建立 LINE Pay 付款請求，回傳 paymentUrl
+app.MapPost("/api/payment/linepay/request", async (int orderId, AppDbContext db, IConfiguration config) =>
+{
+    var order = await db.Orders.Include(o => o.Items).FirstOrDefaultAsync(o => o.Id == orderId);
+    if (order == null) return Results.NotFound(new { error = "訂單不存在" });
+
+    var linepay      = config.GetSection("LinePay");
+    var channelId    = linepay["ChannelId"]          ?? "";
+    var channelSecret = linepay["ChannelSecretKey"]  ?? "";
+    var isProduction = linepay.GetValue<bool>("IsProduction");
+    var confirmUrl   = linepay["ConfirmUrl"] ?? "";
+    var cancelUrl    = linepay["CancelUrl"]  ?? "";
+
+    var apiBase = isProduction
+        ? "https://api-pay.line.me"
+        : "https://sandbox-api-pay.line.me";
+    var apiPath = "/v3/payments/request";
+
+    var packages = new[]
+    {
+        new
+        {
+            id = order.OrderNumber,
+            amount = (int)order.TotalAmount,
+            name = "品皇咖啡訂購",
+            products = order.Items.Select(i => new
+            {
+                name = i.ProductName ?? "商品",
+                quantity = i.Quantity,
+                price = (int)i.UnitPrice
+            }).ToArray()
+        }
+    };
+
+    var requestBody = System.Text.Json.JsonSerializer.Serialize(new
+    {
+        amount = (int)order.TotalAmount,
+        currency = "TWD",
+        orderId = order.OrderNumber,
+        packages,
+        redirectUrls = new { confirmUrl = $"{confirmUrl}?type=linepay&orderId={order.Id}", cancelUrl }
+    });
+
+    var nonce    = Guid.NewGuid().ToString("N");
+    var sigText  = channelSecret + apiPath + requestBody + nonce;
+    var sigBytes = new System.Security.Cryptography.HMACSHA256(Encoding.UTF8.GetBytes(channelSecret))
+        .ComputeHash(Encoding.UTF8.GetBytes(sigText));
+    var signature = Convert.ToBase64String(sigBytes);
+
+    using var http = new System.Net.Http.HttpClient();
+    http.DefaultRequestHeaders.Add("X-LINE-ChannelId", channelId);
+    http.DefaultRequestHeaders.Add("X-LINE-Authorization-Nonce", nonce);
+    http.DefaultRequestHeaders.Add("X-LINE-Authorization", signature);
+
+    var resp = await http.PostAsync(
+        $"{apiBase}{apiPath}",
+        new System.Net.Http.StringContent(requestBody, Encoding.UTF8, "application/json"));
+    var respJson = await resp.Content.ReadAsStringAsync();
+
+    using var doc = System.Text.Json.JsonDocument.Parse(respJson);
+    var returnCode = doc.RootElement.GetProperty("returnCode").GetString();
+    if (returnCode != "0000")
+        return Results.BadRequest(new { error = $"LINE Pay 建立失敗：{returnCode}" });
+
+    var paymentUrl = doc.RootElement
+        .GetProperty("info").GetProperty("paymentUrl").GetProperty("web").GetString();
+    var transactionId = doc.RootElement
+        .GetProperty("info").GetProperty("transactionId").GetInt64();
+
+    order.LinePayTransactionId = transactionId.ToString();
+    order.UpdatedAt = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+
+    return Results.Ok(new { paymentUrl });
+}).WithName("LinePayRequest").WithTags("Payment");
+
+// GET /api/payment/linepay/confirm?transactionId=xxx&orderId=xxx — LINE Pay 確認付款
+app.MapGet("/api/payment/linepay/confirm", async (long transactionId, int orderId, AppDbContext db, IConfiguration config) =>
+{
+    var order = await db.Orders.FindAsync(orderId);
+    if (order == null) return Results.NotFound(new { error = "訂單不存在" });
+
+    var linepay       = config.GetSection("LinePay");
+    var channelId     = linepay["ChannelId"]         ?? "";
+    var channelSecret = linepay["ChannelSecretKey"]  ?? "";
+    var isProduction  = linepay.GetValue<bool>("IsProduction");
+    var apiBase       = isProduction ? "https://api-pay.line.me" : "https://sandbox-api-pay.line.me";
+    var apiPath       = $"/v3/payments/{transactionId}/confirm";
+
+    var requestBody = System.Text.Json.JsonSerializer.Serialize(new
+    {
+        amount = (int)order.TotalAmount,
+        currency = "TWD"
+    });
+
+    var nonce    = Guid.NewGuid().ToString("N");
+    var sigText  = channelSecret + apiPath + requestBody + nonce;
+    var sigBytes = new System.Security.Cryptography.HMACSHA256(Encoding.UTF8.GetBytes(channelSecret))
+        .ComputeHash(Encoding.UTF8.GetBytes(sigText));
+    var signature = Convert.ToBase64String(sigBytes);
+
+    using var http = new System.Net.Http.HttpClient();
+    http.DefaultRequestHeaders.Add("X-LINE-ChannelId", channelId);
+    http.DefaultRequestHeaders.Add("X-LINE-Authorization-Nonce", nonce);
+    http.DefaultRequestHeaders.Add("X-LINE-Authorization", signature);
+
+    var resp = await http.PostAsync(
+        $"{apiBase}{apiPath}",
+        new System.Net.Http.StringContent(requestBody, Encoding.UTF8, "application/json"));
+    var respJson = await resp.Content.ReadAsStringAsync();
+
+    using var doc = System.Text.Json.JsonDocument.Parse(respJson);
+    var returnCode = doc.RootElement.GetProperty("returnCode").GetString();
+
+    if (returnCode == "0000")
+    {
+        order.PaymentStatus = PaymentStatus.Paid;
+        order.Status = OrderStatus.Paid;
+        order.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+        return Results.Ok(new { success = true });
+    }
+    return Results.Ok(new { success = false, returnCode });
+}).WithName("LinePayConfirm").WithTags("Payment");
+
+// GET /api/payment/linepay/cancel — LINE Pay 取消
+app.MapGet("/api/payment/linepay/cancel", (int orderId) =>
+    Results.Ok(new { cancelled = true, orderId })
+).WithName("LinePayCancel").WithTags("Payment");
+
+// ── ECPay Helper ─────────────────────────────────────────────────────────────
+
+static string EcpayCheckMacValue(IDictionary<string, string> parameters, string hashKey, string hashIV)
+{
+    var raw = string.Join("&", parameters
+        .OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
+        .Select(kv => $"{kv.Key}={kv.Value}"));
+    raw = $"HashKey={hashKey}&{raw}&HashIV={hashIV}";
+
+    // URL encode（小寫）
+    raw = Uri.EscapeDataString(raw).ToLower()
+        .Replace("%21", "!")
+        .Replace("%2a", "*")
+        .Replace("%28", "(")
+        .Replace("%29", ")")
+        .Replace("%20", "+");
+
+    // SHA256（大寫 hex）
+    var bytes = System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(raw));
+    return Convert.ToHexString(bytes).ToUpper();
+}
+
+static string BuildEcpayForm(string actionUrl, IDictionary<string, string> parameters)
+{
+    var inputs = string.Join("\n", parameters.Select(
+        kv => $"<input type='hidden' name='{kv.Key}' value='{kv.Value}' />"));
+    return $"""
+        <form id='ecpay' method='post' action='{actionUrl}'>
+          {inputs}
+        </form>
+        <script>document.getElementById('ecpay').submit();</script>
+        """;
+}
+
 // Testimonials
 app.MapGet("/api/testimonials", async (AppDbContext db) =>
     Results.Ok(await db.Testimonials

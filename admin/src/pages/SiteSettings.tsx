@@ -19,6 +19,8 @@ interface SettingsForm {
   checkout_enabled: boolean;
   payment_bank_transfer_enabled: boolean;
   payment_cash_enabled: boolean;
+  payment_ecpay_enabled: boolean;
+  payment_linepay_enabled: boolean;
   // bank account fields (stored as JSON under bank_account_info)
   bank_name: string;
   bank_branch: string;
@@ -71,6 +73,8 @@ export default function SiteSettings() {
           checkout_enabled: data.checkout_enabled !== 'false',
           payment_bank_transfer_enabled: data.payment_bank_transfer_enabled !== 'false',
           payment_cash_enabled: data.payment_cash_enabled !== 'false',
+          payment_ecpay_enabled: data.payment_ecpay_enabled === 'true',
+          payment_linepay_enabled: data.payment_linepay_enabled === 'true',
           bank_name: bankInfo.bankName || '',
           bank_branch: bankInfo.branch || '',
           bank_account: bankInfo.accountNumber || '',
@@ -129,6 +133,8 @@ export default function SiteSettings() {
         { key: 'checkout_enabled', value: values.checkout_enabled ? 'true' : 'false' },
         { key: 'payment_bank_transfer_enabled', value: values.payment_bank_transfer_enabled ? 'true' : 'false' },
         { key: 'payment_cash_enabled', value: values.payment_cash_enabled ? 'true' : 'false' },
+        { key: 'payment_ecpay_enabled', value: values.payment_ecpay_enabled ? 'true' : 'false' },
+        { key: 'payment_linepay_enabled', value: values.payment_linepay_enabled ? 'true' : 'false' },
         { key: 'bank_account_info', value: bankInfo },
         { key: 'brand_story_title', value: values.brand_story_title || '' },
         { key: 'brand_story_content', value: values.brand_story_content || '' },
@@ -219,8 +225,21 @@ export default function SiteSettings() {
                 <Switch />
               </Form.Item>
             </Col>
+            <Col>
+              <Form.Item label="綠界（信用卡/ATM/超商）" name="payment_ecpay_enabled" valuePropName="checked">
+                <Switch />
+              </Form.Item>
+            </Col>
+            <Col>
+              <Form.Item label="LINE Pay" name="payment_linepay_enabled" valuePropName="checked">
+                <Switch />
+              </Form.Item>
+            </Col>
           </Row>
         </Form.Item>
+        <div style={{ fontSize: 12, color: '#888', marginBottom: 16 }}>
+          ⚠️ 綠界／LINE Pay API 金鑰請在 VM 的 <code>appsettings.Production.json</code> 設定，不在後台 UI 設定
+        </div>
 
         <Divider dashed>銀行轉帳帳號</Divider>
         <Row gutter={16}>

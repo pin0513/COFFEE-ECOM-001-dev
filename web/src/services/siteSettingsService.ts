@@ -12,6 +12,8 @@ export interface SiteSettings {
   logo_url: string;
   payment_bank_transfer_enabled: string;
   payment_cash_enabled: string;
+  payment_ecpay_enabled: string;
+  payment_linepay_enabled: string;
   bank_account_info: string;
   order_notification_email: string;
   checkout_enabled: string;

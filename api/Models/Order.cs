@@ -86,6 +86,16 @@ public class Order
     public string? TransferCode { get; set; }
 
     /// <summary>
+    /// 綠界交易編號（ECPay）
+    /// </summary>
+    public string? EcpayTradeNo { get; set; }
+
+    /// <summary>
+    /// LINE Pay 交易 ID
+    /// </summary>
+    public string? LinePayTransactionId { get; set; }
+
+    /// <summary>
     /// 訂單日期
     /// </summary>
     public DateTime OrderDate { get; set; } = DateTime.UtcNow;

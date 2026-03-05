@@ -10,6 +10,7 @@ import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import OrderSuccessPage from './pages/OrderSuccessPage';
 import PagesPage from './pages/PagesPage';
+import PaymentReturnPage from './pages/PaymentReturnPage';
 
 /** 所有頁面共用的 Layout wrapper（Header + Footer + LINE 浮動按鈕） */
 function AppLayout() {
@@ -30,6 +31,8 @@ function App() {
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/order-success" element={<OrderSuccessPage />} />
               <Route path="/pages/:slug" element={<PagesPage />} />
+              <Route path="/payment/return" element={<PaymentReturnPage />} />
+              <Route path="/payment/cancel" element={<PaymentReturnPage />} />
             </Route>
           </Routes>
         </Router>
