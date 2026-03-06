@@ -125,7 +125,7 @@ export default function CheckoutPage() {
 
       message.success(`訂單已成立！訂單編號：${order.orderNumber}`);
       clearCart();
-      navigate('/order-success', { state: { order } });
+      navigate('/order-success', { state: { order, customerEmail: values.email } });
 
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } }; message?: string };

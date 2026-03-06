@@ -1850,6 +1850,34 @@ app.MapPut("/api/customer/me", async (ClaimsPrincipal user, [FromBody] CustomerU
     return Results.Ok(new { customer.Id, customer.Name, customer.Email, customer.Phone, customer.Address, isProfileComplete });
 }).RequireAuthorization().WithName("CustomerUpdateProfile").WithTags("CustomerAuth");
 
+// GET /api/orders/lookup — 匿名訂單查詢（訂單編號 + Email 雙重驗證）
+app.MapGet("/api/orders/lookup", async ([FromQuery] string orderNumber, [FromQuery] string email, AppDbContext db) =>
+{
+    if (string.IsNullOrWhiteSpace(orderNumber) || string.IsNullOrWhiteSpace(email))
+        return Results.BadRequest(new { message = "請提供訂單編號與 Email" });
+    var order = await db.Orders.Include(o => o.Items)
+        .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber);
+    if (order == null) return Results.NotFound(new { message = "找不到此訂單" });
+    // 用 Customer Email 驗證（避免任意查他人訂單）
+    var customer = await db.Customers.FindAsync(order.CustomerId);
+    if (customer == null || !string.Equals(customer.Email, email.Trim(), StringComparison.OrdinalIgnoreCase))
+        return Results.NotFound(new { message = "找不到此訂單" });
+    return Results.Ok(new
+    {
+        order.Id, order.OrderNumber, order.TotalAmount, order.Subtotal, order.ShippingFee, order.DiscountAmount,
+        Status = order.Status.ToString(),
+        PaymentStatus = order.PaymentStatus.ToString(),
+        PaymentMethod = order.PaymentMethod.ToString(),
+        order.RecipientName, order.RecipientPhone, order.ShippingAddress,
+        order.Notes, order.TransferCode,
+        order.OrderDate, order.CreatedAt,
+        Items = order.Items.Select(i => new
+        {
+            i.ProductName, i.ProductSku, i.UnitPrice, i.Quantity, i.Subtotal
+        })
+    });
+}).WithName("OrderLookup").WithTags("Orders");
+
 // GET /api/customer/orders — 查詢自己的訂單列表
 app.MapGet("/api/customer/orders", async (ClaimsPrincipal user, AppDbContext db,
     [FromQuery] int page = 1, [FromQuery] int pageSize = 10) =>
