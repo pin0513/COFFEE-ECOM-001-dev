@@ -32,7 +32,7 @@ import CustomerManagement from './CustomerManagement';
 const { Header, Sider, Content } = Layout;
 
 export default function AdminLayout() {
-  const [selectedKey, setSelectedKey] = useState('dashboard');
+  const [selectedKey, setSelectedKey] = useState('orders');
   const { user, signOut } = useAuth();
 
   const handleLogout = async () => {

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import {
   Card, Table, Button, Modal, Form, Input, InputNumber, Select,
-  Switch, Space, message, Upload, Tag, Dropdown, Divider, DatePicker,
+  Switch, Space, message, Upload, Tag, Dropdown, Divider, DatePicker, Tabs,
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, UploadOutlined, ImportOutlined, LoadingOutlined, DownOutlined, MinusCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, UploadOutlined, ImportOutlined, LoadingOutlined, DownOutlined, MinusCircleOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import type { UploadFile, UploadProps } from 'antd';
 import { apiClient } from '../config/api';
 
@@ -68,22 +68,35 @@ export default function ProductManagement() {
   const [imageUploading, setImageUploading] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
+  const [productTab, setProductTab] = useState<'all' | 'pending'>('all');
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [allowBulk, setAllowBulk] = useState(false);
   const [bulkTiers, setBulkTiers] = useState<BulkTier[]>([]);
   const [requirePrePayment, setRequirePrePayment] = useState(false);
   const [form] = Form.useForm();
 
-  const fetchProducts = async (p = 1) => {
+  const fetchProducts = async (p = 1, tab = productTab) => {
     setLoading(true);
     try {
-      const res = await apiClient.get('/products', { params: { page: p, pageSize: 20 } });
+      const params: Record<string, unknown> = { page: p, pageSize: 20 };
+      if (tab === 'pending') params.isOrderable = false;
+      const res = await apiClient.get('/products', { params });
       setProducts(res.data.data || []);
       setTotal(res.data.totalCount || 0);
     } catch {
       message.error('載入商品失敗');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePublish = async (id: number) => {
+    try {
+      await apiClient.patch(`/products/${id}/toggles`, { isActive: true, isOrderable: true });
+      setProducts(prev => prev.map(p => p.id === id ? { ...p, isActive: true, isOrderable: true } : p));
+      message.success('商品已上架');
+    } catch {
+      message.error('上架失敗');
     }
   };
 
@@ -107,9 +120,9 @@ export default function ProductManagement() {
   };
 
   useEffect(() => {
-    fetchProducts();
+    fetchProducts(1, productTab);
     fetchCategories();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 取得目前選擇分類的 SpecTemplate 欄位
   const getSpecFields = (categoryId: number | null): SpecField[] => {
@@ -142,7 +155,7 @@ export default function ProductManagement() {
         try {
           await apiClient.delete(`/products/${id}`);
           message.success('商品已刪除');
-          fetchProducts(page);
+          fetchProducts(page, productTab);
         } catch {
           message.error('刪除失敗');
         }
@@ -271,7 +284,7 @@ export default function ProductManagement() {
         message.success('商品已新增');
       }
       setIsModalVisible(false);
-      fetchProducts(page);
+      fetchProducts(page, productTab);
     } catch {
       message.error('儲存失敗');
     }
@@ -288,7 +301,7 @@ export default function ProductManagement() {
       });
       setImportResult(res.data);
       message.success(`匯入完成：新增 ${res.data.inserted}，更新 ${res.data.updated}`);
-      fetchProducts(1);
+      fetchProducts(1, productTab);
       setPage(1);
     } catch {
       message.error('匯入失敗');
@@ -301,7 +314,7 @@ export default function ProductManagement() {
       const res = await apiClient.post('/products/batch', { ids: selectedRowKeys, ...fields });
       message.success(`已更新 ${res.data.updated} 筆商品`);
       setSelectedRowKeys([]);
-      fetchProducts(page);
+      fetchProducts(page, productTab);
     } catch {
       message.error('批次更新失敗');
     }
@@ -359,9 +372,12 @@ export default function ProductManagement() {
     {
       title: '操作',
       key: 'action',
-      width: 130,
+      width: 180,
       render: (_: unknown, record: Product) => (
         <Space>
+          {!record.isOrderable && (
+            <Button type="link" icon={<CheckCircleOutlined />} style={{ color: '#52c41a' }} onClick={() => handlePublish(record.id)}>上架</Button>
+          )}
           <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)}>編輯</Button>
           <Button type="link" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)}>刪除</Button>
         </Space>
@@ -370,6 +386,7 @@ export default function ProductManagement() {
   ];
 
   const batchMenuItems = [
+    { key: 'publish', label: '批次上架（啟用＋可下單）', onClick: () => handleBatchUpdate({ isActive: true, isOrderable: true }) },
     { key: 'orderable-on', label: '批次開放可下單', onClick: () => handleBatchUpdate({ isOrderable: true }) },
     { key: 'orderable-off', label: '批次停用可下單', onClick: () => handleBatchUpdate({ isOrderable: false }) },
     { type: 'divider' as const },
@@ -399,6 +416,21 @@ export default function ProductManagement() {
         </Space>
       }
     >
+      <Tabs
+        activeKey={productTab}
+        items={[
+          { key: 'all', label: '全部商品' },
+          { key: 'pending', label: `待上架` },
+        ]}
+        onChange={(key) => {
+          const tab = key as 'all' | 'pending';
+          setProductTab(tab);
+          setPage(1);
+          setSelectedRowKeys([]);
+          fetchProducts(1, tab);
+        }}
+        style={{ marginBottom: 8 }}
+      />
       <Table
         columns={columns}
         dataSource={products}
@@ -408,7 +440,7 @@ export default function ProductManagement() {
           selectedRowKeys,
           onChange: (keys) => setSelectedRowKeys(keys as number[]),
         }}
-        pagination={{ current: page, pageSize: 20, total, onChange: (p) => { setPage(p); fetchProducts(p); } }}
+        pagination={{ current: page, pageSize: 20, total, onChange: (p) => { setPage(p); fetchProducts(p, productTab); } }}
       />
 
       {/* 商品表單 Modal */}

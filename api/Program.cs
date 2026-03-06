@@ -288,6 +288,7 @@ app.MapPut("/api/categories/{id:int}", [Authorize] async (int id, [FromBody] Upd
 // Products
 app.MapGet("/api/products", async (
     [FromQuery] int? categoryId, [FromQuery] bool? featured, [FromQuery] bool? isActive,
+    [FromQuery] bool? isOrderable,
     [FromQuery] bool? hasBulk, [FromQuery] bool? hasSub, [FromQuery] bool? hasPromo,
     [FromQuery] string? keyword,
     [FromQuery] int page = 1, [FromQuery] int pageSize = 20, AppDbContext db = null!) =>
@@ -295,6 +296,7 @@ app.MapGet("/api/products", async (
     if (page < 1) page = 1;
     if (pageSize < 1 || pageSize > 100) pageSize = 20;
     var query = db.Products.Include(p => p.Category).AsQueryable();
+    if (isOrderable.HasValue) query = query.Where(p => p.IsOrderable == isOrderable.Value);
     if (categoryId.HasValue)
     {
         var childIds = await db.Categories

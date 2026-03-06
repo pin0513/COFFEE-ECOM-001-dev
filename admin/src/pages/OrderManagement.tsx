@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, Table, Tag, Button, Modal, Space, Descriptions, message, Select } from 'antd';
+import { Card, Table, Tag, Button, Modal, Space, Descriptions, message, Select, Tabs } from 'antd';
 import { EyeOutlined, ReloadOutlined } from '@ant-design/icons';
 import { apiClient } from '../config/api';
 
@@ -70,12 +70,15 @@ export default function OrderManagement() {
   const [modalVisible, setModalVisible] = useState(false);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [statusFilter, setStatusFilter] = useState<string>('Pending');
   const pageSize = 20;
 
-  const fetchOrders = async (p = 1) => {
+  const fetchOrders = async (p = 1, status = statusFilter) => {
     setLoading(true);
     try {
-      const res = await apiClient.get('/orders', { params: { page: p, pageSize } });
+      const params: Record<string, unknown> = { page: p, pageSize };
+      if (status !== 'all') params.status = status;
+      const res = await apiClient.get('/orders', { params });
       setOrders(res.data.data);
       setTotal(res.data.totalCount);
     } catch {
@@ -85,7 +88,7 @@ export default function OrderManagement() {
     }
   };
 
-  useEffect(() => { fetchOrders(1); }, []);
+  useEffect(() => { fetchOrders(1, statusFilter); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleViewDetail = async (order: Order) => {
     try {
@@ -101,7 +104,7 @@ export default function OrderManagement() {
     try {
       await apiClient.patch(`/orders/${orderId}/status`, { status, paymentStatus });
       message.success('狀態已更新');
-      fetchOrders(page);
+      fetchOrders(page, statusFilter);
       if (selectedOrder?.id === orderId) {
         const res = await apiClient.get(`/orders/${orderId}`);
         setSelectedOrder(res.data);
@@ -167,11 +170,30 @@ export default function OrderManagement() {
     },
   ];
 
+  const statusTabs = [
+    { key: 'Pending', label: '待處理' },
+    { key: 'Processing', label: '處理中' },
+    { key: 'Shipped', label: '已出貨' },
+    { key: 'Completed', label: '已完成' },
+    { key: 'Cancelled', label: '已取消' },
+    { key: 'all', label: '全部' },
+  ];
+
   return (
     <Card
       title="訂單管理"
-      extra={<Button icon={<ReloadOutlined />} onClick={() => fetchOrders(page)}>重新整理</Button>}
+      extra={<Button icon={<ReloadOutlined />} onClick={() => fetchOrders(page, statusFilter)}>重新整理</Button>}
     >
+      <Tabs
+        activeKey={statusFilter}
+        items={statusTabs.map(t => ({ key: t.key, label: t.label }))}
+        onChange={(key) => {
+          setStatusFilter(key);
+          setPage(1);
+          fetchOrders(1, key);
+        }}
+        style={{ marginBottom: 8 }}
+      />
       <Table
         columns={columns}
         dataSource={orders}
