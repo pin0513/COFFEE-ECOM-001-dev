@@ -26,7 +26,8 @@ builder.Services.AddCors(options =>
             // 允許所有 localhost（任意 port）與正式域名
             var uri = new Uri(origin);
             return uri.Host == "localhost" || uri.Host == "127.0.0.1"
-                || uri.Host.EndsWith(".pinhung.com");
+                || uri.Host.EndsWith(".pinhung.com")
+                || uri.Host == "coffee88.com.tw" || uri.Host.EndsWith(".coffee88.com.tw");
         })
         .AllowAnyMethod()
         .AllowAnyHeader()
