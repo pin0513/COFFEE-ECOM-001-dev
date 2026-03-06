@@ -171,8 +171,6 @@ export default function HomePage() {
   const [brandStoryContent, setBrandStoryContent] = useState(
     '自 2010 年創立以來，品皇咖啡秉持著「專業烘焙，極致品味」的理念，精選世界各地最優質的咖啡豆，透過專業烘焙師的精湛技藝，為您呈現每一杯完美的咖啡。我們相信，好的咖啡不僅是一種飲品，更是一種生活態度，一種對品質的堅持。'
   );
-  const [email, setEmail] = useState('');
-  const [subscribeSuccess, setSubscribeSuccess] = useState(false);
   const [homeSearchKeyword, setHomeSearchKeyword] = useState('');
 
   // Hero 輪播
@@ -320,16 +318,7 @@ export default function HomePage() {
     elements.forEach((el) => observer.observe(el));
   }, [testimonials, stores, featuredProducts, bulkProducts]);
 
-  // Newsletter subscription
-  const handleSubscribe = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      console.log('Subscribe email:', email);
-      setSubscribeSuccess(true);
-      setEmail('');
-      setTimeout(() => setSubscribeSuccess(false), 5000);
-    }
-  };
+
 
   const renderStars = (rating: number) => '⭐'.repeat(Math.min(5, Math.max(1, rating)));
 
@@ -614,30 +603,6 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* Newsletter */}
-      <section className="section newsletter">
-        <div className="container">
-          <h2 className="newsletter-title">訂閱電子報，獲得最新優惠</h2>
-          <p className="newsletter-subtitle">Subscribe for exclusive offers</p>
-          {subscribeSuccess ? (
-            <div className="newsletter-success">
-              ✓ 訂閱成功！感謝您的訂閱
-            </div>
-          ) : (
-            <form className="newsletter-form" onSubmit={handleSubscribe}>
-              <input
-                type="email"
-                className="newsletter-input"
-                placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-              <button type="submit" className="newsletter-button">訂閱</button>
-            </form>
-          )}
-        </div>
-      </section>
     </div>
     </>
   );
