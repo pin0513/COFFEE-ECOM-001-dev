@@ -1626,18 +1626,14 @@ app.MapPost("/api/auth/customer/verify-otp", async ([FromBody] CustomerVerifyOtp
     });
 }).WithName("CustomerVerifyOtp").WithTags("CustomerAuth");
 
-// POST /api/auth/customer/login — Email 或 手機 + 密碼登入
+// POST /api/auth/customer/login — 手機 + 密碼登入
 app.MapPost("/api/auth/customer/login", async ([FromBody] CustomerLoginRequest req, AppDbContext db) =>
 {
     if (string.IsNullOrEmpty(req.Password)) return Results.BadRequest(new { message = "密碼不可為空" });
-    if (string.IsNullOrEmpty(req.Email) && string.IsNullOrEmpty(req.Phone))
-        return Results.BadRequest(new { message = "請輸入手機或 Email" });
+    if (string.IsNullOrEmpty(req.Phone))
+        return Results.BadRequest(new { message = "請輸入手機號碼" });
 
-    Customer? customer;
-    if (!string.IsNullOrEmpty(req.Phone))
-        customer = await db.Customers.FirstOrDefaultAsync(c => c.Phone == req.Phone && c.IsEmailVerified);
-    else
-        customer = await db.Customers.FirstOrDefaultAsync(c => c.Email == req.Email && c.IsActive);
+    var customer = await db.Customers.FirstOrDefaultAsync(c => c.Phone == req.Phone && c.IsEmailVerified);
 
     if (customer == null || string.IsNullOrEmpty(customer.PasswordHash))
         return Results.Unauthorized();
@@ -2052,6 +2048,6 @@ public record UpsertHeroBannerRequest(string? Title, string? SubTitle, string? B
 public record UpsertContentPageRequest(string? Slug, string? TitleZhTW, string? BodyZhTW, bool? IsPublished, int? SortOrder);
 public record CustomerRegisterRequest(string? Email, string Password, string? Name, string? Phone);
 public record CustomerVerifyOtpRequest(string Email, string Code);
-public record CustomerLoginRequest(string? Email, string? Phone, string Password);
+public record CustomerLoginRequest(string? Phone, string Password);
 public record CustomerUpdateProfileRequest(string? Name, string? Phone, string? Address);
 public record OrderLookupCancelRequest(string OrderNumber, string Email);

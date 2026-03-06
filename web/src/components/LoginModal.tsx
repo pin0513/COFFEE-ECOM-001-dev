@@ -42,15 +42,10 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
     onClose();
   };
 
-  const handleLogin = async (values: { account: string; password: string }) => {
+  const handleLogin = async (values: { phone: string; password: string }) => {
     setLoading(true);
     try {
-      // account 可以是 email 或手機
-      const isPhone = /^[0-9+\-\s]{7,}$/.test(values.account.trim()) && !values.account.includes('@');
-      const body = isPhone
-        ? { phone: values.account.trim(), password: values.password }
-        : { email: values.account.trim(), password: values.password };
-      const data = await apiPost<AuthResponse>('/auth/customer/login', body);
+      const data = await apiPost<AuthResponse>('/auth/customer/login', { phone: values.phone.trim(), password: values.password });
       handleLoginSuccess(data);
     } catch (err: unknown) {
       message.error((err as Error).message || '登入失敗');
@@ -214,8 +209,8 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
               children: (
                 <>
                   <Form form={loginForm} layout="vertical" onFinish={handleLogin} style={{ marginTop: 8 }}>
-                    <Form.Item name="account" label="手機 / Email" rules={[{ required: true, message: '請輸入手機或 Email' }]}>
-                      <Input placeholder="手機號碼 或 your@email.com" size="large" />
+                    <Form.Item name="phone" label="手機號碼" rules={[{ required: true, message: '請輸入手機號碼' }]}>
+                      <Input placeholder="0912345678" size="large" />
                     </Form.Item>
                     <Form.Item name="password" label="密碼" rules={[{ required: true, message: '請輸入密碼' }]}>
                       <Input.Password placeholder="請輸入密碼" size="large" />
