@@ -76,6 +76,7 @@ export default function Layout({ children }: LayoutProps) {
             <button className={`nav-link ${location.pathname.startsWith('/pages/about') ? 'active' : ''}`} onClick={() => { navigate('/pages/about'); setMobileMenuOpen(false); }}>關於我們</button>
             <button className={`nav-link ${location.pathname.startsWith('/pages/faq') ? 'active' : ''}`} onClick={() => { navigate('/pages/faq'); setMobileMenuOpen(false); }}>常見問答</button>
             <button className={`nav-link ${location.pathname.startsWith('/pages/contact') ? 'active' : ''}`} onClick={() => { navigate('/pages/contact'); setMobileMenuOpen(false); }}>聯絡我們</button>
+            <a className="nav-link" href="https://coffee88.com.tw/km" target="_blank" rel="noopener noreferrer" onClick={() => setMobileMenuOpen(false)}>咖啡知識地圖</a>
           </nav>
 
           <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
