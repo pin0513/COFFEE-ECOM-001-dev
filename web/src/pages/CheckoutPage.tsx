@@ -146,8 +146,8 @@ export default function CheckoutPage() {
 
   // 含預付款商品時禁用 COD
   const paymentOptions = [
-    ...(ecpayEnabled ? [{ label: '信用卡 / ATM / 超商代碼（綠界）', value: 'ecpay' }] : []),
-    ...(linepayEnabled ? [{ label: 'LINE Pay', value: 'linepay' }] : []),
+    ...(ecpayEnabled ? [{ label: '💳 信用卡（綠界金流）', value: 'ecpay' }] : []),
+    ...(linepayEnabled ? [{ label: '💚 LINE Pay', value: 'linepay' }] : []),
     ...(cashEnabled && !hasPrePayRequired ? [{ label: '貨到付款', value: 'cash' }] : []),
     ...(bankTransferEnabled ? [{ label: '銀行轉帳', value: 'transfer' }] : []),
   ];

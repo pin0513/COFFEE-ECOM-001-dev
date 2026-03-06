@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Form, Input, Button, Card, Descriptions, Tag, Table, Typography, Divider, Alert } from 'antd';
+import { Form, Input, Button, Card, Descriptions, Tag, Table, Typography, Divider, Alert, Popconfirm, message } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
 import { API_BASE_URL } from '../config/api';
@@ -16,7 +16,7 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
 };
 
 const PAYMENT_STATUS_MAP: Record<string, { label: string; color: string }> = {
-  Pending: { label: '待付款', color: 'orange' },
+  Unpaid:  { label: '待付款', color: 'orange' },
   Paid:    { label: '已付款', color: 'green' },
   Refunded:{ label: '已退款', color: 'red' },
 };
@@ -29,6 +29,7 @@ const PAYMENT_METHOD_MAP: Record<string, string> = {
 };
 
 interface OrderResult {
+  id: number;
   orderNumber: string;
   totalAmount: number;
   subtotal: number;
@@ -52,11 +53,14 @@ export default function OrderLookupPage() {
   const [loading, setLoading] = useState(false);
   const [order, setOrder] = useState<OrderResult | null>(null);
   const [error, setError] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
+  const [currentEmail, setCurrentEmail] = useState('');
 
   // 從 URL params 預填（訂單成功頁帶過來）
   const defaultOrderNumber = searchParams.get('orderNumber') ?? '';
 
   const handleSearch = async (values: { orderNumber: string; email: string }) => {
+    setCurrentEmail(values.email.trim());
     setLoading(true);
     setError('');
     setOrder(null);
@@ -162,6 +166,73 @@ export default function OrderLookupPage() {
           <div style={{ textAlign: 'right', marginTop: 16 }}>
             <Text strong style={{ fontSize: 16 }}>總計：NT$ {order.totalAmount.toLocaleString()}</Text>
           </div>
+
+          <Divider />
+          {order.paymentStatus === 'Unpaid' && order.status !== 'Cancelled' ? (
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              {(order.paymentMethod === 'ECPay' || order.paymentMethod === 'LinePay') && (
+                <Button
+                  type="primary"
+                  loading={actionLoading}
+                  onClick={async () => {
+                    setActionLoading(true);
+                    try {
+                      if (order.paymentMethod === 'ECPay') {
+                        const r = await fetch(`${API_BASE_URL}/payment/ecpay/checkout?orderId=${order.id}`, { method: 'POST' });
+                        const html = await r.text();
+                        const div = document.createElement('div');
+                        div.innerHTML = html;
+                        document.body.appendChild(div);
+                        const frm = div.querySelector('form');
+                        if (frm) frm.submit();
+                      } else {
+                        const r = await fetch(`${API_BASE_URL}/payment/linepay/request?orderId=${order.id}`, { method: 'POST' });
+                        const d = await r.json();
+                        if (d.paymentUrl) window.location.href = d.paymentUrl;
+                        else message.error('無法取得付款連結');
+                      }
+                    } finally { setActionLoading(false); }
+                  }}
+                >
+                  繼續付款
+                </Button>
+              )}
+              <Popconfirm
+                title="確定要取消此訂單？"
+                okText="確認取消"
+                cancelText="返回"
+                okButtonProps={{ danger: true }}
+                onConfirm={async () => {
+                  setActionLoading(true);
+                  try {
+                    const r = await fetch(`${API_BASE_URL}/orders/lookup/cancel`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ orderNumber: order.orderNumber, email: currentEmail }),
+                    });
+                    const d = await r.json();
+                    if (!r.ok) { message.error(d.message); return; }
+                    message.success('訂單已取消');
+                    setOrder({ ...order, status: 'Cancelled' });
+                  } finally { setActionLoading(false); }
+                }}
+              >
+                <Button danger loading={actionLoading}>取消訂單</Button>
+              </Popconfirm>
+            </div>
+          ) : order.paymentStatus === 'Paid' ? (
+            <Alert
+              type="info"
+              showIcon
+              message="已付款訂單如需退款，請聯絡店家"
+              description={
+                <span>
+                  來電：<a href="tel:02-29990000">02-2999-0000</a>　或透過
+                  <a href="https://line.me/ti/p/~@pinhung" target="_blank" rel="noreferrer"> LINE 客服</a>申請，退款需經商家審核。
+                </span>
+              }
+            />
+          ) : null}
         </Card>
       )}
     </div>

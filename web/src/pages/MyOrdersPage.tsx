@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Table, Tag, Typography, Button, Modal, Descriptions, Divider, Empty, Spin } from 'antd';
+import { Table, Tag, Typography, Button, Modal, Descriptions, Divider, Empty, Spin, Alert, message, Popconfirm } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useCustomerAuthStore } from '../stores/customerAuthStore';
 import { API_BASE_URL } from '../config/api';
@@ -49,7 +49,7 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
 };
 
 const PAYMENT_STATUS_MAP: Record<string, { label: string; color: string }> = {
-  Pending: { label: '待付款', color: 'orange' },
+  Unpaid:  { label: '待付款', color: 'orange' },
   Paid:    { label: '已付款', color: 'green' },
   Refunded:{ label: '已退款', color: 'red' },
 };
@@ -69,16 +69,21 @@ export default function MyOrdersPage() {
   const [detail, setDetail] = useState<OrderDetail | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
-    if (!isLoggedIn) { navigate('/'); return; }
+  const fetchOrders = () => {
     fetch(`${API_BASE_URL}/customer/orders`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(r => r.json())
       .then(d => setOrders(d.data ?? []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    if (!isLoggedIn) { navigate('/'); return; }
+    fetchOrders();
+    setLoading(false);
   }, [isLoggedIn, token, navigate]);
 
   const openDetail = async (id: number) => {
@@ -92,6 +97,47 @@ export default function MyOrdersPage() {
       setDetail(d);
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!detail) return;
+    setActionLoading(true);
+    try {
+      const r = await fetch(`${API_BASE_URL}/customer/orders/${detail.id}/cancel`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const d = await r.json();
+      if (!r.ok) { message.error(d.message); return; }
+      message.success('訂單已取消');
+      setDetailOpen(false);
+      fetchOrders();
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRepay = async () => {
+    if (!detail) return;
+    setActionLoading(true);
+    try {
+      if (detail.paymentMethod === 'ECPay') {
+        const r = await fetch(`${API_BASE_URL}/payment/ecpay/checkout?orderId=${detail.id}`, { method: 'POST' });
+        const html = await r.text();
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        document.body.appendChild(div);
+        const form = div.querySelector('form');
+        if (form) form.submit();
+      } else if (detail.paymentMethod === 'LinePay') {
+        const r = await fetch(`${API_BASE_URL}/payment/linepay/request?orderId=${detail.id}`, { method: 'POST' });
+        const d = await r.json();
+        if (d.paymentUrl) window.location.href = d.paymentUrl;
+        else message.error('無法取得付款連結');
+      }
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -169,6 +215,38 @@ export default function MyOrdersPage() {
             <div style={{ textAlign: 'right', marginTop: 16 }}>
               <Text strong style={{ fontSize: 16 }}>總計：NT$ {detail.totalAmount.toLocaleString()}</Text>
             </div>
+
+            <Divider />
+            {detail.paymentStatus === 'Unpaid' && detail.status !== 'Cancelled' ? (
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                {(detail.paymentMethod === 'ECPay' || detail.paymentMethod === 'LinePay') && (
+                  <Button type="primary" loading={actionLoading} onClick={handleRepay}>
+                    繼續付款
+                  </Button>
+                )}
+                <Popconfirm
+                  title="確定要取消此訂單？"
+                  okText="確認取消"
+                  cancelText="返回"
+                  okButtonProps={{ danger: true }}
+                  onConfirm={handleCancel}
+                >
+                  <Button danger loading={actionLoading}>取消訂單</Button>
+                </Popconfirm>
+              </div>
+            ) : detail.paymentStatus === 'Paid' ? (
+              <Alert
+                type="info"
+                showIcon
+                message="已付款訂單如需退款，請聯絡店家"
+                description={
+                  <span>
+                    來電：<a href="tel:02-29990000">02-2999-0000</a>　或透過
+                    <a href="https://line.me/ti/p/~@pinhung" target="_blank" rel="noreferrer"> LINE 客服</a>申請，退款需經商家審核。
+                  </span>
+                }
+              />
+            ) : null}
           </>
         )}
       </Modal>

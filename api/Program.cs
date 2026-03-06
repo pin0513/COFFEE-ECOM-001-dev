@@ -1931,6 +1931,45 @@ app.MapGet("/api/customer/orders/{id:int}", async (int id, ClaimsPrincipal user,
     });
 }).RequireAuthorization().WithName("CustomerGetOrderById").WithTags("CustomerAuth");
 
+// PATCH /api/customer/orders/{id}/cancel — 會員取消自己的未付款訂單
+app.MapPatch("/api/customer/orders/{id:int}/cancel", async (int id, ClaimsPrincipal user, AppDbContext db) =>
+{
+    var role = user.FindFirstValue(ClaimTypes.Role);
+    if (role != "customer") return Results.Forbid();
+    var idStr = user.FindFirstValue(ClaimTypes.NameIdentifier);
+    if (!int.TryParse(idStr, out var customerId)) return Results.Unauthorized();
+    var order = await db.Orders.FirstOrDefaultAsync(o => o.Id == id && o.CustomerId == customerId);
+    if (order == null) return Results.NotFound(new { message = "找不到此訂單" });
+    if (order.PaymentStatus != PaymentStatus.Unpaid)
+        return Results.BadRequest(new { message = "已付款的訂單無法取消，請聯絡店家申請退款" });
+    if (order.Status == OrderStatus.Shipped || order.Status == OrderStatus.Completed)
+        return Results.BadRequest(new { message = "訂單已出貨，無法取消" });
+    order.Status = OrderStatus.Cancelled;
+    order.UpdatedAt = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+    return Results.Ok(new { message = "訂單已取消" });
+}).RequireAuthorization().WithName("CustomerCancelOrder").WithTags("CustomerAuth");
+
+// POST /api/orders/lookup/cancel — 匿名取消訂單（訂單編號 + Email 驗證）
+app.MapPost("/api/orders/lookup/cancel", async ([FromBody] OrderLookupCancelRequest req, AppDbContext db) =>
+{
+    if (string.IsNullOrWhiteSpace(req.OrderNumber) || string.IsNullOrWhiteSpace(req.Email))
+        return Results.BadRequest(new { message = "請提供訂單編號與 Email" });
+    var order = await db.Orders.FirstOrDefaultAsync(o => o.OrderNumber == req.OrderNumber);
+    if (order == null) return Results.NotFound(new { message = "找不到此訂單" });
+    var customer = await db.Customers.FindAsync(order.CustomerId);
+    if (customer == null || !string.Equals(customer.Email, req.Email.Trim(), StringComparison.OrdinalIgnoreCase))
+        return Results.NotFound(new { message = "找不到此訂單" });
+    if (order.PaymentStatus != PaymentStatus.Unpaid)
+        return Results.BadRequest(new { message = "已付款的訂單無法取消，請聯絡店家申請退款" });
+    if (order.Status == OrderStatus.Shipped || order.Status == OrderStatus.Completed)
+        return Results.BadRequest(new { message = "訂單已出貨，無法取消" });
+    order.Status = OrderStatus.Cancelled;
+    order.UpdatedAt = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+    return Results.Ok(new { message = "訂單已取消" });
+}).WithName("OrderLookupCancel").WithTags("Orders");
+
 app.Run();
 
 public record CreateCustomerRequest(string Email, string? Name, string? Phone, string? Address, string? DisplayName, string? FirebaseUid);
@@ -1979,3 +2018,4 @@ public record CustomerRegisterRequest(string Email, string Password, string? Nam
 public record CustomerVerifyOtpRequest(string Email, string Code);
 public record CustomerLoginRequest(string Email, string Password);
 public record CustomerUpdateProfileRequest(string? Name, string? Phone, string? Address);
+public record OrderLookupCancelRequest(string OrderNumber, string Email);
