@@ -52,6 +52,7 @@ interface Product {
   promotionTag: string | null;
   requirePrePayment: boolean;
   promotionEndAt: string | null;
+  hasGrindOption: boolean;
 }
 
 export default function ProductManagement() {
@@ -201,6 +202,7 @@ export default function ProductManagement() {
       isFeatured: product.isFeatured,
       isOrderable: product.isOrderable,
       inventoryEnabled: product.inventoryEnabled,
+      hasGrindOption: product.hasGrindOption,
       parentProductId: product.parentProductId ?? undefined,
       variantLabel: product.variantLabel ?? undefined,
       promotionTag: product.promotionTag ?? undefined,
@@ -217,7 +219,7 @@ export default function ProductManagement() {
     setBulkTiers([]);
     setRequirePrePayment(false);
     form.resetFields();
-    form.setFieldsValue({ isActive: true, isOrderable: true, inventoryEnabled: false, unit: '磅' });
+    form.setFieldsValue({ isActive: true, isOrderable: true, inventoryEnabled: false, hasGrindOption: false, unit: '磅' });
     setIsModalVisible(true);
   };
 
@@ -351,6 +353,15 @@ export default function ProductManagement() {
       width: 80,
       render: (val: boolean, record: Product) => (
         <Switch size="small" checked={val} onChange={(v) => handleToggle(record.id, 'isOrderable', v)} />
+      ),
+    },
+    {
+      title: '研磨選項',
+      dataIndex: 'hasGrindOption',
+      key: 'hasGrindOption',
+      width: 90,
+      render: (val: boolean, record: Product) => (
+        <Switch size="small" checked={val} onChange={(v) => handleToggle(record.id, 'hasGrindOption', v)} />
       ),
     },
     {
@@ -616,6 +627,9 @@ export default function ProductManagement() {
               <Switch />
             </Form.Item>
             <Form.Item label="可下單" name="isOrderable" valuePropName="checked" style={{ marginBottom: 0 }}>
+              <Switch />
+            </Form.Item>
+            <Form.Item label="研磨選項" name="hasGrindOption" valuePropName="checked" style={{ marginBottom: 0 }}>
               <Switch />
             </Form.Item>
             <Form.Item label="啟用庫存管理" name="inventoryEnabled" valuePropName="checked" style={{ marginBottom: 0 }}>

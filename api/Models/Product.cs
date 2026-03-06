@@ -142,6 +142,11 @@ public class Product
     public bool RequirePrePayment { get; set; } = false;
 
     /// <summary>
+    /// 支援研磨選項（開啟後購買時可選研磨/不研磨及刻度）
+    /// </summary>
+    public bool HasGrindOption { get; set; } = false;
+
+    /// <summary>
     /// 促銷截止時間（null = 無倒數）
     /// 設定後前台商品卡顯示倒數計時
     /// </summary>

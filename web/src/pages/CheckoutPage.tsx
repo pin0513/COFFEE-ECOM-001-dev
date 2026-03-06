@@ -87,10 +87,17 @@ export default function CheckoutPage() {
     try {
       setLoading(true);
 
+      // 組合研磨備註
+      const grindNotes = items
+        .filter(i => i.grindOption)
+        .map(i => `${i.name}：${i.grindOption}`)
+        .join('；');
+      const combinedNotes = [values.note, grindNotes ? `研磨需求 - ${grindNotes}` : ''].filter(Boolean).join('\n') || undefined;
+
       const order = await createOrder({
         customerEmail: values.email,
         items: items.map(item => ({
-          productId: parseInt(item.id, 10),
+          productId: parseInt(item.productId || item.id, 10),
           quantity: item.quantity,
         })),
         discountAmount: 0,
@@ -101,7 +108,7 @@ export default function CheckoutPage() {
         recipientName: values.name,
         recipientPhone: values.phone,
         shippingAddress: values.address,
-        notes: values.note || undefined,
+        notes: combinedNotes,
         transferCode: paymentMethod === 'transfer' ? values.transferCode : undefined,
       });
 

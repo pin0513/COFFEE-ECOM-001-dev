@@ -97,6 +97,11 @@ export default function CartPage() {
                             )}
                           </div>
                           <div>{renderPurchaseModeBadge(item)}</div>
+                          {item.grindOption && (
+                            <div style={{ fontSize: 12, color: '#8b5e3c', marginTop: 2 }}>
+                              ☕ {item.grindOption}
+                            </div>
+                          )}
                           {screens.xs && (
                             <div style={{ marginTop: 8, display: 'flex', gap: 8, alignItems: 'center' }}>
                               <InputNumber

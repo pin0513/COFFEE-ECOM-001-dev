@@ -28,6 +28,7 @@ export interface Product {
   promotionEndAt: string | null;
   brand?: string | null;
   originalPrice?: number | null;
+  hasGrindOption: boolean;
 }
 
 export interface ProductVariant {

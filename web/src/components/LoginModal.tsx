@@ -42,10 +42,15 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
     onClose();
   };
 
-  const handleLogin = async (values: { email: string; password: string }) => {
+  const handleLogin = async (values: { account: string; password: string }) => {
     setLoading(true);
     try {
-      const data = await apiPost<AuthResponse>('/auth/customer/login', values);
+      // account 可以是 email 或手機
+      const isPhone = /^[0-9+\-\s]{7,}$/.test(values.account.trim()) && !values.account.includes('@');
+      const body = isPhone
+        ? { phone: values.account.trim(), password: values.password }
+        : { email: values.account.trim(), password: values.password };
+      const data = await apiPost<AuthResponse>('/auth/customer/login', body);
       handleLoginSuccess(data);
     } catch (err: unknown) {
       message.error((err as Error).message || '登入失敗');
@@ -54,16 +59,20 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
     }
   };
 
-  const handleRegister = async (values: { name: string; email: string; password: string }) => {
+  const handleRegister = async (values: { name: string; phone: string; email?: string; password: string }) => {
     setLoading(true);
     try {
-      const res = await apiPost<{ message: string; otp?: string }>(
+      const res = await apiPost<{ message: string; otp?: string; token?: string; customer?: AuthResponse['customer'] }>(
         '/auth/customer/register',
         values
       );
-      setPendingEmail(values.email);
+      // 無 email → 直接建立帳號，回傳 JWT
+      if (res.token && res.customer) {
+        handleLoginSuccess({ token: res.token, customer: res.customer });
+        return;
+      }
+      setPendingEmail(values.email!);
       setOtpStep(true);
-      // Debug mode 直接填入 OTP
       if (res.otp) {
         const digits = res.otp.split('');
         setOtpCodes(digits);
@@ -205,8 +214,8 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
               children: (
                 <>
                   <Form form={loginForm} layout="vertical" onFinish={handleLogin} style={{ marginTop: 8 }}>
-                    <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email', message: '請輸入正確 Email' }]}>
-                      <Input placeholder="your@email.com" size="large" />
+                    <Form.Item name="account" label="手機 / Email" rules={[{ required: true, message: '請輸入手機或 Email' }]}>
+                      <Input placeholder="手機號碼 或 your@email.com" size="large" />
                     </Form.Item>
                     <Form.Item name="password" label="密碼" rules={[{ required: true, message: '請輸入密碼' }]}>
                       <Input.Password placeholder="請輸入密碼" size="large" />
@@ -230,8 +239,11 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
                     <Form.Item name="name" label="姓名" rules={[{ required: true, message: '請輸入姓名' }]}>
                       <Input placeholder="請輸入真實姓名" size="large" />
                     </Form.Item>
-                    <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email', message: '請輸入正確 Email' }]}>
-                      <Input placeholder="your@email.com" size="large" />
+                    <Form.Item name="phone" label="手機號碼" rules={[{ required: true, message: '請輸入手機號碼' }]}>
+                      <Input placeholder="0912345678" size="large" />
+                    </Form.Item>
+                    <Form.Item name="email" label="Email（選填，用於接收驗證碼）" rules={[{ type: 'email', message: '請輸入正確 Email' }]}>
+                      <Input placeholder="your@email.com（可不填）" size="large" />
                     </Form.Item>
                     <Form.Item
                       name="password"
@@ -240,9 +252,9 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
                     >
                       <Input.Password placeholder="至少 6 個字元" size="large" />
                     </Form.Item>
-                    <Form.Item>
+                    <Form.Item style={{ marginBottom: 0 }}>
                       <Button type="primary" htmlType="submit" block size="large" loading={loading}>
-                        註冊並取得驗證碼
+                        註冊
                       </Button>
                     </Form.Item>
                   </Form>

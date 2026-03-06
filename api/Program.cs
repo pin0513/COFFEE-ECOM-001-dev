@@ -327,7 +327,7 @@ app.MapGet("/api/products", async (
             p.Price, p.ImageUrl, p.IsActive, p.IsFeatured, p.IsOrderable, p.InventoryEnabled,
             p.StockQuantity, p.Unit, p.SpecData, p.SortOrder, p.CreatedAt,
             p.BulkOptions, p.SubscriptionOptions, p.ParentProductId, p.VariantLabel,
-            p.PromotionTag, p.RequirePrePayment, p.PromotionEndAt, p.Brand, p.OriginalPrice })
+            p.PromotionTag, p.RequirePrePayment, p.PromotionEndAt, p.Brand, p.OriginalPrice, p.HasGrindOption })
         .ToListAsync();
     return Results.Ok(new { Data = products, Page = page, PageSize = pageSize, TotalCount = total,
         TotalPages = (int)Math.Ceiling((double)total / pageSize) });
@@ -342,7 +342,7 @@ app.MapGet("/api/products/{id:int}", async (int id, AppDbContext db) =>
         p.Price, p.ImageUrl, p.IsActive, p.IsFeatured,
         p.IsOrderable, p.InventoryEnabled, p.StockQuantity, p.Unit, p.SpecData, p.SortOrder, p.CreatedAt, p.UpdatedAt,
         p.BulkOptions, p.SubscriptionOptions, p.ParentProductId, p.VariantLabel,
-        p.PromotionTag, p.RequirePrePayment, p.PromotionEndAt, p.Brand, p.OriginalPrice });
+        p.PromotionTag, p.RequirePrePayment, p.PromotionEndAt, p.Brand, p.OriginalPrice, p.HasGrindOption });
 }).WithName("GetProductById").WithTags("Products");
 
 app.MapPost("/api/products", [Authorize] async ([FromBody] UpsertProductRequest req, AppDbContext db) =>
@@ -365,6 +365,7 @@ app.MapPost("/api/products", [Authorize] async ([FromBody] UpsertProductRequest 
         PromotionEndAt = req.PromotionEndAt,
         Brand = string.IsNullOrEmpty(req.Brand) ? null : req.Brand,
         OriginalPrice = req.OriginalPrice,
+        HasGrindOption = req.HasGrindOption ?? false,
     };
     db.Products.Add(product);
     await db.SaveChangesAsync();
@@ -397,6 +398,7 @@ app.MapPut("/api/products/{id:int}", [Authorize] async (int id, [FromBody] Upser
     if (req.PromotionEndAt != null) product.PromotionEndAt = req.PromotionEndAt;
     if (req.Brand != null) product.Brand = req.Brand == "" ? null : req.Brand;
     if (req.OriginalPrice.HasValue) product.OriginalPrice = req.OriginalPrice;
+    if (req.HasGrindOption.HasValue) product.HasGrindOption = req.HasGrindOption.Value;
     product.UpdatedAt = DateTime.UtcNow;
     await db.SaveChangesAsync();
     return Results.Ok(new { product.Id });
@@ -449,9 +451,10 @@ app.MapPatch("/api/products/{id:int}/toggles", [Authorize] async (int id, [FromB
     if (req.IsOrderable.HasValue) product.IsOrderable = req.IsOrderable.Value;
     if (req.InventoryEnabled.HasValue) product.InventoryEnabled = req.InventoryEnabled.Value;
     if (req.IsActive.HasValue) product.IsActive = req.IsActive.Value;
+    if (req.HasGrindOption.HasValue) product.HasGrindOption = req.HasGrindOption.Value;
     product.UpdatedAt = DateTime.UtcNow;
     await db.SaveChangesAsync();
-    return Results.Ok(new { product.Id, product.IsOrderable, product.InventoryEnabled, product.IsActive });
+    return Results.Ok(new { product.Id, product.IsOrderable, product.InventoryEnabled, product.IsActive, product.HasGrindOption });
 }).WithName("UpdateProductToggles").WithTags("Products");
 
 app.MapPost("/api/products/import", [Authorize] async (HttpRequest request, AppDbContext db) =>
@@ -1481,12 +1484,36 @@ string GenerateCustomerJwt(Customer customer)
     return new JwtSecurityTokenHandler().WriteToken(token);
 }
 
-// POST /api/auth/customer/register — Email 註冊，送 OTP
+// POST /api/auth/customer/register — 手機 or Email 註冊
 app.MapPost("/api/auth/customer/register", async ([FromBody] CustomerRegisterRequest req, AppDbContext db, IConfiguration config) =>
 {
-    if (string.IsNullOrEmpty(req.Email)) return Results.BadRequest(new { message = "Email 不可為空" });
     if (string.IsNullOrEmpty(req.Password) || req.Password.Length < 6)
         return Results.BadRequest(new { message = "密碼長度至少 6 碼" });
+    if (string.IsNullOrEmpty(req.Phone) && string.IsNullOrEmpty(req.Email))
+        return Results.BadRequest(new { message = "請填寫手機或 Email" });
+
+    // 若無 Email → 直接建立帳號（不需 OTP）
+    if (string.IsNullOrEmpty(req.Email))
+    {
+        if (await db.Customers.AnyAsync(c => c.Phone == req.Phone && c.IsEmailVerified))
+            return Results.Conflict(new { message = "此手機號碼已註冊" });
+        var cnt = await db.Customers.CountAsync();
+        var c = new Customer
+        {
+            CustomerNumber = $"C{cnt + 1:00000}",
+            Name = req.Name ?? req.Phone!,
+            Email = $"phone_{req.Phone}@noemail.local",
+            Phone = req.Phone!,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password),
+            IsEmailVerified = true,
+            CreatedAt = DateTime.UtcNow
+        };
+        db.Customers.Add(c);
+        await db.SaveChangesAsync();
+        var jwt = GenerateCustomerJwt(c);
+        var isProfileComplete = !string.IsNullOrEmpty(c.Name) && !string.IsNullOrEmpty(c.Phone) && !string.IsNullOrEmpty(c.Address);
+        return Results.Ok(new { token = jwt, customer = new { c.Id, c.Name, c.Email, c.Phone, c.Address, isProfileComplete } });
+    }
 
     if (await db.Customers.AnyAsync(c => c.Email == req.Email && c.IsEmailVerified))
         return Results.Conflict(new { message = "此 Email 已註冊" });
@@ -1515,7 +1542,7 @@ app.MapPost("/api/auth/customer/register", async ([FromBody] CustomerRegisterReq
             CustomerNumber = $"C{cnt + 1:00000}",
             Name = req.Name ?? req.Email.Split('@')[0],
             Email = req.Email,
-            Phone = "",
+            Phone = req.Phone ?? "",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password),
             IsEmailVerified = false,
             CreatedAt = DateTime.UtcNow
@@ -1526,6 +1553,7 @@ app.MapPost("/api/auth/customer/register", async ([FromBody] CustomerRegisterReq
     {
         pendingCustomer.PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password);
         if (!string.IsNullOrEmpty(req.Name)) pendingCustomer.Name = req.Name;
+        if (!string.IsNullOrEmpty(req.Phone)) pendingCustomer.Phone = req.Phone;
         pendingCustomer.UpdatedAt = DateTime.UtcNow;
     }
     await db.SaveChangesAsync();
@@ -1598,19 +1626,25 @@ app.MapPost("/api/auth/customer/verify-otp", async ([FromBody] CustomerVerifyOtp
     });
 }).WithName("CustomerVerifyOtp").WithTags("CustomerAuth");
 
-// POST /api/auth/customer/login — Email + 密碼登入
+// POST /api/auth/customer/login — Email 或 手機 + 密碼登入
 app.MapPost("/api/auth/customer/login", async ([FromBody] CustomerLoginRequest req, AppDbContext db) =>
 {
-    if (string.IsNullOrEmpty(req.Email) || string.IsNullOrEmpty(req.Password))
-        return Results.BadRequest(new { message = "Email 和密碼不可為空" });
+    if (string.IsNullOrEmpty(req.Password)) return Results.BadRequest(new { message = "密碼不可為空" });
+    if (string.IsNullOrEmpty(req.Email) && string.IsNullOrEmpty(req.Phone))
+        return Results.BadRequest(new { message = "請輸入手機或 Email" });
 
-    var customer = await db.Customers.FirstOrDefaultAsync(c => c.Email == req.Email && c.IsActive);
+    Customer? customer;
+    if (!string.IsNullOrEmpty(req.Phone))
+        customer = await db.Customers.FirstOrDefaultAsync(c => c.Phone == req.Phone && c.IsEmailVerified);
+    else
+        customer = await db.Customers.FirstOrDefaultAsync(c => c.Email == req.Email && c.IsActive);
+
     if (customer == null || string.IsNullOrEmpty(customer.PasswordHash))
         return Results.Unauthorized();
     if (!BCrypt.Net.BCrypt.Verify(req.Password, customer.PasswordHash))
         return Results.Unauthorized();
     if (!customer.IsEmailVerified)
-        return Results.BadRequest(new { message = "Email 尚未驗證，請先完成驗證" });
+        return Results.BadRequest(new { message = "帳號尚未驗證，請先完成 Email 驗證" });
 
     customer.LastLoginAt = DateTime.UtcNow;
     await db.SaveChangesAsync();
@@ -1997,10 +2031,10 @@ public record UpsertProductRequest(
     string? SpecData, string? BulkOptions, string? SubscriptionOptions,
     int? ParentProductId, string? VariantLabel,
     string? PromotionTag, bool? RequirePrePayment, DateTime? PromotionEndAt,
-    string? Brand, decimal? OriginalPrice);
+    string? Brand, decimal? OriginalPrice, bool? HasGrindOption);
 public record UpdateCategoryRequest(string? Name, string? Description, string? SpecTemplate, string? Icon, int? SortOrder, int? ParentId);
 public record CreateCategoryRequest(string Name, string Code, string? Description, string? Icon, string? Color, int? ParentId, int SortOrder, string? SpecTemplate);
-public record ProductTogglesRequest(bool? IsOrderable, bool? InventoryEnabled, bool? IsActive);
+public record ProductTogglesRequest(bool? IsOrderable, bool? InventoryEnabled, bool? IsActive, bool? HasGrindOption);
 public record BatchProductRequest(List<int> Ids, bool? IsOrderable, bool? IsActive, bool? IsFeatured);
 public record SiteSettingItem(string Key, string? Value);
 public record ImportRow
@@ -2016,8 +2050,8 @@ public record UpsertTestimonialRequest(string? Content, string? AuthorName, int 
 public record UpsertStoreRequest(string? Name, string? Address, string? Phone, string? BusinessHours, string? ImageUrl, bool? IsVisible, int? SortOrder);
 public record UpsertHeroBannerRequest(string? Title, string? SubTitle, string? ButtonText, string? ButtonUrl, string? ImageUrl, bool? IsActive, int? SortOrder);
 public record UpsertContentPageRequest(string? Slug, string? TitleZhTW, string? BodyZhTW, bool? IsPublished, int? SortOrder);
-public record CustomerRegisterRequest(string Email, string Password, string? Name);
+public record CustomerRegisterRequest(string? Email, string Password, string? Name, string? Phone);
 public record CustomerVerifyOtpRequest(string Email, string Code);
-public record CustomerLoginRequest(string Email, string Password);
+public record CustomerLoginRequest(string? Email, string? Phone, string Password);
 public record CustomerUpdateProfileRequest(string? Name, string? Phone, string? Address);
 public record OrderLookupCancelRequest(string OrderNumber, string Email);

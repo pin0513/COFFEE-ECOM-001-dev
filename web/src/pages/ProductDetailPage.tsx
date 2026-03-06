@@ -1,4 +1,4 @@
-import { Typography, Button, InputNumber, message, Grid, Spin, BackTop } from 'antd';
+import { Typography, Button, InputNumber, message, Grid, Spin, BackTop, Radio, Select } from 'antd';
 import { ShoppingCartOutlined, LeftOutlined, UpOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -40,6 +40,9 @@ export default function ProductDetailPage() {
   // 購買模式
   const [purchaseMode, setPurchaseMode] = useState<PurchaseMode>('oneTime');
   const [selectedTier, setSelectedTier] = useState<BulkTier | null>(null);
+  // 研磨選項
+  const [grindChoice, setGrindChoice] = useState<'whole' | 'grind'>('whole');
+  const [grindLevel, setGrindLevel] = useState<string>('手沖');
   const { addToCart } = useCartStore();
 
   useEffect(() => {
@@ -97,13 +100,20 @@ export default function ProductDetailPage() {
     if (mode !== 'bulk') setSelectedTier(null);
   };
 
+  const getGrindOption = (): string | undefined => {
+    if (!product?.hasGrindOption) return undefined;
+    return grindChoice === 'whole' ? '不研磨（整豆）' : `研磨-${grindLevel}`;
+  };
+
   const handleAddToCart = () => {
     if (!product) return;
     if (!checkoutEnabled) { message.warning('網站目前暫停接受訂單'); return; }
     if (product.price === 0) { message.warning('此商品尚未設定售價'); return; }
     if (purchaseMode === 'bulk' && !selectedTier) { message.warning('請選擇大量購買方案'); return; }
 
-    const cartId = `${product.id}:${purchaseMode}${purchaseMode === 'bulk' && selectedTier ? `:${selectedTier.qty}` : ''}`;
+    const grindOption = getGrindOption();
+    const grindSuffix = grindOption ? `:${grindOption}` : '';
+    const cartId = `${product.id}:${purchaseMode}${purchaseMode === 'bulk' && selectedTier ? `:${selectedTier.qty}` : ''}${grindSuffix}`;
 
     for (let i = 0; i < quantity; i++) {
       addToCart({
@@ -118,6 +128,7 @@ export default function ProductDetailPage() {
         purchaseMode,
         discountRate: purchaseMode === 'bulk' ? selectedTier?.discount : undefined,
         requirePrePayment: product.requirePrePayment,
+        grindOption,
       });
     }
 
@@ -292,6 +303,36 @@ export default function ProductDetailPage() {
                         </div>
                       ))}
                     </div>
+                  </div>
+                )}
+
+                {/* 研磨選項 */}
+                {product.hasGrindOption && (
+                  <div style={{ margin: '16px 0', padding: '12px 16px', background: '#faf7f4', borderRadius: 8, border: '1px solid #e8d5c0' }}>
+                    <div style={{ fontWeight: 600, marginBottom: 10, color: '#5d3a1a' }}>研磨選項</div>
+                    <Radio.Group value={grindChoice} onChange={e => setGrindChoice(e.target.value)} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <Radio value="whole">不研磨（整豆）</Radio>
+                      <Radio value="grind">需要研磨</Radio>
+                    </Radio.Group>
+                    {grindChoice === 'grind' && (
+                      <div style={{ marginTop: 10 }}>
+                        <span style={{ marginRight: 8, fontSize: 13, color: '#666' }}>研磨刻度：</span>
+                        <Select
+                          value={grindLevel}
+                          onChange={setGrindLevel}
+                          style={{ width: 140 }}
+                          options={[
+                            { label: '美式（粗研磨）', value: '美式' },
+                            { label: '手沖（中研磨）', value: '手沖' },
+                            { label: '虹吸（中細研磨）', value: '虹吸' },
+                            { label: '義式（細研磨）', value: '義式' },
+                            { label: '摩卡壺（細研磨）', value: '摩卡壺' },
+                            { label: '法式壓濾（粗研磨）', value: '法式壓濾' },
+                            { label: '冷萃（粗研磨）', value: '冷萃' },
+                          ]}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
 
