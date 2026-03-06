@@ -1485,113 +1485,31 @@ string GenerateCustomerJwt(Customer customer)
 }
 
 // POST /api/auth/customer/register — 手機 or Email 註冊
-app.MapPost("/api/auth/customer/register", async ([FromBody] CustomerRegisterRequest req, AppDbContext db, IConfiguration config) =>
+app.MapPost("/api/auth/customer/register", async ([FromBody] CustomerRegisterRequest req, AppDbContext db) =>
 {
+    if (string.IsNullOrEmpty(req.Phone)) return Results.BadRequest(new { message = "請填寫手機號碼" });
     if (string.IsNullOrEmpty(req.Password) || req.Password.Length < 6)
         return Results.BadRequest(new { message = "密碼長度至少 6 碼" });
-    if (string.IsNullOrEmpty(req.Phone) && string.IsNullOrEmpty(req.Email))
-        return Results.BadRequest(new { message = "請填寫手機或 Email" });
+    if (await db.Customers.AnyAsync(c => c.Phone == req.Phone && c.IsEmailVerified))
+        return Results.Conflict(new { message = "此手機號碼已註冊" });
 
-    // 若無 Email → 直接建立帳號（不需 OTP）
-    if (string.IsNullOrEmpty(req.Email))
+    var cnt = await db.Customers.CountAsync();
+    var c = new Customer
     {
-        if (await db.Customers.AnyAsync(c => c.Phone == req.Phone && c.IsEmailVerified))
-            return Results.Conflict(new { message = "此手機號碼已註冊" });
-        var cnt = await db.Customers.CountAsync();
-        var c = new Customer
-        {
-            CustomerNumber = $"C{cnt + 1:00000}",
-            Name = req.Name ?? req.Phone!,
-            Email = $"phone_{req.Phone}@noemail.local",
-            Phone = req.Phone!,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password),
-            IsEmailVerified = true,
-            CreatedAt = DateTime.UtcNow
-        };
-        db.Customers.Add(c);
-        await db.SaveChangesAsync();
-        var jwt = GenerateCustomerJwt(c);
-        var isProfileComplete = !string.IsNullOrEmpty(c.Name) && !string.IsNullOrEmpty(c.Phone) && !string.IsNullOrEmpty(c.Address);
-        return Results.Ok(new { token = jwt, customer = new { c.Id, c.Name, c.Email, c.Phone, c.Address, isProfileComplete } });
-    }
-
-    if (await db.Customers.AnyAsync(c => c.Email == req.Email && c.IsEmailVerified))
-        return Results.Conflict(new { message = "此 Email 已註冊" });
-
-    // 清除舊 OTP
-    var oldOtps = db.CustomerOtps.Where(o => o.Email == req.Email);
-    db.CustomerOtps.RemoveRange(oldOtps);
-
-    var code = new Random().Next(1000, 9999).ToString();
-    db.CustomerOtps.Add(new CustomerOtp
-    {
-        Email = req.Email,
-        Code = code,
-        ExpiresAt = DateTime.UtcNow.AddMinutes(10),
+        CustomerNumber = $"C{cnt + 1:00000}",
+        Name = req.Name ?? req.Phone,
+        Email = $"phone_{req.Phone}@noemail.local",
+        Phone = req.Phone,
+        PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password),
+        IsEmailVerified = true,
         CreatedAt = DateTime.UtcNow
-    });
+    };
+    db.Customers.Add(c);
     await db.SaveChangesAsync();
 
-    // 儲存暫時密碼（未驗證狀態）
-    var pendingCustomer = await db.Customers.FirstOrDefaultAsync(c => c.Email == req.Email);
-    if (pendingCustomer == null)
-    {
-        var cnt = await db.Customers.CountAsync();
-        pendingCustomer = new Customer
-        {
-            CustomerNumber = $"C{cnt + 1:00000}",
-            Name = req.Name ?? req.Email.Split('@')[0],
-            Email = req.Email,
-            Phone = req.Phone ?? "",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password),
-            IsEmailVerified = false,
-            CreatedAt = DateTime.UtcNow
-        };
-        db.Customers.Add(pendingCustomer);
-    }
-    else
-    {
-        pendingCustomer.PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password);
-        if (!string.IsNullOrEmpty(req.Name)) pendingCustomer.Name = req.Name;
-        if (!string.IsNullOrEmpty(req.Phone)) pendingCustomer.Phone = req.Phone;
-        pendingCustomer.UpdatedAt = DateTime.UtcNow;
-    }
-    await db.SaveChangesAsync();
-
-    var debugMode = config.GetValue<bool>("SmtpSettings:DebugMode");
-    if (debugMode)
-        return Results.Ok(new { message = "OTP 已產生（Debug 模式）", otp = code });
-
-    // 寄 OTP 信
-    _ = Task.Run(async () =>
-    {
-        try
-        {
-            var smtpHost = config["SmtpSettings:Host"];
-            var smtpUser = config["SmtpSettings:Username"];
-            var smtpPass = config["SmtpSettings:Password"];
-            var smtpFrom = config["SmtpSettings:FromEmail"];
-            var smtpPort = int.TryParse(config["SmtpSettings:Port"], out var p) ? p : 587;
-            var fromName = config["SmtpSettings:FromName"] ?? "品皇咖啡";
-            if (string.IsNullOrEmpty(smtpHost) || string.IsNullOrEmpty(smtpFrom)) return;
-            using var client = new System.Net.Mail.SmtpClient(smtpHost, smtpPort)
-            {
-                EnableSsl = true,
-                Credentials = new System.Net.NetworkCredential(smtpUser, smtpPass)
-            };
-            using var msg = new System.Net.Mail.MailMessage
-            {
-                From = new System.Net.Mail.MailAddress(smtpFrom, fromName),
-                Subject = "【品皇咖啡】Email 驗證碼",
-                Body = $"您的驗證碼為：{code}\n此驗證碼 10 分鐘內有效，請勿分享給他人。"
-            };
-            msg.To.Add(req.Email);
-            await client.SendMailAsync(msg);
-        }
-        catch (Exception ex) { Console.WriteLine($"[OTP Email] 發送失敗: {ex.Message}"); }
-    });
-
-    return Results.Ok(new { message = "驗證碼已寄出" });
+    var jwt = GenerateCustomerJwt(c);
+    var isProfileComplete = !string.IsNullOrEmpty(c.Name) && !string.IsNullOrEmpty(c.Phone) && !string.IsNullOrEmpty(c.Address);
+    return Results.Ok(new { token = jwt, customer = new { c.Id, c.Name, c.Email, c.Phone, c.Address, isProfileComplete } });
 }).WithName("CustomerRegister").WithTags("CustomerAuth");
 
 // POST /api/auth/customer/verify-otp — 驗證 OTP，建立正式帳號
@@ -2046,8 +1964,8 @@ public record UpsertTestimonialRequest(string? Content, string? AuthorName, int 
 public record UpsertStoreRequest(string? Name, string? Address, string? Phone, string? BusinessHours, string? ImageUrl, bool? IsVisible, int? SortOrder);
 public record UpsertHeroBannerRequest(string? Title, string? SubTitle, string? ButtonText, string? ButtonUrl, string? ImageUrl, bool? IsActive, int? SortOrder);
 public record UpsertContentPageRequest(string? Slug, string? TitleZhTW, string? BodyZhTW, bool? IsPublished, int? SortOrder);
-public record CustomerRegisterRequest(string? Email, string Password, string? Name, string? Phone);
-public record CustomerVerifyOtpRequest(string Email, string Code);
+public record CustomerRegisterRequest(string Phone, string Password, string? Name);
+public record CustomerVerifyOtpRequest(string Email, string Code); // 保留供舊有資料相容
 public record CustomerLoginRequest(string? Phone, string Password);
 public record CustomerUpdateProfileRequest(string? Name, string? Phone, string? Address);
 public record OrderLookupCancelRequest(string OrderNumber, string Email);
