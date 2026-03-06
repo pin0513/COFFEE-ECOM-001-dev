@@ -12,6 +12,7 @@ import OrderSuccessPage from './pages/OrderSuccessPage';
 import PagesPage from './pages/PagesPage';
 import PaymentReturnPage from './pages/PaymentReturnPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
+import MyOrdersPage from './pages/MyOrdersPage';
 
 /** 所有頁面共用的 Layout wrapper（Header + Footer + LINE 浮動按鈕） */
 function AppLayout() {
@@ -35,6 +36,7 @@ function App() {
               <Route path="/payment/return" element={<PaymentReturnPage />} />
               <Route path="/payment/cancel" element={<PaymentReturnPage />} />
               <Route path="/auth/callback" element={<AuthCallbackPage />} />
+              <Route path="/my-orders" element={<MyOrdersPage />} />
             </Route>
           </Routes>
         </Router>

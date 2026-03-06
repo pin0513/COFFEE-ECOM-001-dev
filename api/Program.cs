@@ -1850,6 +1850,59 @@ app.MapPut("/api/customer/me", async (ClaimsPrincipal user, [FromBody] CustomerU
     return Results.Ok(new { customer.Id, customer.Name, customer.Email, customer.Phone, customer.Address, isProfileComplete });
 }).RequireAuthorization().WithName("CustomerUpdateProfile").WithTags("CustomerAuth");
 
+// GET /api/customer/orders — 查詢自己的訂單列表
+app.MapGet("/api/customer/orders", async (ClaimsPrincipal user, AppDbContext db,
+    [FromQuery] int page = 1, [FromQuery] int pageSize = 10) =>
+{
+    var role = user.FindFirstValue(ClaimTypes.Role);
+    if (role != "customer") return Results.Forbid();
+    var idStr = user.FindFirstValue(ClaimTypes.NameIdentifier);
+    if (!int.TryParse(idStr, out var customerId)) return Results.Unauthorized();
+    if (page < 1) page = 1;
+    if (pageSize < 1 || pageSize > 50) pageSize = 10;
+    var query = db.Orders.Where(o => o.CustomerId == customerId);
+    var total = await query.CountAsync();
+    var orders = await query.OrderByDescending(o => o.CreatedAt).Skip((page - 1) * pageSize).Take(pageSize)
+        .Select(o => new
+        {
+            o.Id, o.OrderNumber, o.TotalAmount,
+            Status = o.Status.ToString(),
+            PaymentStatus = o.PaymentStatus.ToString(),
+            PaymentMethod = o.PaymentMethod.ToString(),
+            o.RecipientName, o.ShippingAddress,
+            o.OrderDate, o.CreatedAt,
+            ItemCount = o.Items.Count
+        }).ToListAsync();
+    return Results.Ok(new { data = orders, page, pageSize, totalCount = total,
+        totalPages = (int)Math.Ceiling((double)total / pageSize) });
+}).RequireAuthorization().WithName("CustomerGetOrders").WithTags("CustomerAuth");
+
+// GET /api/customer/orders/{id} — 查詢自己的訂單詳情
+app.MapGet("/api/customer/orders/{id:int}", async (int id, ClaimsPrincipal user, AppDbContext db) =>
+{
+    var role = user.FindFirstValue(ClaimTypes.Role);
+    if (role != "customer") return Results.Forbid();
+    var idStr = user.FindFirstValue(ClaimTypes.NameIdentifier);
+    if (!int.TryParse(idStr, out var customerId)) return Results.Unauthorized();
+    var order = await db.Orders.Include(o => o.Items)
+        .FirstOrDefaultAsync(o => o.Id == id && o.CustomerId == customerId);
+    if (order == null) return Results.NotFound();
+    return Results.Ok(new
+    {
+        order.Id, order.OrderNumber, order.TotalAmount, order.Subtotal, order.ShippingFee, order.DiscountAmount,
+        Status = order.Status.ToString(),
+        PaymentStatus = order.PaymentStatus.ToString(),
+        PaymentMethod = order.PaymentMethod.ToString(),
+        order.RecipientName, order.RecipientPhone, order.ShippingAddress,
+        order.Notes, order.TransferCode,
+        order.OrderDate, order.CreatedAt,
+        Items = order.Items.Select(i => new
+        {
+            i.ProductId, i.ProductName, i.ProductSku, i.UnitPrice, i.Quantity, i.Subtotal
+        })
+    });
+}).RequireAuthorization().WithName("CustomerGetOrderById").WithTags("CustomerAuth");
+
 app.Run();
 
 public record CreateCustomerRequest(string Email, string? Name, string? Phone, string? Address, string? DisplayName, string? FirebaseUid);

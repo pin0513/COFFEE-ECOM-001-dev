@@ -1,6 +1,6 @@
 import { type ReactNode, useState, useEffect, useMemo } from 'react';
 import { Dropdown, Avatar, message } from 'antd';
-import { UserOutlined, LogoutOutlined, ProfileOutlined } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined, ProfileOutlined, OrderedListOutlined } from '@ant-design/icons';
 
 interface FooterLink { label: string; url: string; }
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -90,6 +90,12 @@ export default function Layout({ children }: LayoutProps) {
                       icon: <ProfileOutlined />,
                       label: '完善資料',
                       onClick: () => setShowProfileModal(true),
+                    },
+                    {
+                      key: 'orders',
+                      icon: <OrderedListOutlined />,
+                      label: '我的訂單',
+                      onClick: () => navigate('/my-orders'),
                     },
                     {
                       key: 'logout',
