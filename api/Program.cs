@@ -1920,6 +1920,66 @@ app.MapPost("/api/orders/lookup/cancel", async ([FromBody] OrderLookupCancelRequ
     return Results.Ok(new { message = "訂單已取消" });
 }).WithName("OrderLookupCancel").WithTags("Orders");
 
+// ── Business Inquiries ──────────────────────────────────────────────────────────
+
+// 公開端點：送出詢問單
+app.MapPost("/api/inquiries", async ([FromBody] CreateInquiryRequest req, AppDbContext db) =>
+{
+    if (string.IsNullOrWhiteSpace(req.ContactName) || string.IsNullOrWhiteSpace(req.Phone))
+        return Results.BadRequest(new { message = "姓名與電話為必填" });
+    var inquiry = new BusinessInquiry
+    {
+        ContactName = req.ContactName.Trim(),
+        Phone = req.Phone.Trim(),
+        Email = req.Email?.Trim(),
+        Company = req.Company?.Trim(),
+        InquiryType = req.InquiryType ?? "general",
+        SelectedPlan = req.SelectedPlan?.Trim(),
+        Message = req.Message?.Trim(),
+        Status = "new",
+        CreatedAt = DateTime.UtcNow,
+    };
+    db.BusinessInquiries.Add(inquiry);
+    await db.SaveChangesAsync();
+    return Results.Created($"/api/admin/inquiries/{inquiry.Id}", new { inquiry.Id, message = "詢問單已送出，我們將於 1 個工作日內與您聯繫" });
+}).WithName("CreateInquiry").WithTags("Inquiries");
+
+// 後台：列出所有詢問單
+app.MapGet("/api/admin/inquiries", [Authorize] async (
+    AppDbContext db,
+    [FromQuery] string? status,
+    [FromQuery] string? type,
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 30) =>
+{
+    var q = db.BusinessInquiries.AsQueryable();
+    if (!string.IsNullOrWhiteSpace(status)) q = q.Where(i => i.Status == status);
+    if (!string.IsNullOrWhiteSpace(type)) q = q.Where(i => i.InquiryType == type);
+    var total = await q.CountAsync();
+    var items = await q.OrderByDescending(i => i.CreatedAt)
+        .Skip((page - 1) * pageSize).Take(pageSize)
+        .Select(i => new
+        {
+            i.Id, i.ContactName, i.Phone, i.Email, i.Company,
+            i.InquiryType, i.SelectedPlan, i.Message,
+            i.Status, i.AdminNote, i.CreatedAt, i.UpdatedAt
+        }).ToListAsync();
+    return Results.Ok(new { data = items, totalCount = total, page, pageSize });
+}).WithName("GetInquiries").WithTags("Inquiries");
+
+// 後台：更新狀態與備註
+app.MapPatch("/api/admin/inquiries/{id:int}", [Authorize] async (
+    int id, [FromBody] UpdateInquiryRequest req, AppDbContext db) =>
+{
+    var inquiry = await db.BusinessInquiries.FindAsync(id);
+    if (inquiry == null) return Results.NotFound();
+    if (req.Status != null) inquiry.Status = req.Status;
+    if (req.AdminNote != null) inquiry.AdminNote = req.AdminNote;
+    inquiry.UpdatedAt = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+    return Results.Ok(new { message = "更新成功" });
+}).WithName("UpdateInquiry").WithTags("Inquiries");
+
 app.Run();
 
 public record CreateCustomerRequest(string Email, string? Name, string? Phone, string? Address, string? DisplayName, string? FirebaseUid);
@@ -1969,3 +2029,7 @@ public record CustomerVerifyOtpRequest(string Email, string Code); // 保留供�
 public record CustomerLoginRequest(string? Phone, string Password);
 public record CustomerUpdateProfileRequest(string? Name, string? Phone, string? Address);
 public record OrderLookupCancelRequest(string OrderNumber, string Email);
+public record CreateInquiryRequest(
+    string ContactName, string Phone, string? Email, string? Company,
+    string? InquiryType, string? SelectedPlan, string? Message);
+public record UpdateInquiryRequest(string? Status, string? AdminNote);

@@ -1,0 +1,653 @@
+/**
+ * BusinessPage.css — 品皇咖啡商業合作方案頁
+ */
+
+.biz-page {
+  font-family: var(--font-family-base);
+  color: var(--color-text-primary);
+  background: #faf8f5;
+}
+
+.biz-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+.biz-section-header {
+  text-align: center;
+  margin-bottom: 52px;
+}
+
+.biz-section-header h2 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1007;
+  margin: 0 0 12px 0;
+}
+
+.biz-section-header p {
+  font-size: 15px;
+  color: #6b5c4c;
+  margin: 0;
+}
+
+/* ── Hero ──────────────────────────────────────────────────── */
+.biz-hero {
+  position: relative;
+  min-height: 520px;
+  display: flex;
+  align-items: center;
+  background-image: url('https://images.unsplash.com/photo-1445116572660-236099ec97a0?w=1920&h=800&fit=crop&q=80');
+  background-size: cover;
+  background-position: center;
+}
+
+.biz-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, rgba(15, 8, 3, 0.82) 40%, rgba(15, 8, 3, 0.3) 100%);
+}
+
+.biz-hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 80px 40px;
+  width: 100%;
+}
+
+.biz-hero-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0 0 20px 0;
+  text-transform: uppercase;
+}
+
+.biz-hero-title {
+  font-family: var(--font-family-display);
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+  margin: 0 0 20px 0;
+  max-width: 560px;
+}
+
+.biz-hero-sub {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.7;
+  margin: 0 0 36px 0;
+  max-width: 480px;
+}
+
+.biz-hero-ctas {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.biz-hero-btn {
+  display: inline-block;
+  padding: 14px 32px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.biz-hero-btn.primary {
+  background: #fff;
+  color: #1a1007;
+}
+
+.biz-hero-btn.primary:hover {
+  background: #f0ece4;
+}
+
+.biz-hero-btn.outline {
+  background: transparent;
+  color: #fff;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+}
+
+.biz-hero-btn.outline:hover {
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.biz-hotline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.biz-hotline strong {
+  color: #fff;
+  font-size: 15px;
+}
+
+/* ── 大量採購區塊 ───────────────────────────────────────────── */
+.biz-bulk-section {
+  padding: 80px 0;
+  background: #fff;
+}
+
+.biz-bulk-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.biz-bulk-card {
+  position: relative;
+  border: 1px solid #e0d8cd;
+  padding: 36px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.biz-bulk-card:hover {
+  box-shadow: 0 8px 32px rgba(74, 55, 40, 0.1);
+}
+
+.biz-bulk-card.featured {
+  border-color: #4a3728;
+  background: #faf5ef;
+}
+
+.biz-bulk-badge {
+  position: absolute;
+  top: -12px;
+  left: 28px;
+  background: #4a3728;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 4px 12px;
+}
+
+.biz-bulk-icon {
+  color: #4a3728;
+  margin-bottom: 4px;
+}
+
+.biz-bulk-card h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1007;
+  margin: 0;
+}
+
+.biz-bulk-card > p {
+  font-size: 13px;
+  color: #6b5c4c;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.biz-bulk-perks {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0 0;
+  flex: 1;
+}
+
+.biz-bulk-perks li {
+  font-size: 13px;
+  color: #4a3728;
+  padding: 5px 0;
+  border-bottom: 1px solid #f0ece4;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.biz-bulk-perks li::before {
+  content: '✓';
+  font-weight: 700;
+  color: #4a7c59;
+  flex-shrink: 0;
+}
+
+.biz-bulk-cta {
+  display: block;
+  text-align: center;
+  padding: 12px;
+  background: #1a1007;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  margin-top: 16px;
+  transition: background 0.2s;
+}
+
+.biz-bulk-cta:hover {
+  background: #4a3728;
+}
+
+/* ── 機器方案 ───────────────────────────────────────────────── */
+.biz-plans-section {
+  padding: 80px 0;
+  background: #faf8f5;
+}
+
+.biz-plans-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.biz-plan-card {
+  position: relative;
+  border: 1px solid #e0d8cd;
+  padding: 28px 22px 24px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: box-shadow 0.2s;
+}
+
+.biz-plan-card:hover {
+  box-shadow: 0 6px 24px rgba(74, 55, 40, 0.1);
+}
+
+.biz-plan-card.recommended {
+  border-color: #4a3728;
+  border-width: 2px;
+}
+
+.biz-plan-badge {
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #4a3728;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 3px 12px;
+  white-space: nowrap;
+}
+
+.biz-plan-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 3px 8px;
+  border-radius: 2px;
+  display: inline-block;
+  width: fit-content;
+}
+
+.biz-plan-tag.hot { background: #fef3c7; color: #92400e; }
+.biz-plan-tag.upgrade { background: #e0f2fe; color: #0369a1; }
+.biz-plan-tag.cafe { background: #fce7f3; color: #9d174d; }
+.biz-plan-tag.hotel { background: #f0fdf4; color: #166534; }
+
+.biz-plan-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1007;
+  margin: 0;
+}
+
+.biz-plan-target {
+  font-size: 12px;
+  color: #9e8c7e;
+  margin: 0;
+}
+
+.biz-plan-price {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 0;
+  border-top: 1px solid #f0ece4;
+  border-bottom: 1px solid #f0ece4;
+}
+
+.biz-plan-fee {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1007;
+}
+
+.biz-plan-fee.custom {
+  font-size: 18px;
+}
+
+.biz-plan-period {
+  font-size: 13px;
+  color: #9e8c7e;
+}
+
+.biz-plan-deposit {
+  font-size: 11px;
+  color: #4a7c59;
+  font-weight: 600;
+}
+
+.biz-plan-features {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0;
+  flex: 1;
+}
+
+.biz-plan-features li {
+  font-size: 12px;
+  color: #4a3728;
+  padding: 6px 0;
+  border-bottom: 1px solid #f5f0ea;
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  line-height: 1.5;
+}
+
+.biz-plan-features li svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  stroke: #4a7c59;
+}
+
+.biz-plan-cta {
+  width: 100%;
+  padding: 12px;
+  background: #2d2d2d;
+  color: #fff;
+  border: none;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background 0.2s;
+}
+
+.biz-plan-cta:hover {
+  background: #4a3728;
+}
+
+/* ── 應用場景 ──────────────────────────────────────────────── */
+.biz-scenarios-section {
+  padding: 60px 0;
+  background: #1a1007;
+}
+
+.biz-scenarios-section .biz-section-header h2 {
+  color: #fff;
+}
+
+.biz-scenarios-section .biz-section-header p {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.biz-scenarios-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.biz-scenario-chip {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 20px 18px;
+}
+
+.biz-scenario-icon {
+  color: rgba(255, 255, 255, 0.6);
+  flex-shrink: 0;
+}
+
+.biz-scenario-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 6px;
+}
+
+.biz-scenario-desc {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.6;
+}
+
+/* ── 詢問表單區 ────────────────────────────────────────────── */
+.biz-inquiry-section {
+  padding: 80px 0;
+  background: #faf8f5;
+}
+
+.biz-inquiry-inner {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 60px;
+  align-items: flex-start;
+}
+
+.biz-inquiry-left h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1007;
+  margin: 0 0 16px 0;
+}
+
+.biz-inquiry-left > p {
+  font-size: 14px;
+  color: #6b5c4c;
+  line-height: 1.7;
+  margin: 0 0 28px 0;
+}
+
+.biz-contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.biz-contact-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #6b5c4c;
+}
+
+.biz-contact-item svg {
+  stroke: #4a3728;
+  flex-shrink: 0;
+}
+
+.biz-contact-item strong {
+  color: #1a1007;
+}
+
+.biz-back-btn {
+  background: none;
+  border: 1.5px solid #c5b9a8;
+  padding: 10px 20px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #6b5c4c;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.biz-back-btn:hover {
+  border-color: #4a3728;
+  color: #4a3728;
+}
+
+/* 表單 */
+.biz-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #fff;
+  border: 1px solid #e0d8cd;
+  padding: 36px;
+}
+
+.biz-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.biz-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.biz-form-field label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #1a1007;
+}
+
+.biz-form-field .req {
+  color: #e53e3e;
+}
+
+.biz-form-field input,
+.biz-form-field select,
+.biz-form-field textarea {
+  padding: 10px 12px;
+  border: 1.5px solid #d4c9bc;
+  font-size: 13px;
+  color: #1a1007;
+  background: #faf8f5;
+  outline: none;
+  font-family: var(--font-family-base);
+  transition: border-color 0.2s;
+}
+
+.biz-form-field input:focus,
+.biz-form-field select:focus,
+.biz-form-field textarea:focus {
+  border-color: #4a3728;
+}
+
+.biz-form-field input::placeholder,
+.biz-form-field textarea::placeholder {
+  color: #b0a89e;
+}
+
+.biz-form-field select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239e8c7e' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+.biz-submit-btn {
+  width: 100%;
+  padding: 16px;
+  background: #1a1007;
+  color: #fff;
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 4px;
+}
+
+.biz-submit-btn:hover:not(:disabled) {
+  background: #4a3728;
+}
+
+.biz-submit-btn:disabled {
+  background: #c5b9a8;
+  cursor: not-allowed;
+}
+
+.biz-form-note {
+  font-size: 11px;
+  color: #9e8c7e;
+  text-align: center;
+  margin: 0;
+}
+
+/* 送出成功 */
+.biz-success {
+  background: #fff;
+  border: 1px solid #e0d8cd;
+  padding: 60px 36px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.biz-success-icon {
+  color: #4a7c59;
+}
+
+.biz-success h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1007;
+  margin: 0;
+}
+
+.biz-success p {
+  font-size: 14px;
+  color: #6b5c4c;
+  line-height: 1.7;
+  margin: 0;
+  max-width: 380px;
+}
+
+/* ── RWD ─────────────────────────────────────────────────── */
+@media (max-width: 1023px) {
+  .biz-container { padding: 0 24px; }
+  .biz-plans-grid { grid-template-columns: repeat(2, 1fr); }
+  .biz-bulk-cards { grid-template-columns: 1fr; gap: 16px; }
+  .biz-scenarios-grid { grid-template-columns: repeat(2, 1fr); }
+  .biz-inquiry-inner { grid-template-columns: 1fr; gap: 40px; }
+}
+
+@media (max-width: 767px) {
+  .biz-container { padding: 0 16px; }
+  .biz-hero-content { padding: 60px 20px; }
+  .biz-hero-title { font-size: 28px; }
+  .biz-hero-ctas { flex-direction: column; }
+  .biz-plans-grid { grid-template-columns: 1fr; }
+  .biz-scenarios-grid { grid-template-columns: 1fr; }
+  .biz-form { padding: 24px 16px; }
+  .biz-form-row { grid-template-columns: 1fr; }
+  .biz-section-header h2 { font-size: 22px; }
+  .biz-bulk-section,
+  .biz-plans-section,
+  .biz-inquiry-section { padding: 48px 0; }
+}

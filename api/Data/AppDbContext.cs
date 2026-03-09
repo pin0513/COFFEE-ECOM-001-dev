@@ -21,6 +21,7 @@ public class AppDbContext : DbContext
     public DbSet<HeroBanner> HeroBanners { get; set; }
     public DbSet<ContentPage> ContentPages { get; set; }
     public DbSet<CustomerOtp> CustomerOtps { get; set; }
+    public DbSet<BusinessInquiry> BusinessInquiries { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -154,6 +155,18 @@ public class AppDbContext : DbContext
             e.HasKey(o => o.Id);
             e.Property(o => o.Email).HasMaxLength(256);
             e.Property(o => o.Code).HasMaxLength(10);
+        });
+
+        modelBuilder.Entity<BusinessInquiry>(e =>
+        {
+            e.HasKey(i => i.Id);
+            e.Property(i => i.ContactName).HasMaxLength(100);
+            e.Property(i => i.Phone).HasMaxLength(50);
+            e.Property(i => i.Email).HasMaxLength(256);
+            e.Property(i => i.Company).HasMaxLength(200);
+            e.Property(i => i.InquiryType).HasMaxLength(50);
+            e.Property(i => i.SelectedPlan).HasMaxLength(100);
+            e.Property(i => i.Status).HasMaxLength(20);
         });
     }
 }
