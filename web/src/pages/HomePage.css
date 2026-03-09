@@ -1054,6 +1054,138 @@
   opacity: 0.65;
 }
 
+/* ==================== 我是誰？場景導入區塊 ==================== */
+.scenario-section {
+  background: var(--color-bg-primary);
+  padding: var(--spacing-12) 0;
+  border-bottom: 1px solid var(--color-border-secondary);
+}
+
+.scenario-heading {
+  font-size: 18px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin: 0 0 var(--spacing-8) 0;
+  letter-spacing: 0.04em;
+}
+
+.scenario-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-5);
+}
+
+.scenario-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--spacing-8) var(--spacing-6);
+  border: 1px solid var(--color-border-secondary);
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: var(--color-bg-primary);
+}
+
+.scenario-card:hover {
+  border-color: #4a3728;
+  box-shadow: 0 4px 16px rgba(74, 55, 40, 0.08);
+}
+
+.scenario-icon {
+  color: #4a3728;
+  margin-bottom: var(--spacing-4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scenario-card-title {
+  font-size: 17px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-2) 0;
+}
+
+.scenario-card-desc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin: 0 0 var(--spacing-4) 0;
+  flex: 1;
+}
+
+.scenario-cta {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #4a3728;
+  text-transform: uppercase;
+}
+
+@media (max-width: 767px) {
+  .scenario-cards {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-3);
+  }
+  .scenario-card {
+    flex-direction: row;
+    text-align: left;
+    padding: var(--spacing-5) var(--spacing-5);
+    gap: var(--spacing-4);
+    align-items: flex-start;
+  }
+  .scenario-icon {
+    margin-bottom: 0;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .scenario-card-desc { margin-bottom: var(--spacing-2); }
+}
+
+/* ==================== 沖煮情境 全幅橫幅 ==================== */
+.brew-banner {
+  background-image: url('https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=1920&h=280&fit=crop&q=75');
+  background-size: cover;
+  background-position: center 60%;
+  position: relative;
+  min-height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brew-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 8, 3, 0.62);
+}
+
+.brew-banner-inner {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: var(--spacing-10) var(--spacing-6);
+}
+
+.brew-banner-text {
+  font-family: var(--font-family-display);
+  font-size: clamp(20px, 3vw, 32px);
+  font-weight: var(--font-weight-bold);
+  color: #ffffff;
+  margin: 0 0 var(--spacing-2) 0;
+  letter-spacing: 0.01em;
+}
+
+.brew-banner-sub {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  letter-spacing: 0.06em;
+}
+
 /* ==================== 限時優惠 section ==================== */
 .promo-section {
   background-color: var(--color-bg-secondary);

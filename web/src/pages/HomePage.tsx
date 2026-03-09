@@ -104,6 +104,81 @@ function BulkCard({ product, onClick }: { product: Product; onClick: () => void 
   );
 }
 
+/** 我是誰？場景導入區塊 */
+function ScenarioSection({ onNavigate }: { onNavigate: (path: string) => void }) {
+  const scenarios = [
+    {
+      title: '在家享用',
+      desc: '為自己選一支每天喝的豆',
+      cta: '開始選購',
+      link: '/products',
+      icon: (
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+      ),
+    },
+    {
+      title: '準備送禮',
+      desc: '找一份有溫度的伴手禮',
+      cta: '看禮盒選品',
+      link: '/products?hasPromo=true',
+      icon: (
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="20 12 20 22 4 22 4 12"/>
+          <rect x="2" y="7" width="20" height="5"/>
+          <line x1="12" y1="22" x2="12" y2="7"/>
+          <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
+          <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+        </svg>
+      ),
+    },
+    {
+      title: '商業洽詢',
+      desc: '餐廳、飯店、辦公室咖啡解決方案',
+      cta: '聯絡我們',
+      link: '/pages/business',
+      icon: (
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="7" width="20" height="14" rx="2"/>
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+        </svg>
+      ),
+    },
+  ];
+
+  return (
+    <section className="scenario-section">
+      <div className="container">
+        <h2 className="scenario-heading">選擇你的咖啡需求</h2>
+        <div className="scenario-cards">
+          {scenarios.map(s => (
+            <div key={s.title} className="scenario-card" onClick={() => onNavigate(s.link)}>
+              <span className="scenario-icon">{s.icon}</span>
+              <h3 className="scenario-card-title">{s.title}</h3>
+              <p className="scenario-card-desc">{s.desc}</p>
+              <span className="scenario-cta">{s.cta} →</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/** 沖煮情境 全幅分隔橫幅 */
+function BrewBanner() {
+  return (
+    <div className="brew-banner">
+      <div className="brew-banner-inner">
+        <p className="brew-banner-text">烘好三天內出貨，趁新鮮最香</p>
+        <p className="brew-banner-sub">每一包都是為你而烘</p>
+      </div>
+    </div>
+  );
+}
+
 interface HeroBanner {
   id: number;
   title: string;
@@ -456,15 +531,16 @@ export default function HomePage() {
         </section>
       )}
 
+      {/* 我是誰？場景導入 */}
+      <ScenarioSection onNavigate={navigate} />
+
       {/* 精選/促銷商品 — 永遠顯示（有資料才 render） */}
       {featuredProducts.length > 0 && (
         <section className="section promo-section animate-on-scroll">
           <div className="container">
             <div className="section-header">
-              <h2 className="section-title">{featuredTitle}</h2>
-              <p className="section-subtitle">
-                {featuredTitle === '限時優惠' ? 'SPECIAL OFFERS' : featuredTitle === '精選商品' ? 'FEATURED PRODUCTS' : 'POPULAR PRODUCTS'}
-              </p>
+              <h2 className="section-title">{featuredTitle === '限時優惠' ? '本月精選' : featuredTitle}</h2>
+              <p className="section-subtitle">依你的喜好探索</p>
             </div>
 
             <div className="promo-grid">
@@ -482,20 +558,23 @@ export default function HomePage() {
                 className="btn btn-outline"
                 onClick={() => navigate('/products')}
               >
-                查看所有商品
+                繼續探索
               </button>
             </div>
           </div>
         </section>
       )}
 
-      {/* 大量購買促銷 */}
+      {/* 沖煮情境橫幅 */}
+      <BrewBanner />
+
+      {/* 新手入門推薦 */}
       {bulkProducts.length > 0 && (
         <section className="section bulk-section animate-on-scroll">
           <div className="container">
             <div className="section-header">
-              <h2 className="section-title">買越多省越多</h2>
-              <p className="section-subtitle">BULK PURCHASE SAVINGS</p>
+              <h2 className="section-title">新手入門推薦</h2>
+              <p className="section-subtitle">第一包買什麼？這裡有答案</p>
             </div>
             <div className="bulk-grid">
               {bulkProducts.map(product => (
@@ -508,34 +587,20 @@ export default function HomePage() {
             </div>
             <div className="section-action">
               <button className="btn btn-outline" onClick={() => navigate('/products')}>
-                查看更多商品
+                繼續探索
               </button>
             </div>
           </div>
         </section>
       )}
 
-      {/* Brand Story — 全幅背景，無佔位圖 */}
-      <section className="section brand-story animate-on-scroll">
-        <div className="brand-story-bg">
-          <div className="container">
-            <div className="brand-story-inner">
-              <p className="brand-story-label">OUR STORY</p>
-              <h2 className="brand-story-title">{brandStoryTitle}</h2>
-              <p className="brand-story-text">{brandStoryContent}</p>
-              <a href="/pages/about" className="brand-story-link">閱讀更多 →</a>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Testimonials */}
       {testimonials.length > 0 && (
         <section className="section testimonials animate-on-scroll">
           <div className="container">
             <div className="section-header">
-              <h2 className="section-title">顧客怎麼說</h2>
-              <p className="section-subtitle">CUSTOMER REVIEWS</p>
+              <h2 className="section-title">他們喝了怎麼說</h2>
+              <p className="section-subtitle">真實顧客評價</p>
             </div>
             <div className="testimonial-grid">
               {testimonials.map(t => (
@@ -559,6 +624,20 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      {/* Brand Story — 全幅背景，無佔位圖 */}
+      <section className="section brand-story animate-on-scroll">
+        <div className="brand-story-bg">
+          <div className="container">
+            <div className="brand-story-inner">
+              <p className="brand-story-label">我們為什麼這麼做咖啡</p>
+              <h2 className="brand-story-title">{brandStoryTitle}</h2>
+              <p className="brand-story-text">{brandStoryContent}</p>
+              <a href="/pages/about" className="brand-story-link">繼續閱讀 →</a>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Stores */}
       {stores.length > 0 && (

@@ -56,11 +56,18 @@ function ProductCard({ product, onAddToCart, onNavigate, checkoutEnabled }: {
     badgeText = product.promotionTag;
   } else if (product.bulkOptions) {
     badgeClass = 'bb-badge bulk';
-    badgeText = 'BEST SELLER';
+    badgeText = '本月熱銷';
   } else if (product.isFeatured) {
     badgeClass = 'bb-badge featured';
-    badgeText = 'FEATURED';
+    badgeText = '精選';
   }
+
+  // Hashtag（分類 + promotionTag）
+  const hashtags: string[] = [];
+  if (product.categoryName) hashtags.push(product.categoryName);
+  if (product.promotionTag && !hashtags.includes(product.promotionTag)) hashtags.push(product.promotionTag);
+  if (product.isFeatured && hashtags.length < 3) hashtags.push('本月精選');
+  const displayTags = hashtags.slice(0, 3);
 
   const showCountdown = !!countdown;
   const isUrgent = showCountdown && countdown !== null && !countdown.includes('天');
@@ -73,7 +80,7 @@ function ProductCard({ product, onAddToCart, onNavigate, checkoutEnabled }: {
       ? '未設定售價'
       : !product.isOrderable
         ? '暫停販售'
-        : 'ADD TO CART';
+        : '加入購物車';
 
   return (
     <div className="bb-card">
@@ -101,11 +108,15 @@ function ProductCard({ product, onAddToCart, onNavigate, checkoutEnabled }: {
             )}
           </div>
         </div>
-        {product.categoryName && (
-          <div className="bb-card-sub">{product.categoryName}</div>
-        )}
         {product.shortDescription && (
           <div className="bb-card-tagline">{product.shortDescription}</div>
+        )}
+        {displayTags.length > 0 && (
+          <div className="bb-card-hashtags">
+            {displayTags.map(tag => (
+              <span key={tag} className="bb-hashtag">#{tag}</span>
+            ))}
+          </div>
         )}
         <button
           className={`bb-add-btn${!canAddToCart ? ' disabled' : ''}`}

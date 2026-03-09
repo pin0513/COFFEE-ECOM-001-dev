@@ -1249,3 +1249,19 @@
 .bb-card-price .bb-card-unit {
   color: #999;
 }
+
+/* ==================== Hashtag ==================== */
+.bb-card-hashtags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.bb-hashtag {
+  font-size: 11px;
+  color: #9e8c7e;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+}
