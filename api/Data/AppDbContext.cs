@@ -22,6 +22,8 @@ public class AppDbContext : DbContext
     public DbSet<ContentPage> ContentPages { get; set; }
     public DbSet<CustomerOtp> CustomerOtps { get; set; }
     public DbSet<BusinessInquiry> BusinessInquiries { get; set; }
+    public DbSet<MachinePlan> MachinePlans { get; set; }
+    public DbSet<BusinessSubscription> BusinessSubscriptions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -167,6 +169,32 @@ public class AppDbContext : DbContext
             e.Property(i => i.InquiryType).HasMaxLength(50);
             e.Property(i => i.SelectedPlan).HasMaxLength(100);
             e.Property(i => i.Status).HasMaxLength(20);
+        });
+
+        modelBuilder.Entity<MachinePlan>(e =>
+        {
+            e.HasKey(p => p.Id);
+            e.Property(p => p.Name).HasMaxLength(100);
+            e.Property(p => p.Category).HasMaxLength(50);
+            e.Property(p => p.MonthlyPrice).HasColumnType("decimal(10,2)");
+            e.Property(p => p.QuarterlyPrice).HasColumnType("decimal(10,2)");
+            e.Property(p => p.AnnualPrice).HasColumnType("decimal(10,2)");
+            e.Property(p => p.DepositAmount).HasColumnType("decimal(10,2)");
+        });
+
+        modelBuilder.Entity<BusinessSubscription>(e =>
+        {
+            e.HasKey(s => s.Id);
+            e.Property(s => s.ContactName).HasMaxLength(100);
+            e.Property(s => s.Phone).HasMaxLength(50);
+            e.Property(s => s.Email).HasMaxLength(256);
+            e.Property(s => s.Company).HasMaxLength(200);
+            e.Property(s => s.BillingCycle).HasMaxLength(20);
+            e.Property(s => s.Status).HasMaxLength(20);
+            e.HasOne(s => s.MachinePlan).WithMany(p => p.Subscriptions)
+                .HasForeignKey(s => s.MachinePlanId).OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(s => s.SourceInquiry).WithMany()
+                .HasForeignKey(s => s.SourceInquiryId).OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

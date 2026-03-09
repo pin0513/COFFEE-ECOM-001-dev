@@ -1099,13 +1099,24 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+}
+
+.scenario-card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  width: 100%;
 }
 
 .scenario-card-title {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   margin: 0 0 var(--spacing-2) 0;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .scenario-card-desc {
@@ -1124,22 +1135,28 @@
   text-transform: uppercase;
 }
 
-@media (max-width: 767px) {
+/* Tablet + Mobile: 單欄，icon 左 + 文字右 */
+@media (max-width: 1023px) {
   .scenario-cards {
     grid-template-columns: 1fr;
     gap: var(--spacing-3);
+    max-width: 540px;
+    margin-left: auto;
+    margin-right: auto;
   }
   .scenario-card {
     flex-direction: row;
     text-align: left;
-    padding: var(--spacing-5) var(--spacing-5);
+    padding: var(--spacing-5);
     gap: var(--spacing-4);
     align-items: flex-start;
   }
   .scenario-icon {
     margin-bottom: 0;
-    flex-shrink: 0;
     margin-top: 2px;
+  }
+  .scenario-card-body {
+    align-items: flex-start;
   }
   .scenario-card-desc { margin-bottom: var(--spacing-2); }
 }

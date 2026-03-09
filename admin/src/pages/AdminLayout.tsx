@@ -30,6 +30,8 @@ import HeroBannerManagement from './HeroBannerManagement';
 import ContentPageManagement from './ContentPageManagement';
 import CustomerManagement from './CustomerManagement';
 import InquiryManagement from './InquiryManagement';
+import MachinePlanManagement from './MachinePlanManagement';
+import BusinessCrmManagement from './BusinessCrmManagement';
 
 const { Header, Sider, Content } = Layout;
 
@@ -71,6 +73,8 @@ export default function AdminLayout() {
       case 'content-pages': return <ContentPageManagement />;
       case 'customers': return <CustomerManagement />;
       case 'inquiries': return <InquiryManagement />;
+      case 'machine-plans': return <MachinePlanManagement />;
+      case 'business-crm': return <BusinessCrmManagement />;
       default: return <Dashboard />;
     }
   };
@@ -97,6 +101,8 @@ export default function AdminLayout() {
             { key: 'orders', icon: <ShoppingCartOutlined />, label: '訂單管理' },
             { key: 'customers', icon: <UserOutlined />, label: '會員管理' },
             { key: 'inquiries', icon: <PhoneOutlined />, label: '商業詢問' },
+            { key: 'machine-plans', icon: <SettingOutlined />, label: '方案管理' },
+            { key: 'business-crm', icon: <TeamOutlined />, label: '商業客戶 CRM' },
             { key: 'hero-banners', icon: <PictureOutlined />, label: 'Banner 管理' },
             { key: 'testimonials', icon: <StarOutlined />, label: '評價管理' },
             { key: 'stores', icon: <EnvironmentOutlined />, label: '門市管理' },

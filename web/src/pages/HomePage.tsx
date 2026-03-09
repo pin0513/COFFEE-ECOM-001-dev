@@ -152,9 +152,11 @@ function ScenarioSection({ onNavigate }: { onNavigate: (path: string) => void })
           {scenarios.map(s => (
             <div key={s.title} className="scenario-card" onClick={() => onNavigate(s.link)}>
               <span className="scenario-icon">{s.icon}</span>
-              <h3 className="scenario-card-title">{s.title}</h3>
-              <p className="scenario-card-desc">{s.desc}</p>
-              <span className="scenario-cta">{s.cta} →</span>
+              <div className="scenario-card-body">
+                <h3 className="scenario-card-title">{s.title}</h3>
+                <p className="scenario-card-desc">{s.desc}</p>
+                <span className="scenario-cta">{s.cta} →</span>
+              </div>
             </div>
           ))}
         </div>

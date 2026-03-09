@@ -1920,6 +1920,186 @@ app.MapPost("/api/orders/lookup/cancel", async ([FromBody] OrderLookupCancelRequ
     return Results.Ok(new { message = "訂單已取消" });
 }).WithName("OrderLookupCancel").WithTags("Orders");
 
+// ── Machine Plans ───────────────────────────────────────────────────────────────
+
+app.MapGet("/api/admin/machine-plans", [Authorize] async (AppDbContext db) =>
+{
+    var plans = await db.MachinePlans
+        .OrderBy(p => p.SortOrder).ThenBy(p => p.Id)
+        .Select(p => new {
+            p.Id, p.Name, p.Category, p.Description,
+            p.MonthlyPrice, p.QuarterlyPrice, p.AnnualPrice, p.DepositAmount,
+            p.Features, p.IsActive, p.SortOrder, p.CreatedAt, p.UpdatedAt
+        }).ToListAsync();
+    return Results.Ok(plans);
+}).WithName("GetMachinePlans").WithTags("MachinePlans");
+
+app.MapPost("/api/admin/machine-plans", [Authorize] async ([FromBody] UpsertMachinePlanRequest req, AppDbContext db) =>
+{
+    var plan = new MachinePlan
+    {
+        Name = req.Name.Trim(),
+        Category = req.Category ?? "office",
+        Description = req.Description?.Trim(),
+        MonthlyPrice = req.MonthlyPrice,
+        QuarterlyPrice = req.QuarterlyPrice,
+        AnnualPrice = req.AnnualPrice,
+        DepositAmount = req.DepositAmount,
+        Features = req.Features,
+        IsActive = req.IsActive ?? true,
+        SortOrder = req.SortOrder ?? 0,
+        CreatedAt = DateTime.UtcNow,
+        UpdatedAt = DateTime.UtcNow,
+    };
+    db.MachinePlans.Add(plan);
+    await db.SaveChangesAsync();
+    return Results.Created($"/api/admin/machine-plans/{plan.Id}", plan);
+}).WithName("CreateMachinePlan").WithTags("MachinePlans");
+
+app.MapPut("/api/admin/machine-plans/{id:int}", [Authorize] async (int id, [FromBody] UpsertMachinePlanRequest req, AppDbContext db) =>
+{
+    var plan = await db.MachinePlans.FindAsync(id);
+    if (plan == null) return Results.NotFound();
+    plan.Name = req.Name.Trim();
+    plan.Category = req.Category ?? plan.Category;
+    plan.Description = req.Description?.Trim();
+    plan.MonthlyPrice = req.MonthlyPrice;
+    plan.QuarterlyPrice = req.QuarterlyPrice;
+    plan.AnnualPrice = req.AnnualPrice;
+    plan.DepositAmount = req.DepositAmount;
+    plan.Features = req.Features;
+    plan.IsActive = req.IsActive ?? plan.IsActive;
+    plan.SortOrder = req.SortOrder ?? plan.SortOrder;
+    plan.UpdatedAt = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+    return Results.Ok(plan);
+}).WithName("UpdateMachinePlan").WithTags("MachinePlans");
+
+app.MapPatch("/api/admin/machine-plans/{id:int}/toggle", [Authorize] async (int id, AppDbContext db) =>
+{
+    var plan = await db.MachinePlans.FindAsync(id);
+    if (plan == null) return Results.NotFound();
+    plan.IsActive = !plan.IsActive;
+    plan.UpdatedAt = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+    return Results.Ok(new { plan.Id, plan.IsActive });
+}).WithName("ToggleMachinePlan").WithTags("MachinePlans");
+
+// ── Business Subscriptions (CRM) ─────────────────────────────────────────────
+
+app.MapGet("/api/admin/subscriptions", [Authorize] async (
+    AppDbContext db,
+    [FromQuery] string? status,
+    [FromQuery] int? planId,
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 50) =>
+{
+    var q = db.BusinessSubscriptions.Include(s => s.MachinePlan).AsQueryable();
+    if (!string.IsNullOrWhiteSpace(status)) q = q.Where(s => s.Status == status);
+    if (planId.HasValue) q = q.Where(s => s.MachinePlanId == planId);
+    var total = await q.CountAsync();
+    var items = await q.OrderByDescending(s => s.UpdatedAt)
+        .Skip((page - 1) * pageSize).Take(pageSize)
+        .Select(s => new {
+            s.Id, s.ContactName, s.Phone, s.Email, s.Company,
+            s.MachinePlanId, PlanName = s.MachinePlan == null ? null : s.MachinePlan.Name,
+            s.BillingCycle, s.StartDate, s.RenewalDate, s.Status,
+            s.InternalNotes, s.SourceInquiryId, s.CreatedAt, s.UpdatedAt
+        }).ToListAsync();
+    return Results.Ok(new { data = items, totalCount = total, page, pageSize });
+}).WithName("GetSubscriptions").WithTags("Subscriptions");
+
+app.MapGet("/api/admin/subscriptions/{id:int}", [Authorize] async (int id, AppDbContext db) =>
+{
+    var s = await db.BusinessSubscriptions
+        .Include(s => s.MachinePlan)
+        .Include(s => s.SourceInquiry)
+        .Where(s => s.Id == id).FirstOrDefaultAsync();
+    if (s == null) return Results.NotFound();
+    return Results.Ok(new {
+        s.Id, s.ContactName, s.Phone, s.Email, s.Company,
+        s.MachinePlanId, PlanName = s.MachinePlan?.Name,
+        s.BillingCycle, s.StartDate, s.RenewalDate, s.Status,
+        s.InternalNotes, s.ChangeHistory, s.SourceInquiryId, s.CreatedAt, s.UpdatedAt
+    });
+}).WithName("GetSubscription").WithTags("Subscriptions");
+
+app.MapPost("/api/admin/subscriptions", [Authorize] async ([FromBody] CreateSubscriptionRequest req, AppDbContext db) =>
+{
+    var sub = new BusinessSubscription
+    {
+        ContactName = req.ContactName.Trim(),
+        Phone = req.Phone.Trim(),
+        Email = req.Email?.Trim(),
+        Company = req.Company?.Trim(),
+        MachinePlanId = req.MachinePlanId,
+        BillingCycle = req.BillingCycle ?? "monthly",
+        StartDate = req.StartDate,
+        RenewalDate = req.RenewalDate,
+        Status = req.Status ?? "pending",
+        InternalNotes = req.InternalNotes?.Trim(),
+        SourceInquiryId = req.SourceInquiryId,
+        ChangeHistory = "[]",
+        CreatedAt = DateTime.UtcNow,
+        UpdatedAt = DateTime.UtcNow,
+    };
+    db.BusinessSubscriptions.Add(sub);
+    await db.SaveChangesAsync();
+    return Results.Created($"/api/admin/subscriptions/{sub.Id}", new { sub.Id });
+}).WithName("CreateSubscription").WithTags("Subscriptions");
+
+app.MapPatch("/api/admin/subscriptions/{id:int}", [Authorize] async (int id, [FromBody] UpdateSubscriptionRequest req, AppDbContext db) =>
+{
+    var sub = await db.BusinessSubscriptions.Include(s => s.MachinePlan).FirstOrDefaultAsync(s => s.Id == id);
+    if (sub == null) return Results.NotFound();
+
+    // 升降級：記錄歷史
+    if (req.MachinePlanId.HasValue && req.MachinePlanId != sub.MachinePlanId)
+    {
+        var oldPlan = sub.MachinePlan?.Name ?? "無";
+        var newPlan = await db.MachinePlans.Where(p => p.Id == req.MachinePlanId).Select(p => p.Name).FirstOrDefaultAsync() ?? "未知";
+        var history = System.Text.Json.JsonSerializer.Deserialize<List<System.Text.Json.JsonElement>>(sub.ChangeHistory ?? "[]") ?? new();
+        var entry = System.Text.Json.JsonSerializer.SerializeToElement(new {
+            date = DateTime.UtcNow,
+            action = "plan_change",
+            fromPlan = oldPlan,
+            toPlan = newPlan,
+            note = req.HistoryNote ?? ""
+        });
+        history.Add(entry);
+        sub.ChangeHistory = System.Text.Json.JsonSerializer.Serialize(history);
+        sub.MachinePlanId = req.MachinePlanId;
+    }
+    if (req.Status != null) sub.Status = req.Status;
+    if (req.BillingCycle != null) sub.BillingCycle = req.BillingCycle;
+    if (req.StartDate.HasValue) sub.StartDate = req.StartDate;
+    if (req.RenewalDate.HasValue) sub.RenewalDate = req.RenewalDate;
+    if (req.InternalNotes != null) sub.InternalNotes = req.InternalNotes;
+    sub.UpdatedAt = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+    return Results.Ok(new { message = "更新成功" });
+}).WithName("UpdateSubscription").WithTags("Subscriptions");
+
+// 新增備忘記錄（不換方案，只加一筆 note）
+app.MapPost("/api/admin/subscriptions/{id:int}/notes", [Authorize] async (int id, [FromBody] AddNoteRequest req, AppDbContext db) =>
+{
+    var sub = await db.BusinessSubscriptions.FindAsync(id);
+    if (sub == null) return Results.NotFound();
+    var history = System.Text.Json.JsonSerializer.Deserialize<List<System.Text.Json.JsonElement>>(sub.ChangeHistory ?? "[]") ?? new();
+    var entry = System.Text.Json.JsonSerializer.SerializeToElement(new {
+        date = DateTime.UtcNow,
+        action = "note",
+        fromPlan = (string?)null,
+        toPlan = (string?)null,
+        note = req.Note
+    });
+    history.Add(entry);
+    sub.ChangeHistory = System.Text.Json.JsonSerializer.Serialize(history);
+    sub.UpdatedAt = DateTime.UtcNow;
+    await db.SaveChangesAsync();
+    return Results.Ok(new { message = "備忘已記錄" });
+}).WithName("AddSubscriptionNote").WithTags("Subscriptions");
+
 // ── Business Inquiries ──────────────────────────────────────────────────────────
 
 // 公開端點：送出詢問單
@@ -2033,3 +2213,17 @@ public record CreateInquiryRequest(
     string ContactName, string Phone, string? Email, string? Company,
     string? InquiryType, string? SelectedPlan, string? Message);
 public record UpdateInquiryRequest(string? Status, string? AdminNote);
+public record UpsertMachinePlanRequest(
+    string Name, string? Category, string? Description,
+    decimal? MonthlyPrice, decimal? QuarterlyPrice, decimal? AnnualPrice, decimal? DepositAmount,
+    string? Features, bool? IsActive, int? SortOrder);
+public record CreateSubscriptionRequest(
+    string ContactName, string Phone, string? Email, string? Company,
+    int? MachinePlanId, string? BillingCycle,
+    DateTime? StartDate, DateTime? RenewalDate, string? Status,
+    string? InternalNotes, int? SourceInquiryId);
+public record UpdateSubscriptionRequest(
+    int? MachinePlanId, string? Status, string? BillingCycle,
+    DateTime? StartDate, DateTime? RenewalDate,
+    string? InternalNotes, string? HistoryNote);
+public record AddNoteRequest(string Note);
