@@ -9,6 +9,11 @@ interface MachinePlan {
   name: string;
   category: string;
   description?: string;
+  tag?: string;
+  tagColor?: string;
+  targetDesc?: string;
+  badge?: string;
+  depositNote?: string;
   monthlyPrice?: number;
   quarterlyPrice?: number;
   annualPrice?: number;
@@ -62,7 +67,7 @@ export default function MachinePlanManagement() {
   const openCreate = () => {
     setEditModal({ open: true });
     form.resetFields();
-    form.setFieldsValue({ isActive: true, category: 'office', sortOrder: 0 });
+    form.setFieldsValue({ isActive: true, category: 'office', sortOrder: 0, tagColor: 'default' });
   };
 
   const openEdit = (record: MachinePlan) => {
@@ -73,6 +78,11 @@ export default function MachinePlanManagement() {
       name: record.name,
       category: record.category,
       description: record.description,
+      tag: record.tag,
+      tagColor: record.tagColor || 'default',
+      targetDesc: record.targetDesc,
+      badge: record.badge,
+      depositNote: record.depositNote,
       monthlyPrice: record.monthlyPrice,
       quarterlyPrice: record.quarterlyPrice,
       annualPrice: record.annualPrice,
@@ -91,6 +101,11 @@ export default function MachinePlanManagement() {
       name: values.name,
       category: values.category,
       description: values.description,
+      tag: values.tag || null,
+      tagColor: values.tagColor || null,
+      targetDesc: values.targetDesc || null,
+      badge: values.badge || null,
+      depositNote: values.depositNote || null,
       monthlyPrice: values.monthlyPrice ?? null,
       quarterlyPrice: values.quarterlyPrice ?? null,
       annualPrice: values.annualPrice ?? null,
@@ -189,6 +204,31 @@ export default function MachinePlanManagement() {
           </div>
           <Form.Item name="description" label="簡短說明">
             <Input placeholder="適合 10–30 人辦公室..." />
+          </Form.Item>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <Form.Item name="tag" label="標籤文字">
+              <Input placeholder="最受歡迎" />
+            </Form.Item>
+            <Form.Item name="tagColor" label="標籤顏色">
+              <Select options={[
+                { value: 'hot', label: '熱銷紅 (hot)' },
+                { value: 'upgrade', label: '升級藍 (upgrade)' },
+                { value: 'cafe', label: '咖啡廳綠 (cafe)' },
+                { value: 'hotel', label: '飯店金 (hotel)' },
+                { value: 'default', label: '預設灰 (default)' },
+              ]} />
+            </Form.Item>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <Form.Item name="targetDesc" label="目標客群描述">
+              <Input placeholder="10 ~ 30 人辦公室" />
+            </Form.Item>
+            <Form.Item name="badge" label="推薦 Badge（留空=不顯示）">
+              <Input placeholder="推薦方案" />
+            </Form.Item>
+          </div>
+          <Form.Item name="depositNote" label="押金說明">
+            <Input placeholder="免押金 / 押金 NT$ 10,000 / 客製報價" />
           </Form.Item>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <Form.Item name="monthlyPrice" label="月租費（NT$，留空=客製報價）">

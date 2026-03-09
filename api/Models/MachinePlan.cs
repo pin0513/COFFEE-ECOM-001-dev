@@ -16,6 +16,16 @@ public class MachinePlan
     public decimal? AnnualPrice { get; set; }
     /// <summary>押金（NT$）</summary>
     public decimal? DepositAmount { get; set; }
+    /// <summary>方案標籤文字，例如：最受歡迎、效能升級</summary>
+    public string? Tag { get; set; }
+    /// <summary>標籤顏色代碼：hot | upgrade | cafe | hotel | default</summary>
+    public string? TagColor { get; set; }
+    /// <summary>目標客群描述，例如：10 ~ 30 人辦公室</summary>
+    public string? TargetDesc { get; set; }
+    /// <summary>推薦 Badge 文字，例如：推薦方案（留空=不顯示）</summary>
+    public string? Badge { get; set; }
+    /// <summary>押金說明文字，例如：免押金、押金 NT$ 10,000</summary>
+    public string? DepositNote { get; set; }
     /// <summary>方案特色 JSON string[]</summary>
     public string? Features { get; set; }
     public bool IsActive { get; set; } = true;

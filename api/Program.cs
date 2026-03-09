@@ -1922,6 +1922,21 @@ app.MapPost("/api/orders/lookup/cancel", async ([FromBody] OrderLookupCancelRequ
 
 // ── Machine Plans ───────────────────────────────────────────────────────────────
 
+// 公開端點：前台讀取啟用的方案
+app.MapGet("/api/machine-plans", async (AppDbContext db) =>
+{
+    var plans = await db.MachinePlans
+        .Where(p => p.IsActive)
+        .OrderBy(p => p.SortOrder).ThenBy(p => p.Id)
+        .Select(p => new {
+            p.Id, p.Name, p.Category, p.Description,
+            p.Tag, p.TagColor, p.TargetDesc, p.Badge, p.DepositNote,
+            p.MonthlyPrice, p.QuarterlyPrice, p.AnnualPrice, p.DepositAmount,
+            p.Features, p.SortOrder
+        }).ToListAsync();
+    return Results.Ok(plans);
+}).WithName("GetPublicMachinePlans").WithTags("MachinePlans");
+
 app.MapGet("/api/admin/machine-plans", [Authorize] async (AppDbContext db) =>
 {
     var plans = await db.MachinePlans
@@ -1941,6 +1956,11 @@ app.MapPost("/api/admin/machine-plans", [Authorize] async ([FromBody] UpsertMach
         Name = req.Name.Trim(),
         Category = req.Category ?? "office",
         Description = req.Description?.Trim(),
+        Tag = req.Tag?.Trim(),
+        TagColor = req.TagColor?.Trim(),
+        TargetDesc = req.TargetDesc?.Trim(),
+        Badge = string.IsNullOrWhiteSpace(req.Badge) ? null : req.Badge.Trim(),
+        DepositNote = req.DepositNote?.Trim(),
         MonthlyPrice = req.MonthlyPrice,
         QuarterlyPrice = req.QuarterlyPrice,
         AnnualPrice = req.AnnualPrice,
@@ -1963,6 +1983,11 @@ app.MapPut("/api/admin/machine-plans/{id:int}", [Authorize] async (int id, [From
     plan.Name = req.Name.Trim();
     plan.Category = req.Category ?? plan.Category;
     plan.Description = req.Description?.Trim();
+    plan.Tag = req.Tag?.Trim();
+    plan.TagColor = req.TagColor?.Trim();
+    plan.TargetDesc = req.TargetDesc?.Trim();
+    plan.Badge = string.IsNullOrWhiteSpace(req.Badge) ? null : req.Badge.Trim();
+    plan.DepositNote = req.DepositNote?.Trim();
     plan.MonthlyPrice = req.MonthlyPrice;
     plan.QuarterlyPrice = req.QuarterlyPrice;
     plan.AnnualPrice = req.AnnualPrice;
@@ -2215,6 +2240,7 @@ public record CreateInquiryRequest(
 public record UpdateInquiryRequest(string? Status, string? AdminNote);
 public record UpsertMachinePlanRequest(
     string Name, string? Category, string? Description,
+    string? Tag, string? TagColor, string? TargetDesc, string? Badge, string? DepositNote,
     decimal? MonthlyPrice, decimal? QuarterlyPrice, decimal? AnnualPrice, decimal? DepositAmount,
     string? Features, bool? IsActive, int? SortOrder);
 public record CreateSubscriptionRequest(

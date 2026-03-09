@@ -1,86 +1,32 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { message } from 'antd';
 import { apiClient } from '../config/api';
 import './BusinessPage.css';
 
-// ── 機器方案資料 ────────────────────────────────────────────────
-const MACHINE_PLANS = [
-  {
-    id: 'office-basic',
-    name: '辦公室輕鬆版',
-    tag: '最受歡迎',
-    tagColor: 'hot',
-    targetDesc: '10 ~ 30 人辦公室',
-    monthlyFee: 2800,
-    depositNote: '免押金',
-    features: [
-      '全自動義式咖啡機 × 1',
-      '每月精選配方豆 2kg',
-      '濾心耗材免費更換',
-      '定期到府保養維護',
-      '電話 / 遠端即時支援',
-    ],
-    badge: null,
-  },
-  {
-    id: 'office-pro',
-    name: '辦公室專業版',
-    tag: '效能升級',
-    tagColor: 'upgrade',
-    targetDesc: '30 ~ 80 人辦公室',
-    monthlyFee: 4500,
-    depositNote: '免押金',
-    features: [
-      '商用半自動咖啡機 × 1',
-      '每月精選單品豆 4kg',
-      '專業磨豆機 × 1',
-      '濾心耗材全包',
-      '每月 1 次到府保養',
-      '優先故障排除（24h）',
-    ],
-    badge: null,
-  },
-  {
-    id: 'cafe-standard',
-    name: '咖啡廳標準版',
-    tag: '穩定出杯',
-    tagColor: 'cafe',
-    targetDesc: '小型咖啡廳 / 餐廳',
-    monthlyFee: 7800,
-    depositNote: '押金 NT$ 10,000',
-    features: [
-      '商用雙孔義式機 × 1',
-      '商用錐刀磨豆機 × 1',
-      '每月莊園豆 8kg（客製）',
-      '濾心 / 水垢清潔全包',
-      '每兩週到府保養',
-      '優先故障排除（12h）',
-      '免費員工基礎訓練',
-    ],
-    badge: '推薦方案',
-  },
-  {
-    id: 'hotel-premium',
-    name: '飯店頂配版',
-    tag: '五星品質',
-    tagColor: 'hotel',
-    targetDesc: '星級飯店 / 大型餐飲',
-    monthlyFee: null,
-    depositNote: '客製報價',
-    features: [
-      '頂級商用機器（品牌客製）',
-      '無限量頂級莊園豆供應',
-      '專屬業務顧問 1 對 1',
-      '24 小時緊急維修',
-      '員工進階訓練課程',
-      '品牌形象咖啡設計服務',
-      '季度烘焙審評報告',
-    ],
-    badge: null,
-  },
-];
+// ── API 型別 ────────────────────────────────────────────────────
+interface MachinePlanApi {
+  id: number;
+  name: string;
+  category: string;
+  description?: string;
+  tag?: string;
+  tagColor?: string;
+  targetDesc?: string;
+  badge?: string;
+  depositNote?: string;
+  monthlyPrice?: number;
+  quarterlyPrice?: number;
+  annualPrice?: number;
+  depositAmount?: number;
+  features?: string; // JSON string[]
+  sortOrder: number;
+}
+
+function getPlanFeatures(plan: MachinePlanApi): string[] {
+  try { return JSON.parse(plan.features || '[]'); } catch { return []; }
+}
 
 // ── 應用場景 ────────────────────────────────────────────────────
 const SCENARIOS = [
@@ -92,7 +38,6 @@ const SCENARIOS = [
     ),
     title: '辦公室',
     desc: '提升員工活力，讓每個早晨從一杯好咖啡開始',
-    plans: ['office-basic', 'office-pro'],
   },
   {
     icon: (
@@ -102,7 +47,6 @@ const SCENARIOS = [
     ),
     title: '咖啡廳',
     desc: '讓專業機器的穩定出杯，成為您口碑的最佳後盾',
-    plans: ['cafe-standard'],
   },
   {
     icon: (
@@ -112,7 +56,6 @@ const SCENARIOS = [
     ),
     title: '餐廳',
     desc: '飯後一杯精品咖啡，讓客人留下最完美的句點',
-    plans: ['cafe-standard', 'hotel-premium'],
   },
   {
     icon: (
@@ -122,7 +65,6 @@ const SCENARIOS = [
     ),
     title: '飯店',
     desc: '從大廳到客房，五星咖啡體驗是品牌印象的一部分',
-    plans: ['hotel-premium'],
   },
 ];
 
@@ -131,9 +73,10 @@ interface InquiryFormProps {
   preselectedPlan?: string;
   inquiryType: string;
   onSuccess: () => void;
+  machinePlans: MachinePlanApi[];
 }
 
-function InquiryForm({ preselectedPlan, inquiryType, onSuccess }: InquiryFormProps) {
+function InquiryForm({ preselectedPlan, inquiryType, onSuccess, machinePlans }: InquiryFormProps) {
   const [form, setForm] = useState({
     contactName: '',
     phone: '',
@@ -218,8 +161,8 @@ function InquiryForm({ preselectedPlan, inquiryType, onSuccess }: InquiryFormPro
           onChange={e => setForm(f => ({ ...f, selectedPlan: e.target.value }))}
         >
           <option value="">── 請選擇（選填）──</option>
-          {MACHINE_PLANS.map(p => (
-            <option key={p.id} value={p.id}>{p.name}</option>
+          {machinePlans.map(p => (
+            <option key={p.id} value={String(p.id)}>{p.name}</option>
           ))}
           <option value="bulk-purchase">大量採購咖啡豆</option>
           <option value="hotel-restaurant-supply">飯店 / 餐廳豆源供應</option>
@@ -248,8 +191,17 @@ export default function BusinessPage() {
   const location = useLocation();
   const [activePlanId, setActivePlanId] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [machinePlans, setMachinePlans] = useState<MachinePlanApi[]>([]);
+  const [plansLoading, setPlansLoading] = useState(true);
   const isBulk = location.hash === '#bulk';
   const inquiryType = isBulk ? 'hotel-restaurant' : 'machine-rental';
+
+  useEffect(() => {
+    apiClient.get('/machine-plans')
+      .then(res => { setMachinePlans(res.data); })
+      .catch(() => { /* keep empty */ })
+      .finally(() => setPlansLoading(false));
+  }, []);
 
   return (
     <>
@@ -360,49 +312,53 @@ export default function BusinessPage() {
               <h2>咖啡機租賃 / 購買方案</h2>
               <p>月租即享頂規設備，零維護、零壓力，隨時升級換新</p>
             </div>
-            <div className="biz-plans-grid">
-              {MACHINE_PLANS.map(plan => (
-                <div
-                  key={plan.id}
-                  className={`biz-plan-card${plan.badge ? ' recommended' : ''}`}
-                >
-                  {plan.badge && <div className="biz-plan-badge">{plan.badge}</div>}
-                  <div className={`biz-plan-tag ${plan.tagColor}`}>{plan.tag}</div>
-                  <h3 className="biz-plan-name">{plan.name}</h3>
-                  <p className="biz-plan-target">{plan.targetDesc}</p>
-                  <div className="biz-plan-price">
-                    {plan.monthlyFee ? (
-                      <>
-                        <span className="biz-plan-fee">NT$ {plan.monthlyFee.toLocaleString()}</span>
-                        <span className="biz-plan-period"> / 月</span>
-                      </>
-                    ) : (
-                      <span className="biz-plan-fee custom">客製報價</span>
-                    )}
-                    <span className="biz-plan-deposit">{plan.depositNote}</span>
-                  </div>
-                  <ul className="biz-plan-features">
-                    {plan.features.map(f => (
-                      <li key={f}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12"/>
-                        </svg>
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <button
-                    className="biz-plan-cta"
-                    onClick={() => {
-                      setActivePlanId(plan.id);
-                      document.getElementById('inquiry')?.scrollIntoView({ behavior: 'smooth' });
-                    }}
+            {plansLoading ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: '#888' }}>載入方案中...</div>
+            ) : (
+              <div className="biz-plans-grid">
+                {machinePlans.map(plan => (
+                  <div
+                    key={plan.id}
+                    className={`biz-plan-card${plan.badge ? ' recommended' : ''}`}
                   >
-                    選擇此方案
-                  </button>
-                </div>
-              ))}
-            </div>
+                    {plan.badge && <div className="biz-plan-badge">{plan.badge}</div>}
+                    <div className={`biz-plan-tag ${plan.tagColor || 'default'}`}>{plan.tag}</div>
+                    <h3 className="biz-plan-name">{plan.name}</h3>
+                    <p className="biz-plan-target">{plan.targetDesc}</p>
+                    <div className="biz-plan-price">
+                      {plan.monthlyPrice ? (
+                        <>
+                          <span className="biz-plan-fee">NT$ {plan.monthlyPrice.toLocaleString()}</span>
+                          <span className="biz-plan-period"> / 月</span>
+                        </>
+                      ) : (
+                        <span className="biz-plan-fee custom">客製報價</span>
+                      )}
+                      <span className="biz-plan-deposit">{plan.depositNote}</span>
+                    </div>
+                    <ul className="biz-plan-features">
+                      {getPlanFeatures(plan).map(f => (
+                        <li key={f}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      className="biz-plan-cta"
+                      onClick={() => {
+                        setActivePlanId(String(plan.id));
+                        document.getElementById('inquiry')?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                    >
+                      選擇此方案
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
@@ -476,6 +432,7 @@ export default function BusinessPage() {
                   preselectedPlan={activePlanId || undefined}
                   inquiryType={inquiryType}
                   onSuccess={() => setSubmitted(true)}
+                  machinePlans={machinePlans}
                 />
               )}
             </div>

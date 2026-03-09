@@ -767,60 +767,43 @@ public static class DbSeeder
 
     private static async Task EnsureMachinePlansAsync(AppDbContext db)
     {
-        if (await db.MachinePlans.AnyAsync()) return;
-
-        var plans = new[]
+        if (!await db.MachinePlans.AnyAsync())
         {
-            new MachinePlan
+            var plans = new[]
             {
-                Name = "辦公室基本款",
-                Category = "office",
-                Description = "適合 10–30 人辦公室，全自動研磨，每日穩定出杯",
-                MonthlyPrice = 2800,
-                QuarterlyPrice = 7900,
-                AnnualPrice = 28800,
-                DepositAmount = 5000,
-                Features = "[\"全自動研磨沖煮\",\"每月 2 公斤精品豆\",\"定期保養維護\",\"48 小時到府維修\"]",
-                IsActive = true, SortOrder = 1, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
-            },
-            new MachinePlan
-            {
-                Name = "辦公室進階款",
-                Category = "office",
-                Description = "適合 30–80 人辦公室，雙鍋爐高效出杯，支援多種豆款",
-                MonthlyPrice = 4500,
-                QuarterlyPrice = 12500,
-                AnnualPrice = 46000,
-                DepositAmount = 8000,
-                Features = "[\"雙鍋爐高效機\",\"每月 4 公斤精品豆\",\"季度深度保養\",\"24 小時到府維修\",\"豆款月月替換\"]",
-                IsActive = true, SortOrder = 2, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
-            },
-            new MachinePlan
-            {
-                Name = "餐飲標準款",
-                Category = "cafe",
-                Description = "適合咖啡廳、早餐店，半自動義式機，專業師傅出杯品質",
-                MonthlyPrice = 7800,
-                QuarterlyPrice = 21500,
-                AnnualPrice = 79800,
-                DepositAmount = 15000,
-                Features = "[\"半自動義式咖啡機\",\"專業磨豆機配套\",\"每月 8 公斤精品豆\",\"月度清潔保養\",\"沖煮技術培訓\",\"24 小時緊急維修\"]",
-                IsActive = true, SortOrder = 3, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
-            },
-            new MachinePlan
-            {
-                Name = "飯店旗艦款",
-                Category = "hotel",
-                Description = "星級飯店專屬方案，頂級機器，客製豆單，專屬顧問服務",
-                MonthlyPrice = null,
-                QuarterlyPrice = null,
-                AnnualPrice = null,
-                DepositAmount = null,
-                Features = "[\"頂級義式機組\",\"客製品牌豆單\",\"每月無限量供豆\",\"專屬顧問駐點\",\"員工培訓課程\",\"VIP 緊急維修 SLA 4小時\"]",
-                IsActive = true, SortOrder = 4, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
-            },
+                new MachinePlan { Name="辦公室基本款", Category="office", Description="適合 10–30 人辦公室，全自動研磨，每日穩定出杯", Tag="最受歡迎", TagColor="hot", TargetDesc="10 ~ 30 人辦公室", Badge=null, DepositNote="免押金", MonthlyPrice=2800, QuarterlyPrice=7900, AnnualPrice=28800, DepositAmount=null, Features="[\"全自動義式咖啡機 × 1\",\"每月精選配方豆 2kg\",\"濾心耗材免費更換\",\"定期到府保養維護\",\"電話 / 遠端即時支援\"]", IsActive=true, SortOrder=1, CreatedAt=DateTime.UtcNow, UpdatedAt=DateTime.UtcNow },
+                new MachinePlan { Name="辦公室進階款", Category="office", Description="適合 30–80 人辦公室，雙鍋爐高效出杯", Tag="效能升級", TagColor="upgrade", TargetDesc="30 ~ 80 人辦公室", Badge=null, DepositNote="免押金", MonthlyPrice=4500, QuarterlyPrice=12500, AnnualPrice=46000, DepositAmount=null, Features="[\"商用半自動咖啡機 × 1\",\"每月精選單品豆 4kg\",\"專業磨豆機 × 1\",\"濾心耗材全包\",\"每月 1 次到府保養\",\"優先故障排除（24h）\"]", IsActive=true, SortOrder=2, CreatedAt=DateTime.UtcNow, UpdatedAt=DateTime.UtcNow },
+                new MachinePlan { Name="餐飲標準款", Category="cafe", Description="適合咖啡廳、早餐店，半自動義式機", Tag="穩定出杯", TagColor="cafe", TargetDesc="小型咖啡廳 / 餐廳", Badge="推薦方案", DepositNote="押金 NT$ 10,000", MonthlyPrice=7800, QuarterlyPrice=21500, AnnualPrice=79800, DepositAmount=10000, Features="[\"商用雙孔義式機 × 1\",\"商用錐刀磨豆機 × 1\",\"每月莊園豆 8kg（客製）\",\"濾心 / 水垢清潔全包\",\"每兩週到府保養\",\"優先故障排除（12h）\",\"免費員工基礎訓練\"]", IsActive=true, SortOrder=3, CreatedAt=DateTime.UtcNow, UpdatedAt=DateTime.UtcNow },
+                new MachinePlan { Name="飯店旗艦款", Category="hotel", Description="星級飯店專屬方案，頂級機器，客製豆單", Tag="五星品質", TagColor="hotel", TargetDesc="星級飯店 / 大型餐飲", Badge=null, DepositNote="客製報價", MonthlyPrice=null, QuarterlyPrice=null, AnnualPrice=null, DepositAmount=null, Features="[\"頂級商用機器（品牌客製）\",\"無限量頂級莊園豆供應\",\"專屬業務顧問 1 對 1\",\"24 小時緊急維修\",\"員工進階訓練課程\",\"品牌形象咖啡設計服務\",\"季度烘焙審評報告\"]", IsActive=true, SortOrder=4, CreatedAt=DateTime.UtcNow, UpdatedAt=DateTime.UtcNow },
+            };
+            db.MachinePlans.AddRange(plans);
+            await db.SaveChangesAsync();
+            return;
+        }
+
+        // 更新既有方案的顯示欄位（Tag 為 null 表示尚未遷移）
+        var displayData = new Dictionary<string, (string Tag, string TagColor, string TargetDesc, string? Badge, string DepositNote)>
+        {
+            ["辦公室基本款"] = ("最受歡迎", "hot", "10 ~ 30 人辦公室", null, "免押金"),
+            ["辦公室進階款"] = ("效能升級", "upgrade", "30 ~ 80 人辦公室", null, "免押金"),
+            ["餐飲標準款"]   = ("穩定出杯", "cafe", "小型咖啡廳 / 餐廳", "推薦方案", "押金 NT$ 10,000"),
+            ["飯店旗艦款"]   = ("五星品質", "hotel", "星級飯店 / 大型餐飲", null, "客製報價"),
         };
-        db.MachinePlans.AddRange(plans);
-        await db.SaveChangesAsync();
+
+        var existing = await db.MachinePlans.ToListAsync();
+        bool changed = false;
+        foreach (var plan in existing)
+        {
+            if (plan.Tag == null && displayData.TryGetValue(plan.Name, out var d))
+            {
+                plan.Tag = d.Tag;
+                plan.TagColor = d.TagColor;
+                plan.TargetDesc = d.TargetDesc;
+                plan.Badge = d.Badge;
+                plan.DepositNote = d.DepositNote;
+                changed = true;
+            }
+        }
+        if (changed) await db.SaveChangesAsync();
     }
 }

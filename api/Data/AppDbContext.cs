@@ -176,6 +176,11 @@ public class AppDbContext : DbContext
             e.HasKey(p => p.Id);
             e.Property(p => p.Name).HasMaxLength(100);
             e.Property(p => p.Category).HasMaxLength(50);
+            e.Property(p => p.Tag).HasMaxLength(50);
+            e.Property(p => p.TagColor).HasMaxLength(30);
+            e.Property(p => p.TargetDesc).HasMaxLength(100);
+            e.Property(p => p.Badge).HasMaxLength(50);
+            e.Property(p => p.DepositNote).HasMaxLength(100);
             e.Property(p => p.MonthlyPrice).HasColumnType("decimal(10,2)");
             e.Property(p => p.QuarterlyPrice).HasColumnType("decimal(10,2)");
             e.Property(p => p.AnnualPrice).HasColumnType("decimal(10,2)");
