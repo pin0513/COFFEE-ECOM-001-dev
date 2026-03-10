@@ -213,8 +213,8 @@ interface Store {
 const DEFAULT_BANNERS: HeroBanner[] = [
   {
     id: 0,
-    title: '嘉義廠直焙 · 70款以上任選',
-    subTitle: '1989年創立老字號，ISO22000/HACCP/ISO9001認證。烘焙廠直售省差價，從單品豆到即溶系列一次搞定，批發零售皆可詢。',
+    title: '源自 1989，嘉義工藝烘焙',
+    subTitle: 'ISO 三重認證嚴格把關，七十款精選直售無差價。零售批發，皆以同等品質服務。',
     buttonText: '立即選購',
     buttonUrl: '/products',
     imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=1920&h=700&fit=crop&q=85',

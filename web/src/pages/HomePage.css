@@ -1123,14 +1123,14 @@
 
 /* ==================== 我是誰？場景導入區塊 — 深焙棕底，強對比 ==================== */
 .scenario-section {
-  background: #2c1810;
+  background: #F5F1EC;
   padding: 72px 0 80px;
 }
 
 .scenario-heading {
   font-size: 22px;
   font-weight: var(--font-weight-bold);
-  color: #f5ede3;
+  color: #1C1917;
   text-align: center;
   margin: 0 0 12px 0;
   letter-spacing: 0.02em;
@@ -1138,7 +1138,7 @@
 
 .scenario-subheading {
   font-size: 14px;
-  color: rgba(245, 237, 227, 0.6);
+  color: #78716C;
   text-align: center;
   margin: 0 0 48px 0;
   letter-spacing: 0.03em;
@@ -1156,36 +1156,94 @@
   align-items: center;
   text-align: center;
   padding: 36px 28px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.05);
   cursor: pointer;
-  transition: background 0.25s, border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+  transition: transform 0.25s, box-shadow 0.25s;
+}
+
+/* 卡片 1：居家日常 — 琥珀暖金 */
+.scenario-card:nth-child(1) {
+  background: linear-gradient(160deg, #FFFBF0 0%, #FEF3C7 100%);
+  border: 1px solid #FDE68A;
+}
+.scenario-card:nth-child(1) .scenario-icon {
+  background: #FEF9EC;
+  color: #D97706;
+}
+.scenario-card:nth-child(1) .scenario-card-title { color: #92400E; }
+.scenario-card:nth-child(1) .scenario-cta {
+  color: #D97706;
+  border-color: #FBB040;
+}
+.scenario-card:nth-child(1):hover {
+  box-shadow: 0 12px 36px rgba(217, 119, 6, 0.18);
+}
+.scenario-card:nth-child(1):hover .scenario-cta {
+  background: #D97706;
+  color: #fff;
+  border-color: #D97706;
+}
+
+/* 卡片 2：企業批發 — 森林綠 */
+.scenario-card:nth-child(2) {
+  background: linear-gradient(160deg, #F0FFF7 0%, #D1FAE5 100%);
+  border: 1px solid #A7F3D0;
+}
+.scenario-card:nth-child(2) .scenario-icon {
+  background: #ECFDF5;
+  color: #059669;
+}
+.scenario-card:nth-child(2) .scenario-card-title { color: #064E3B; }
+.scenario-card:nth-child(2) .scenario-cta {
+  color: #059669;
+  border-color: #6EE7B7;
+}
+.scenario-card:nth-child(2):hover {
+  box-shadow: 0 12px 36px rgba(5, 150, 105, 0.18);
+}
+.scenario-card:nth-child(2):hover .scenario-cta {
+  background: #059669;
+  color: #fff;
+  border-color: #059669;
+}
+
+/* 卡片 3：咖啡機租賃 — 靛藍 */
+.scenario-card:nth-child(3) {
+  background: linear-gradient(160deg, #F5F3FF 0%, #EDE9FE 100%);
+  border: 1px solid #DDD6FE;
+}
+.scenario-card:nth-child(3) .scenario-icon {
+  background: #F5F3FF;
+  color: #7C3AED;
+}
+.scenario-card:nth-child(3) .scenario-card-title { color: #4C1D95; }
+.scenario-card:nth-child(3) .scenario-cta {
+  color: #7C3AED;
+  border-color: #C4B5FD;
+}
+.scenario-card:nth-child(3):hover {
+  box-shadow: 0 12px 36px rgba(124, 58, 237, 0.18);
+}
+.scenario-card:nth-child(3):hover .scenario-cta {
+  background: #7C3AED;
+  color: #fff;
+  border-color: #7C3AED;
 }
 
 .scenario-card:hover {
-  background: rgba(255, 255, 255, 0.10);
-  border-color: rgba(201, 164, 122, 0.5);
   transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
 }
 
 .scenario-icon {
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: rgba(201, 164, 122, 0.18);
-  color: #c9a47a;
   margin-bottom: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   transition: background 0.25s;
-}
-
-.scenario-card:hover .scenario-icon {
-  background: rgba(201, 164, 122, 0.30);
 }
 
 .scenario-card-body {
@@ -1199,7 +1257,6 @@
 .scenario-card-title {
   font-size: 17px;
   font-weight: var(--font-weight-bold);
-  color: #f5ede3;
   margin: 0 0 10px 0;
   word-break: keep-all;
   overflow-wrap: break-word;
@@ -1207,7 +1264,7 @@
 
 .scenario-card-desc {
   font-size: 13px;
-  color: rgba(245, 237, 227, 0.65);
+  color: #57534E;
   line-height: 1.7;
   margin: 0 0 20px 0;
   flex: 1;
@@ -1217,18 +1274,12 @@
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.10em;
-  color: #c9a47a;
   text-transform: uppercase;
   padding: 8px 18px;
-  border: 1.5px solid rgba(201, 164, 122, 0.55);
+  border-width: 1.5px;
+  border-style: solid;
   border-radius: 20px;
   transition: background 0.2s, color 0.2s, border-color 0.2s;
-}
-
-.scenario-card:hover .scenario-cta {
-  background: #c9a47a;
-  color: #1a0f08;
-  border-color: #c9a47a;
 }
 
 /* Tablet + Mobile */
