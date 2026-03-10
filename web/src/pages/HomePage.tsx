@@ -213,8 +213,8 @@ interface Store {
 const DEFAULT_BANNERS: HeroBanner[] = [
   {
     id: 0,
-    title: '世界頂級咖啡豆',
-    subTitle: '精選衣索比亞、牙買加、巴拿馬等莊園直送。下單即享專業烘焙，48小時新鮮出貨。',
+    title: '嘉義廠直焙 · 70款以上任選',
+    subTitle: '1989年創立老字號，ISO22000/HACCP/ISO9001認證。烘焙廠直售省差價，從單品豆到即溶系列一次搞定，批發零售皆可詢。',
     buttonText: '立即選購',
     buttonUrl: '/products',
     imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=1920&h=700&fit=crop&q=85',
@@ -384,10 +384,10 @@ export default function HomePage() {
   return (
     <>
     <Helmet>
-      <title>品皇咖啡 | 台灣精品咖啡豆直營專賣</title>
-      <meta name="description" content="品皇咖啡提供精選台灣精品咖啡豆，包含阿拉比卡單品、義式配方豆、即期特價品等。產地直送，品質保證。" />
-      <meta property="og:title" content="品皇咖啡 | 台灣精品咖啡豆直營專賣" />
-      <meta property="og:description" content="品皇咖啡提供精選台灣精品咖啡豆，包含阿拉比卡單品、義式配方豆、即期特價品等。產地直送，品質保證。" />
+      <title>品皇咖啡 | 咖啡豆批發・咖啡機租賃・代工加工 | 嘉義1989</title>
+      <meta name="description" content="品皇咖啡（后政企業，1989年創立）嘉義烘焙廠直售。提供咖啡豆批發零售、咖啡機租賃、食品代工加工、咖啡研發服務。ISO22000/HACCP/ISO9001認證，70款以上任選。" />
+      <meta property="og:title" content="品皇咖啡 | 咖啡豆批發・咖啡機租賃・代工加工" />
+      <meta property="og:description" content="品皇咖啡（后政企業，1989年創立）嘉義烘焙廠直售。提供咖啡豆批發零售、咖啡機租賃、食品代工加工、咖啡研發服務。ISO22000/HACCP/ISO9001認證。" />
       <meta property="og:url" content="https://pinhung.com/" />
       <meta property="og:type" content="website" />
     </Helmet>

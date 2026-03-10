@@ -27,6 +27,7 @@ public static class DbSeeder
 
         // 補充既有 DB 缺少的 footer 連結設定（升級用，不影響新 DB）
         await EnsureFooterLinksAsync(db);
+        await EnsureCategoryDisplayNamesAsync(db);
 
         // 補充金流相關 SiteSettings key（升級用）
         await EnsurePaymentGatewayKeysAsync(db);
@@ -56,7 +57,7 @@ public static class DbSeeder
 
         var categories = new List<Category>
         {
-            new() { Name = "精品咖啡豆", Code = "SPECIALTY_BEANS", Description = "精選世界各地精品咖啡豆", Icon = "☕", Color = "#8B4513", SortOrder = 1 },
+            new() { Name = "精選咖啡豆", Code = "SPECIALTY_BEANS", Description = "不花精品店的錢，同樣喝到好豆。烘焙廠直售，從藍山、曼特寧到耶加雪菲，超過70款任選，大量採購享批發優惠。", Icon = "☕", Color = "#8B4513", SortOrder = 1 },
             new() { Name = "商業配方豆", Code = "COMMERCIAL_BLEND", Description = "商業用途咖啡配方", Icon = "🏢", Color = "#A0522D", SortOrder = 2 },
             new() { Name = "即溶/二合一/三合一", Code = "INSTANT_COFFEE", Description = "即溶咖啡系列", Icon = "⚡", Color = "#CD853F", SortOrder = 3 },
             new() { Name = "茶葉/花草茶", Code = "TEA", Description = "精選茶葉與花草茶", Icon = "🍵", Color = "#228B22", SortOrder = 4 },
@@ -119,6 +120,18 @@ public static class DbSeeder
             }
         }
         await db.SaveChangesAsync();
+    }
+
+    // 將既有 DB 中「精品咖啡豆」重命名為「精選咖啡豆」（升級用）
+    private static async Task EnsureCategoryDisplayNamesAsync(AppDbContext db)
+    {
+        var cat = await db.Categories.FirstOrDefaultAsync(c => c.Name == "精品咖啡豆");
+        if (cat != null)
+        {
+            cat.Name = "精選咖啡豆";
+            cat.Description = "不花精品店的錢，同樣喝到好豆。烘焙廠直售，從藍山、曼特寧到耶加雪菲，超過70款任選，大量採購享批發優惠。";
+            await db.SaveChangesAsync();
+        }
     }
 
     private static async Task EnsurePaymentGatewayKeysAsync(AppDbContext db)
