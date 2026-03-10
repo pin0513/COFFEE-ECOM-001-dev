@@ -28,6 +28,9 @@ public static class DbSeeder
         // 補充既有 DB 缺少的 footer 連結設定（升級用，不影響新 DB）
         await EnsureFooterLinksAsync(db);
         await EnsureCategoryDisplayNamesAsync(db);
+        await EnsureSiteSettingsCorrectionsAsync(db);
+        await EnsureContentPageCorrectionsAsync(db);
+        await EnsureStoreCorrectionsAsync(db);
 
         // 補充金流相關 SiteSettings key（升級用）
         await EnsurePaymentGatewayKeysAsync(db);
@@ -78,10 +81,10 @@ public static class DbSeeder
         var settings = new List<SiteSetting>
         {
             new() { Key = "site_name", Value = "品皇咖啡" },
-            new() { Key = "site_subtitle", Value = "專業烘焙，極致品味" },
-            new() { Key = "contact_phone", Value = "02-2999-0000" },
+            new() { Key = "site_subtitle", Value = "優質原料・專業加工・熱忱服務" },
+            new() { Key = "contact_phone", Value = "02-29821282" },
             new() { Key = "contact_email", Value = "service@pinhung.com.tw" },
-            new() { Key = "contact_address", Value = "新北市三重區重新路五段609巷12號" },
+            new() { Key = "contact_address", Value = "新北市三重區忠孝路一段105號" },
             new() { Key = "branch_info", Value = "[]" },
             new() { Key = "line_client_url", Value = "https://line.me/R/ti/p/@pinhung" },
             new() { Key = "footer_text", Value = "© 2026 品皇咖啡 Pin Huang Coffee. All rights reserved." },
@@ -92,7 +95,7 @@ public static class DbSeeder
             new() { Key = "order_notification_email", Value = "" },
             new() { Key = "checkout_enabled", Value = "false" },
             new() { Key = "brand_story_title", Value = "品皇咖啡的故事" },
-            new() { Key = "brand_story_content", Value = "自 2010 年創立以來，品皇咖啡秉持著「專業烘焙，極致品味」的理念，精選世界各地最優質的咖啡豆，透過專業烘焙師的精湛技藝，為您呈現每一杯完美的咖啡。我們相信，好的咖啡不僅是一種飲品，更是一種生活態度，一種對品質的堅持。" },
+            new() { Key = "brand_story_content", Value = "后政企業（品皇咖啡）創立於西元 1989 年，工廠設於嘉義縣太保市。長期專研咖啡烘焙、即溶系列（咖啡、奶茶、可可亞）產品之調配，秉持「優質原料、專業加工、熱忱服務」三大企業理念。本公司通過 ISO22000、HACCP、ISO9001 三重國際認證，從生產至門市零售批發一條龍，讓消費者買得安心、喝得放心。" },
             new() { Key = "footer_links_shopping", Value = "[{\"label\":\"商品列表\",\"url\":\"/products\"},{\"label\":\"購物車\",\"url\":\"/cart\"},{\"label\":\"配送說明\",\"url\":\"/pages/shipping\"}]" },
             new() { Key = "footer_links_service", Value = "[{\"label\":\"聯絡我們\",\"url\":\"/pages/contact\"},{\"label\":\"常見問題\",\"url\":\"/pages/faq\"},{\"label\":\"關於我們\",\"url\":\"/pages/about\"}]" },
             new() { Key = "footer_social_facebook", Value = "" },
@@ -130,6 +133,105 @@ public static class DbSeeder
         {
             cat.Name = "精選咖啡豆";
             cat.Description = "不花精品店的錢，同樣喝到好豆。烘焙廠直售，從藍山、曼特寧到耶加雪菲，超過70款任選，大量採購享批發優惠。";
+            await db.SaveChangesAsync();
+        }
+    }
+
+    // 修正既有 DB 中錯誤的聯絡/品牌資訊（升級用）
+    private static async Task EnsureSiteSettingsCorrectionsAsync(AppDbContext db)
+    {
+        var corrections = new Dictionary<string, string>
+        {
+            ["contact_phone"]      = "02-29821282",
+            ["contact_address"]    = "新北市三重區忠孝路一段105號",
+            ["site_subtitle"]      = "優質原料・專業加工・熱忱服務",
+            ["brand_story_content"] = "后政企業（品皇咖啡）創立於西元 1989 年，工廠設於嘉義縣太保市。長期專研咖啡烘焙、即溶系列（咖啡、奶茶、可可亞）產品之調配，秉持「優質原料、專業加工、熱忱服務」三大企業理念。本公司通過 ISO22000、HACCP、ISO9001 三重國際認證，從生產至門市零售批發一條龍，讓消費者買得安心、喝得放心。",
+        };
+        var changed = false;
+        foreach (var (key, val) in corrections)
+        {
+            var setting = await db.SiteSettings.FirstOrDefaultAsync(s => s.Key == key);
+            if (setting != null && setting.Value != val)
+            {
+                setting.Value = val;
+                setting.UpdatedAt = DateTime.UtcNow;
+                changed = true;
+            }
+        }
+        if (changed) await db.SaveChangesAsync();
+    }
+
+    // 修正既有 DB 中關於我們、聯絡我們頁面的錯誤內容
+    private static async Task EnsureContentPageCorrectionsAsync(AppDbContext db)
+    {
+        var aboutPage = await db.ContentPages.FirstOrDefaultAsync(p => p.Slug == "about");
+        if (aboutPage != null && aboutPage.BodyZhTW.Contains("2010"))
+        {
+            aboutPage.BodyZhTW = """
+## 品皇咖啡的故事
+
+后政企業有限公司創立於西元 1989 年，工廠設於台灣嘉義縣太保市，長期深耕咖啡烘焙、即溶咖啡及茶飲研發。秉持「優質原料、專業加工、熱忱服務」三大理念，本公司為國家認證許可合法食品加工廠，通過 ISO22000、HACCP、ISO9001 三重國際系統驗證，讓消費者買得安心、喝得放心。
+
+### 我們提供的服務
+
+- **精選咖啡豆批發零售**：70款以上咖啡豆，從單品、拼配到即溶系列一次搞定，量購享批發優惠
+- **咖啡機租賃**：各式咖啡機設備租賃，適合辦公室、餐廳、連鎖門市
+- **食品代工加工**：咖啡、奶茶、可可亞即溶系列代工製造
+- **咖啡研發**：專業研發團隊協助客製化配方，精準對應市場需求
+
+### 品質認證
+
+通過 **ISO22000**、**HACCP**、**ISO9001** 三重國際系統驗證，生產至門市零售批發一條龍，品質有保障。
+
+### 聯絡資訊
+
+- 電話：02-29821282
+- 地址：新北市三重區忠孝路一段105號
+- 營業時間：週一至週六 09:00–18:00
+""";
+            await db.SaveChangesAsync();
+        }
+
+        var contactPage = await db.ContentPages.FirstOrDefaultAsync(p => p.Slug == "contact");
+        if (contactPage != null && contactPage.BodyZhTW.Contains("02-2999-0000"))
+        {
+            contactPage.BodyZhTW = """
+## 聯絡我們
+
+有任何問題或需要協助，歡迎透過以下方式與我們聯繫。
+
+### 聯絡方式
+
+| 方式 | 資訊 |
+|------|------|
+| 電話 | 02-29821282 |
+| Email | service@pinhung.com.tw |
+| LINE | 請搜尋 @pinhung |
+
+### 門市地址
+
+**品皇咖啡 三重忠孝店**
+新北市三重區忠孝路一段105號
+營業時間：週一至週六 09:00–18:00
+
+### 回覆時間
+
+我們通常在一個工作天內回覆，週末與國定假日不在服務時間內。
+若有緊急需求，建議透過電話或 LINE 聯繫我們。
+""";
+            await db.SaveChangesAsync();
+        }
+    }
+
+    // 修正既有 DB 中門市資料的錯誤內容
+    private static async Task EnsureStoreCorrectionsAsync(AppDbContext db)
+    {
+        var store = await db.Stores.FirstOrDefaultAsync(s => s.Address == "新北市三重區重新路五段609巷12號");
+        if (store != null)
+        {
+            store.Name = "品皇咖啡 三重忠孝店";
+            store.Address = "新北市三重區忠孝路一段105號";
+            store.Phone = "02-29821282";
             await db.SaveChangesAsync();
         }
     }
@@ -202,20 +304,23 @@ public static class DbSeeder
                 BodyZhTW = """
 ## 品皇咖啡的故事
 
-自 2010 年創立以來，品皇咖啡秉持著「專業烘焙，極致品味」的理念，精選世界各地最優質的咖啡豆，透過專業烘焙師的精湛技藝，為您呈現每一杯完美的咖啡。
+后政企業有限公司創立於西元 1989 年，工廠設於台灣嘉義縣太保市，長期深耕咖啡烘焙、即溶咖啡及茶飲研發。秉持「優質原料、專業加工、熱忱服務」三大理念，本公司為國家認證許可合法食品加工廠，通過 ISO22000、HACCP、ISO9001 三重國際系統驗證，讓消費者買得安心、喝得放心。
 
-### 我們的理念
+### 我們提供的服務
 
-我們相信，好的咖啡不僅是一種飲品，更是一種生活態度，一種對品質的堅持。
+- **精選咖啡豆批發零售**：70款以上咖啡豆，從單品、拼配到即溶系列一次搞定，量購享批發優惠
+- **咖啡機租賃**：各式咖啡機設備租賃，適合辦公室、餐廳、連鎖門市
+- **食品代工加工**：咖啡、奶茶、可可亞即溶系列代工製造
+- **咖啡研發**：專業研發團隊協助客製化配方，精準對應市場需求
 
-- **嚴選原料**：直接與世界各地咖啡農場合作，確保豆源品質
-- **專業烘焙**：擁有超過 15 年經驗的烘焙師團隊，掌握每一批豆子的最佳風味
-- **快速出貨**：烘焙後 48 小時內出貨，確保咖啡新鮮度
+### 品質認證
+
+通過 **ISO22000**、**HACCP**、**ISO9001** 三重國際系統驗證，生產至門市零售批發一條龍，品質有保障。
 
 ### 聯絡資訊
 
-- 電話：02-2999-0000
-- 地址：新北市三重區重新路五段609巷12號
+- 電話：02-29821282
+- 地址：新北市三重區忠孝路一段105號
 - 營業時間：週一至週六 09:00–18:00
 """,
                 IsPublished = true,
@@ -235,14 +340,14 @@ public static class DbSeeder
 
 | 方式 | 資訊 |
 |------|------|
-| 電話 | 02-2999-0000 |
+| 電話 | 02-29821282 |
 | Email | service@pinhung.com.tw |
 | LINE | 請搜尋 @pinhung |
 
 ### 門市地址
 
-**品皇咖啡 三重本店**
-新北市三重區重新路五段609巷12號
+**品皇咖啡 三重忠孝店**
+新北市三重區忠孝路一段105號
 營業時間：週一至週六 09:00–18:00
 
 ### 回覆時間
@@ -768,9 +873,9 @@ public static class DbSeeder
 
         db.Stores.Add(new Store
         {
-            Name = "品皇咖啡 三重本店",
-            Address = "新北市三重區重新路五段609巷12號",
-            Phone = "02-2999-0000",
+            Name = "品皇咖啡 三重忠孝店",
+            Address = "新北市三重區忠孝路一段105號",
+            Phone = "02-29821282",
             BusinessHours = "週一至週六 09:00–18:00",
             IsVisible = true,
             SortOrder = 1,

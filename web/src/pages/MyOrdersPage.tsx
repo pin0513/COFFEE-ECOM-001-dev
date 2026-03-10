@@ -241,7 +241,7 @@ export default function MyOrdersPage() {
                 message="已付款訂單如需退款，請聯絡店家"
                 description={
                   <span>
-                    來電：<a href="tel:02-29990000">02-2999-0000</a>　或透過
+                    來電：<a href="tel:02-29821282">02-29821282</a>　或透過
                     <a href="https://line.me/ti/p/~@pinhung" target="_blank" rel="noreferrer"> LINE 客服</a>申請，退款需經商家審核。
                   </span>
                 }

@@ -139,7 +139,7 @@ export default function Layout({ children }: LayoutProps) {
           <div className="footer-grid">
             <div className="footer-section">
               <h3 className="footer-title">{siteName}</h3>
-              <p className="footer-description">{settings?.site_subtitle || '專業烘焙，極致品味'}</p>
+              <p className="footer-description">{settings?.site_subtitle || '優質原料・專業加工・熱忱服務'}</p>
             </div>
             <div className="footer-section">
               <h4 className="footer-heading">購物資訊</h4>
