@@ -31,6 +31,7 @@ public static class DbSeeder
         await EnsureSiteSettingsCorrectionsAsync(db);
         await EnsureContentPageCorrectionsAsync(db);
         await EnsureStoreCorrectionsAsync(db);
+        await EnsureHeroBannerCorrectionsAsync(db);
 
         // 補充金流相關 SiteSettings key（升級用）
         await EnsurePaymentGatewayKeysAsync(db);
@@ -232,6 +233,19 @@ public static class DbSeeder
             store.Name = "品皇咖啡 三重忠孝店";
             store.Address = "新北市三重區忠孝路一段105號";
             store.Phone = "02-29821282";
+            await db.SaveChangesAsync();
+        }
+    }
+
+    // 修正既有 DB 中 Hero Banner 的錯誤文案
+    private static async Task EnsureHeroBannerCorrectionsAsync(AppDbContext db)
+    {
+        var banner = await db.HeroBanners.FirstOrDefaultAsync(b => b.Title == "世界頂級咖啡豆");
+        if (banner != null)
+        {
+            banner.Title = "嘉義廠直焙 · 70款以上任選";
+            banner.SubTitle = "1989年創立老字號，ISO22000/HACCP/ISO9001認證。烘焙廠直售省差價，從單品豆到即溶系列一次搞定，批發零售皆可詢。";
+            banner.UpdatedAt = DateTime.UtcNow;
             await db.SaveChangesAsync();
         }
     }
