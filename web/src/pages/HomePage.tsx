@@ -169,8 +169,8 @@ function BrewBanner() {
   return (
     <div className="brew-banner">
       <div className="brew-banner-inner">
-        <p className="brew-banner-text">量購從優，專人服務全程到位</p>
-        <p className="brew-banner-sub">烘焙廠直出・20箱起享批發優惠・全台配送・專屬顧問一對一對接</p>
+        <p className="brew-banner-text">量大從優，直接跟烘焙廠拿</p>
+        <p className="brew-banner-sub">20箱起享批發價・烘焙廠直出無差價・ISO認證品質・全台配送</p>
       </div>
     </div>
   );
