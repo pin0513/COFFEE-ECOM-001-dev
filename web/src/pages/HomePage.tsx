@@ -4,7 +4,6 @@ import { Helmet } from 'react-helmet-async';
 import { getProducts } from '../services/productService';
 import type { Product } from '../services/productService';
 import { apiClient, getImageUrl } from '../config/api';
-import { getSiteSettings } from '../services/siteSettingsService';
 import './HomePage.css';
 
 /** 倒數計時 hook（> 2天顯示天數，≤ 2天即時 HH:MM:SS，過期回 null） */
@@ -240,10 +239,6 @@ export default function HomePage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [stores, setStores] = useState<Store[]>([]);
-  const [brandStoryTitle, setBrandStoryTitle] = useState('品皇咖啡的故事');
-  const [brandStoryContent, setBrandStoryContent] = useState(
-    '自 2010 年創立以來，品皇咖啡秉持著「專業烘焙，極致品味」的理念，精選世界各地最優質的咖啡豆，透過專業烘焙師的精湛技藝，為您呈現每一杯完美的咖啡。我們相信，好的咖啡不僅是一種飲品，更是一種生活態度，一種對品質的堅持。'
-  );
   const [homeSearchKeyword, setHomeSearchKeyword] = useState('');
 
   // Hero 輪播
@@ -359,15 +354,6 @@ export default function HomePage() {
       .catch(() => setStores([]));
   }, []);
 
-  // 載入品牌故事
-  useEffect(() => {
-    getSiteSettings()
-      .then(settings => {
-        if (settings.brand_story_title) setBrandStoryTitle(settings.brand_story_title);
-        if (settings.brand_story_content) setBrandStoryContent(settings.brand_story_content);
-      })
-      .catch(() => {});
-  }, []);
 
   // Scroll animations
   useEffect(() => {
@@ -623,15 +609,39 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* Brand Story — 全幅背景，無佔位圖 */}
-      <section className="section brand-story animate-on-scroll">
-        <div className="brand-story-bg">
+      {/* CoffeeKM 咖啡知識地圖 */}
+      <section className="coffeekm-section animate-on-scroll">
+        <div className="coffeekm-bg">
           <div className="container">
-            <div className="brand-story-inner">
-              <p className="brand-story-label">我們為什麼這麼做咖啡</p>
-              <h2 className="brand-story-title">{brandStoryTitle}</h2>
-              <p className="brand-story-text">{brandStoryContent}</p>
-              <a href="/pages/about" className="brand-story-link">繼續閱讀 →</a>
+            <div className="coffeekm-inner">
+              <div className="coffeekm-text">
+                <p className="coffeekm-label">深度咖啡知識平台</p>
+                <h2 className="coffeekm-title">咖啡知識地圖</h2>
+                <p className="coffeekm-desc">
+                  從產區風土到沖煮技法，從品種圖鑑到烘焙曲線，一站式咖啡知識探索平台，讓你喝懂每一杯咖啡的故事。
+                </p>
+                <div className="coffeekm-tags">
+                  <span className="coffeekm-tag">🌍 產區故事</span>
+                  <span className="coffeekm-tag">☕ 沖煮技法</span>
+                  <span className="coffeekm-tag">🌱 品種圖鑑</span>
+                  <span className="coffeekm-tag">🔥 烘焙知識</span>
+                </div>
+                <a href="https://coffeekm.pinhung.com" target="_blank" rel="noopener noreferrer" className="coffeekm-cta">
+                  探索咖啡知識地圖 →
+                </a>
+              </div>
+              <div className="coffeekm-visual">
+                <div className="coffeekm-card-mini">
+                  <div className="coffeekm-card-mini-icon">🗺️</div>
+                  <p className="coffeekm-card-mini-title">互動產區地圖</p>
+                  <p className="coffeekm-card-mini-desc">點擊地圖探索各地咖啡風味</p>
+                </div>
+                <div className="coffeekm-card-mini">
+                  <div className="coffeekm-card-mini-icon">📖</div>
+                  <p className="coffeekm-card-mini-title">知識文章庫</p>
+                  <p className="coffeekm-card-mini-desc">深度咖啡知識，持續更新</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

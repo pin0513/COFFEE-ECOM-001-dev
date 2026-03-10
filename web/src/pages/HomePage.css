@@ -194,30 +194,28 @@
   max-width: 520px;
 }
 
-/* CTA 按鈕 — Blue Bottle 白底實線框風格 */
+/* CTA 按鈕 — 暖色小巧版 */
 .hero-cta-btn {
   display: inline-block;
-  min-width: 200px;
-  padding: 16px 36px;
+  padding: 12px 28px;
   font-family: var(--font-family-heading);
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #1a1007;
-  background: #ffffff;
-  border: 2px solid #ffffff;
-  border-radius: 4px;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #2c1810;
+  background: rgba(245, 237, 227, 0.88);
+  border: 1.5px solid rgba(245, 237, 227, 0.6);
+  border-radius: 6px;
   cursor: pointer;
   transition: background 0.25s, color 0.25s, border-color 0.25s, box-shadow 0.25s;
   text-align: center;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(4px);
 }
 
 .hero-cta-btn:hover {
-  background: transparent;
-  color: #ffffff;
-  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.35);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 /* ======= 左右箭頭（hover 才顯示，Blue Bottle 風格） ======= */
@@ -474,74 +472,138 @@
   transition: color 0.4s ease;
 }
 
-/* ==================== Brand Story ==================== */
+/* ==================== CoffeeKM 咖啡知識地圖 ==================== */
 
-.brand-story {
+.coffeekm-section {
   padding: 0;
 }
 
-.brand-story-bg {
-  background-image: url('https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1920&q=60');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
+.coffeekm-bg {
+  background: linear-gradient(135deg, #1a2e1a 0%, #0f1f12 55%, #162613 100%);
   position: relative;
-  padding: var(--spacing-20) 0;
+  padding: 72px 0 80px;
+  overflow: hidden;
 }
 
-.brand-story-bg::before {
+.coffeekm-bg::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(15, 8, 3, 0.72);
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.025'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
 
-.brand-story-inner {
+.coffeekm-inner {
   position: relative;
   z-index: 1;
-  max-width: 640px;
+  display: flex;
+  align-items: center;
+  gap: 64px;
 }
 
-.brand-story-label {
+.coffeekm-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.coffeekm-label {
   font-family: var(--font-family-heading);
-  font-size: 12px;
-  letter-spacing: 0.18em;
-  color: rgba(255,255,255,0.55);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  color: rgba(134, 196, 134, 0.7);
   margin: 0 0 16px 0;
   text-transform: uppercase;
 }
 
-.brand-story-content {
-  padding: var(--spacing-8) 0;
-}
-
-.brand-story-title {
+.coffeekm-title {
   font-family: var(--font-family-display);
-  font-size: var(--font-size-4xl);
+  font-size: clamp(28px, 3vw, 42px);
   font-weight: var(--font-weight-bold);
-  color: #ffffff;
-  margin: 0 0 var(--spacing-6) 0;
+  color: #e8f5e8;
+  margin: 0 0 16px 0;
+  line-height: 1.2;
 }
 
-.brand-story-text {
+.coffeekm-desc {
   font-family: var(--font-family-base);
   font-size: var(--font-size-base);
-  color: rgba(255,255,255,0.82);
+  color: rgba(232, 245, 232, 0.72);
   line-height: var(--line-height-loose);
-  margin: 0 0 var(--spacing-4) 0;
+  margin: 0 0 28px 0;
+  max-width: 520px;
 }
 
-.brand-story-link {
+.coffeekm-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 32px;
+}
+
+.coffeekm-tag {
+  display: inline-block;
+  padding: 5px 14px;
+  background: rgba(134, 196, 134, 0.12);
+  border: 1px solid rgba(134, 196, 134, 0.3);
+  border-radius: 20px;
+  font-size: 13px;
+  color: rgba(200, 235, 200, 0.85);
+  letter-spacing: 0.02em;
+}
+
+.coffeekm-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 28px;
+  background: rgba(134, 196, 134, 0.15);
+  border: 1.5px solid rgba(134, 196, 134, 0.5);
+  border-radius: 6px;
   font-family: var(--font-family-base);
-  font-size: var(--font-size-sm);
-  color: #fff;
-  border-bottom: 1px solid rgba(255,255,255,0.5);
+  font-size: 15px;
+  font-weight: 600;
+  color: #a8e6a8;
   text-decoration: none;
-  transition: color var(--transition-fast);
+  transition: background 0.25s, border-color 0.25s;
 }
 
-.brand-story-link:hover {
-  color: rgba(255,255,255,0.8);
+.coffeekm-cta:hover {
+  background: rgba(134, 196, 134, 0.25);
+  border-color: rgba(134, 196, 134, 0.75);
+  color: #c8f0c8;
+}
+
+.coffeekm-visual {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.coffeekm-card-mini {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(134, 196, 134, 0.18);
+  border-radius: 12px;
+  padding: 16px 20px;
+  width: 200px;
+}
+
+.coffeekm-card-mini-icon {
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+
+.coffeekm-card-mini-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #c8f0c8;
+  margin: 0 0 4px 0;
+}
+
+.coffeekm-card-mini-desc {
+  font-size: 11px;
+  color: rgba(200, 235, 200, 0.55);
+  margin: 0;
+  line-height: 1.5;
 }
 
 /* ==================== Testimonials ==================== */
@@ -806,12 +868,6 @@
     gap: var(--spacing-6);
   }
 
-  /* Brand Story */
-  .brand-story-grid {
-    grid-template-columns: 2fr 3fr;
-    gap: var(--spacing-12);
-  }
-
   /* Testimonials */
   .testimonial-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -864,10 +920,9 @@
   }
 
   .hero-cta-btn {
-    font-size: 15px;
-    padding: 18px 40px;
-    min-width: 240px;
-    letter-spacing: 0.06em;
+    font-size: 17px;
+    padding: 12px 26px;
+    letter-spacing: 0.03em;
   }
 
   .hero-arrow {
@@ -893,18 +948,20 @@
     gap: var(--spacing-4);
   }
 
-  /* Brand Story */
-  .brand-story-grid {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-8);
+  /* CoffeeKM mobile */
+  .coffeekm-inner {
+    flex-direction: column;
+    gap: 32px;
   }
 
-  .brand-story-image {
-    order: -1;
+  .coffeekm-visual {
+    flex-direction: row;
+    width: 100%;
   }
 
-  .brand-story-title {
-    font-size: var(--font-size-3xl);
+  .coffeekm-card-mini {
+    width: auto;
+    flex: 1;
   }
 
   /* Testimonials */
@@ -1064,25 +1121,33 @@
   opacity: 0.65;
 }
 
-/* ==================== 我是誰？場景導入區塊 ==================== */
+/* ==================== 我是誰？場景導入區塊 — 深焙棕底，強對比 ==================== */
 .scenario-section {
-  background: #faf5ef;
-  padding: var(--spacing-14) 0;
+  background: #2c1810;
+  padding: 72px 0 80px;
 }
 
 .scenario-heading {
   font-size: 22px;
   font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
+  color: #f5ede3;
   text-align: center;
-  margin: 0 0 var(--spacing-10) 0;
+  margin: 0 0 12px 0;
   letter-spacing: 0.02em;
+}
+
+.scenario-subheading {
+  font-size: 14px;
+  color: rgba(245, 237, 227, 0.6);
+  text-align: center;
+  margin: 0 0 48px 0;
+  letter-spacing: 0.03em;
 }
 
 .scenario-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--spacing-6);
+  gap: 20px;
 }
 
 .scenario-card {
@@ -1090,27 +1155,28 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: var(--spacing-9) var(--spacing-7);
-  border: none;
+  padding: 36px 28px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 16px;
-  box-shadow: 0 2px 16px rgba(74, 55, 40, 0.07);
+  background: rgba(255, 255, 255, 0.05);
   cursor: pointer;
-  transition: box-shadow 0.25s, transform 0.25s;
-  background: #ffffff;
+  transition: background 0.25s, border-color 0.25s, transform 0.25s, box-shadow 0.25s;
 }
 
 .scenario-card:hover {
-  box-shadow: 0 10px 36px rgba(74, 55, 40, 0.14);
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(201, 164, 122, 0.5);
   transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
 }
 
 .scenario-icon {
-  width: 56px;
-  height: 56px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
-  background: #f0e6d6;
-  color: #7a4f2e;
-  margin-bottom: var(--spacing-5);
+  background: rgba(201, 164, 122, 0.18);
+  color: #c9a47a;
+  margin-bottom: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1119,7 +1185,7 @@
 }
 
 .scenario-card:hover .scenario-icon {
-  background: #e5d3be;
+  background: rgba(201, 164, 122, 0.30);
 }
 
 .scenario-card-body {
@@ -1133,55 +1199,58 @@
 .scenario-card-title {
   font-size: 17px;
   font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-2) 0;
+  color: #f5ede3;
+  margin: 0 0 10px 0;
   word-break: keep-all;
   overflow-wrap: break-word;
 }
 
 .scenario-card-desc {
   font-size: 13px;
-  color: var(--color-text-secondary);
+  color: rgba(245, 237, 227, 0.65);
   line-height: 1.7;
-  margin: 0 0 var(--spacing-5) 0;
+  margin: 0 0 20px 0;
   flex: 1;
 }
 
 .scenario-cta {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  color: #7a4f2e;
+  letter-spacing: 0.10em;
+  color: #c9a47a;
   text-transform: uppercase;
-  padding: 8px 16px;
-  border: 1.5px solid #c9a47a;
+  padding: 8px 18px;
+  border: 1.5px solid rgba(201, 164, 122, 0.55);
   border-radius: 20px;
-  transition: background 0.2s, color 0.2s;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
 
 .scenario-card:hover .scenario-cta {
-  background: #7a4f2e;
-  color: #fff;
-  border-color: #7a4f2e;
+  background: #c9a47a;
+  color: #1a0f08;
+  border-color: #c9a47a;
 }
 
-/* Tablet + Mobile: 單欄，icon 左 + 文字右 */
+/* Tablet + Mobile */
 @media (max-width: 1023px) {
   .scenario-section {
-    padding: var(--spacing-10) 0;
+    padding: 48px 0 56px;
+  }
+  .scenario-heading {
+    font-size: 20px;
   }
   .scenario-cards {
     grid-template-columns: 1fr;
-    gap: var(--spacing-4);
-    max-width: 560px;
+    gap: 14px;
+    max-width: 540px;
     margin-left: auto;
     margin-right: auto;
   }
   .scenario-card {
     flex-direction: row;
     text-align: left;
-    padding: var(--spacing-5) var(--spacing-6);
-    gap: var(--spacing-5);
+    padding: 20px 22px;
+    gap: 18px;
     align-items: center;
     border-radius: 12px;
   }
@@ -1194,10 +1263,13 @@
   .scenario-card-body {
     align-items: flex-start;
   }
-  .scenario-card-desc { margin-bottom: var(--spacing-2); }
+  .scenario-card-desc {
+    margin-bottom: 10px;
+    font-size: 12.5px;
+  }
   .scenario-cta {
     font-size: 11px;
-    padding: 6px 12px;
+    padding: 5px 12px;
   }
 }
 
