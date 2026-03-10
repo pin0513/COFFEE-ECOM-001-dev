@@ -198,23 +198,26 @@
 .hero-cta-btn {
   display: inline-block;
   min-width: 200px;
-  padding: 16px 32px;
+  padding: 16px 36px;
   font-family: var(--font-family-heading);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #1a1007;
   background: #ffffff;
   border: 2px solid #ffffff;
+  border-radius: 4px;
   cursor: pointer;
-  transition: background 0.25s, color 0.25s, border-color 0.25s;
+  transition: background 0.25s, color 0.25s, border-color 0.25s, box-shadow 0.25s;
   text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
 }
 
 .hero-cta-btn:hover {
   background: transparent;
   color: #ffffff;
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.35);
 }
 
 /* ======= 左右箭頭（hover 才顯示，Blue Bottle 風格） ======= */
@@ -860,6 +863,13 @@
     display: none;
   }
 
+  .hero-cta-btn {
+    font-size: 15px;
+    padding: 18px 40px;
+    min-width: 240px;
+    letter-spacing: 0.06em;
+  }
+
   .hero-arrow {
     width: 44px;
     height: 44px;
@@ -1056,24 +1066,23 @@
 
 /* ==================== 我是誰？場景導入區塊 ==================== */
 .scenario-section {
-  background: var(--color-bg-primary);
-  padding: var(--spacing-12) 0;
-  border-bottom: 1px solid var(--color-border-secondary);
+  background: #faf5ef;
+  padding: var(--spacing-14) 0;
 }
 
 .scenario-heading {
-  font-size: 18px;
+  font-size: 22px;
   font-weight: var(--font-weight-bold);
-  color: var(--color-text-secondary);
+  color: var(--color-text-primary);
   text-align: center;
-  margin: 0 0 var(--spacing-8) 0;
-  letter-spacing: 0.04em;
+  margin: 0 0 var(--spacing-10) 0;
+  letter-spacing: 0.02em;
 }
 
 .scenario-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--spacing-5);
+  gap: var(--spacing-6);
 }
 
 .scenario-card {
@@ -1081,25 +1090,36 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: var(--spacing-8) var(--spacing-6);
-  border: 1px solid var(--color-border-secondary);
+  padding: var(--spacing-9) var(--spacing-7);
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(74, 55, 40, 0.07);
   cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  background: var(--color-bg-primary);
+  transition: box-shadow 0.25s, transform 0.25s;
+  background: #ffffff;
 }
 
 .scenario-card:hover {
-  border-color: #4a3728;
-  box-shadow: 0 4px 16px rgba(74, 55, 40, 0.08);
+  box-shadow: 0 10px 36px rgba(74, 55, 40, 0.14);
+  transform: translateY(-4px);
 }
 
 .scenario-icon {
-  color: #4a3728;
-  margin-bottom: var(--spacing-4);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #f0e6d6;
+  color: #7a4f2e;
+  margin-bottom: var(--spacing-5);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: background 0.25s;
+}
+
+.scenario-card:hover .scenario-icon {
+  background: #e5d3be;
 }
 
 .scenario-card-body {
@@ -1111,7 +1131,7 @@
 }
 
 .scenario-card-title {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   margin: 0 0 var(--spacing-2) 0;
@@ -1122,43 +1142,63 @@
 .scenario-card-desc {
   font-size: 13px;
   color: var(--color-text-secondary);
-  line-height: 1.6;
-  margin: 0 0 var(--spacing-4) 0;
+  line-height: 1.7;
+  margin: 0 0 var(--spacing-5) 0;
   flex: 1;
 }
 
 .scenario-cta {
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  color: #4a3728;
+  letter-spacing: 0.08em;
+  color: #7a4f2e;
   text-transform: uppercase;
+  padding: 8px 16px;
+  border: 1.5px solid #c9a47a;
+  border-radius: 20px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.scenario-card:hover .scenario-cta {
+  background: #7a4f2e;
+  color: #fff;
+  border-color: #7a4f2e;
 }
 
 /* Tablet + Mobile: 單欄，icon 左 + 文字右 */
 @media (max-width: 1023px) {
+  .scenario-section {
+    padding: var(--spacing-10) 0;
+  }
   .scenario-cards {
     grid-template-columns: 1fr;
-    gap: var(--spacing-3);
-    max-width: 540px;
+    gap: var(--spacing-4);
+    max-width: 560px;
     margin-left: auto;
     margin-right: auto;
   }
   .scenario-card {
     flex-direction: row;
     text-align: left;
-    padding: var(--spacing-5);
-    gap: var(--spacing-4);
-    align-items: flex-start;
+    padding: var(--spacing-5) var(--spacing-6);
+    gap: var(--spacing-5);
+    align-items: center;
+    border-radius: 12px;
   }
   .scenario-icon {
     margin-bottom: 0;
-    margin-top: 2px;
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
   }
   .scenario-card-body {
     align-items: flex-start;
   }
   .scenario-card-desc { margin-bottom: var(--spacing-2); }
+  .scenario-cta {
+    font-size: 11px;
+    padding: 6px 12px;
+  }
 }
 
 /* ==================== 沖煮情境 全幅橫幅 ==================== */
@@ -1247,14 +1287,16 @@
 
 .promo-badge {
   position: absolute;
-  top: 8px;
-  left: 8px;
-  background: #4a3728;
+  top: 10px;
+  left: 10px;
+  background: linear-gradient(135deg, #c0392b, #e74c3c);
   color: white;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  padding: 3px 7px;
+  padding: 4px 10px;
   letter-spacing: 0.05em;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(192, 57, 43, 0.35);
 }
 
 /* 首頁 promo card 倒數 */

@@ -259,21 +259,25 @@
 /* Badge（右上角） */
 .bb-badge {
   position: absolute;
-  top: 14px;
-  right: 14px;
-  padding: 5px 10px;
-  font-size: 10px;
+  top: 12px;
+  right: 12px;
+  padding: 5px 11px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-radius: 6px;
   color: white;
   pointer-events: none;
   z-index: 2;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
-.bb-badge.promo    { background: #4a3728; }
-.bb-badge.bulk     { background: #7a6254; }
-.bb-badge.sub      { background: #2d5a4a; }
-.bb-badge.featured { background: #7a6254; }
+.bb-badge.promo    {
+  background: linear-gradient(135deg, #c0392b, #e74c3c);
+  box-shadow: 0 2px 10px rgba(192, 57, 43, 0.38);
+}
+.bb-badge.bulk     { background: linear-gradient(135deg, #7a4f2e, #a0714f); }
+.bb-badge.sub      { background: linear-gradient(135deg, #1e6b55, #27ae60); }
+.bb-badge.featured { background: linear-gradient(135deg, #8c6a3a, #c49a5e); }
 
 /* 倒數 */
 .bb-countdown {
