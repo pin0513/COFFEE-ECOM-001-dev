@@ -1509,6 +1509,26 @@
   width: 100%;
 }
 
+.rental-inquiry-btn {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 8px 18px;
+  background: transparent;
+  border: 1.5px solid #8B5E3C;
+  border-radius: 4px;
+  color: #6F4E37;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: background 0.2s, color 0.2s;
+}
+
+.rental-inquiry-btn:hover {
+  background: #6F4E37;
+  color: #fff;
+}
+
 /* ==================== 訂閱確認訊息 ==================== */
 
 .subscription-confirm {
@@ -1560,4 +1580,113 @@
   .spec-chips-section {
     padding: 14px;
   }
+}
+
+/* ── 租賃詢問 Modal ─────────────────────────────────────────── */
+.rental-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.rental-modal {
+  position: relative;
+  background: #fff;
+  border-radius: 12px;
+  padding: 36px 32px 28px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+
+.rental-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #999;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px;
+}
+
+.rental-modal-close:hover { color: #333; }
+
+.rental-modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #2c1810;
+  margin: 0 0 8px;
+}
+
+.rental-modal-product {
+  font-size: 14px;
+  color: #6F4E37;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+
+.rental-modal-spec {
+  font-size: 13px;
+  color: #92745a;
+  background: #f8f4ef;
+  padding: 6px 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.rental-modal-desc {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.6;
+  margin: 0 0 24px;
+}
+
+.rental-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rental-modal-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 20px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+.rental-modal-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+.rental-modal-btn--line {
+  background: #06C755;
+  color: #fff;
+}
+
+.rental-modal-btn--phone {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.rental-modal-btn--email {
+  background: transparent;
+  border: 1.5px solid #c8a882;
+  color: #6F4E37;
+}
+
+@media (max-width: 767px) {
+  .rental-modal { padding: 28px 20px 24px; }
 }

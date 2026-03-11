@@ -36,6 +36,9 @@ export default function ProductDetailPage() {
   const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [loading, setLoading] = useState(true);
   const [checkoutEnabled, setCheckoutEnabled] = useState(true);
+  const [lineUrl, setLineUrl] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
+  const [showRentalModal, setShowRentalModal] = useState(false);
 
   // 購買模式
   const [purchaseMode, setPurchaseMode] = useState<PurchaseMode>('oneTime');
@@ -46,7 +49,11 @@ export default function ProductDetailPage() {
   const { addToCart } = useCartStore();
 
   useEffect(() => {
-    getSiteSettings().then(s => setCheckoutEnabled(s.checkout_enabled !== 'false')).catch(() => {});
+    getSiteSettings().then(s => {
+      setCheckoutEnabled(s.checkout_enabled !== 'false');
+      setLineUrl(s.line_client_url || '');
+      setContactPhone(s.contact_phone || '02-29821282');
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -384,6 +391,12 @@ export default function ProductDetailPage() {
                           <span className="price-rental-label">月租方案</span>
                           <span className="price-rental-value">{spec.monthlyRental}</span>
                           <span className="price-rental-note">含設備維護・到期可買斷</span>
+                          <button
+                            className="rental-inquiry-btn"
+                            onClick={() => setShowRentalModal(true)}
+                          >
+                            詢問租賃方案 →
+                          </button>
                         </div>
                       );
                     } catch { /* ignore */ }
@@ -442,6 +455,51 @@ export default function ProductDetailPage() {
           <UpOutlined />
         </div>
       </BackTop>
+
+      {/* 租賃詢問 Modal */}
+      {showRentalModal && product && (
+        <div className="rental-modal-backdrop" onClick={() => setShowRentalModal(false)}>
+          <div className="rental-modal" onClick={e => e.stopPropagation()}>
+            <button className="rental-modal-close" onClick={() => setShowRentalModal(false)}>✕</button>
+            <h3 className="rental-modal-title">租賃方案詢問</h3>
+            <p className="rental-modal-product">{product.name}</p>
+            <div className="rental-modal-spec">
+              {(() => {
+                try {
+                  const spec = JSON.parse(product.specData || '{}') as Record<string, string>;
+                  return spec.monthlyRental ? <span>{spec.monthlyRental}・含設備維護・到期可買斷</span> : null;
+                } catch { return null; }
+              })()}
+            </div>
+            <p className="rental-modal-desc">請透過以下方式聯繫我們，業務將於 1 個工作日內回覆報價與合約說明。</p>
+            <div className="rental-modal-actions">
+              {lineUrl && (
+                <a
+                  href={lineUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rental-modal-btn rental-modal-btn--line"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+                  LINE 立即詢問
+                </a>
+              )}
+              <a
+                href={`tel:${contactPhone.replace(/-/g, '')}`}
+                className="rental-modal-btn rental-modal-btn--phone"
+              >
+                📞 {contactPhone}
+              </a>
+              <a
+                href={`mailto:service@pinhung.com?subject=${encodeURIComponent(`租賃詢問：${product.name}`)}&body=${encodeURIComponent(`您好，我想詢問以下機型的租賃方案：\n\n機型：${product.name}\n\n請問月租費用、合約條款及安裝服務等細節，謝謝。`)}`}
+                className="rental-modal-btn rental-modal-btn--email"
+              >
+                ✉ Email 詢問
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </>
   );
