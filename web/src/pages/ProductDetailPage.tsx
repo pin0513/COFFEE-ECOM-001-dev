@@ -370,7 +370,7 @@ export default function ProductDetailPage() {
                       NT$ {product.price.toLocaleString()}
                       {product.originalPrice && product.originalPrice > product.price && (
                         <span className="price-discount-badge">
-                          {Math.round((1 - product.price / product.originalPrice) * 100 * 10) / 10} 折優惠
+                          {Math.round(product.price / product.originalPrice! * 10 * 10) / 10} 折
                         </span>
                       )}
                     </div>
