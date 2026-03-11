@@ -217,6 +217,7 @@ interface Category {
   id: number;
   name: string;
   productCount: number;
+  color?: string;
 }
 
 interface Testimonial {
@@ -533,6 +534,11 @@ export default function HomePage() {
                 <button
                   key={c.id}
                   className="quick-cat-pill"
+                  style={{
+                    borderColor: c.color ?? '#c8a882',
+                    color: c.color ?? '#6F4E37',
+                    backgroundColor: (c.color ?? '#c8a882') + '14',
+                  }}
                   onClick={() => navigate(`/products?categoryId=${c.id}`)}
                 >
                   {c.name} <span className="quick-cat-count">({c.productCount})</span>
