@@ -1558,7 +1558,62 @@
   font-size: 14px;
   line-height: 1.7;
   color: var(--color-text-secondary);
-  white-space: pre-line;
+}
+
+/* ==================== 規格表 (HTML spec table) ==================== */
+
+.description-text .spec-table-wrap {
+  white-space: normal;
+}
+
+.description-text .spec-table-wrap h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-primary-900);
+  margin: 20px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--color-primary-200);
+}
+
+.description-text .spec-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.description-text .spec-table th,
+.description-text .spec-table td {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border-secondary);
+  text-align: left;
+  vertical-align: top;
+}
+
+.description-text .spec-table th {
+  background-color: var(--color-primary-50);
+  color: var(--color-primary-900);
+  font-weight: 600;
+  width: 36%;
+  white-space: nowrap;
+}
+
+.description-text .spec-table td {
+  color: var(--color-text-primary);
+}
+
+.description-text .spec-table tr:nth-child(even) td {
+  background-color: #fafaf8;
+}
+
+@media (max-width: 767px) {
+  .description-text .spec-table th {
+    width: 42%;
+    font-size: 12px;
+  }
+  .description-text .spec-table td {
+    font-size: 12px;
+  }
 }
 
 /* ==================== RWD 補充 ==================== */
