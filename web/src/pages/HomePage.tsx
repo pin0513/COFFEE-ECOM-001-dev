@@ -582,9 +582,6 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* 沖煮情境橫幅 */}
-      <BrewBanner />
-
       {/* 商用咖啡機推廣 */}
       <MachinePromoSection onNavigate={navigate} />
 
@@ -613,6 +610,9 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      {/* 沖煮情境橫幅 */}
+      <BrewBanner />
 
       {/* Testimonials */}
       {testimonials.length > 0 && (
