@@ -351,6 +351,12 @@ export default function ProductDetailPage() {
 
                 {/* 價格顯示 */}
                 <div className="price-block">
+                  {/* 市售原廠參考價（劃線） */}
+                  {product.originalPrice && product.originalPrice > product.price && (
+                    <div className="price-market-ref">
+                      市售參考 <span className="price-market-strike">NT$ {product.originalPrice.toLocaleString()}</span>
+                    </div>
+                  )}
                   {hasDiscount ? (
                     <>
                       <div className="price-original">NT$ {product.price.toLocaleString()}</div>
@@ -360,8 +366,29 @@ export default function ProductDetailPage() {
                       </div>
                     </>
                   ) : (
-                    <div className="price-final">NT$ {product.price.toLocaleString()}</div>
+                    <div className="price-final">
+                      NT$ {product.price.toLocaleString()}
+                      {product.originalPrice && product.originalPrice > product.price && (
+                        <span className="price-discount-badge">
+                          {Math.round((1 - product.price / product.originalPrice) * 100 * 10) / 10} 折優惠
+                        </span>
+                      )}
+                    </div>
                   )}
+                  {/* 月租方案（從 specData 讀取） */}
+                  {(() => {
+                    try {
+                      const spec = JSON.parse(product.specData || '{}') as Record<string, string>;
+                      if (spec.monthlyRental) return (
+                        <div className="price-rental-block">
+                          <span className="price-rental-label">月租方案</span>
+                          <span className="price-rental-value">{spec.monthlyRental}</span>
+                          <span className="price-rental-note">含設備維護・到期可買斷</span>
+                        </div>
+                      );
+                    } catch { /* ignore */ }
+                    return null;
+                  })()}
                 </div>
 
                 {/* 加入購物車按鈕 */}

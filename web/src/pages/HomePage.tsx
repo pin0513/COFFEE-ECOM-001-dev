@@ -585,6 +585,9 @@ export default function HomePage() {
       {/* 沖煮情境橫幅 */}
       <BrewBanner />
 
+      {/* 商用咖啡機推廣 */}
+      <MachinePromoSection onNavigate={navigate} />
+
       {/* 新手入門推薦 */}
       {bulkProducts.length > 0 && (
         <section className="section bulk-section animate-on-scroll">
@@ -610,9 +613,6 @@ export default function HomePage() {
           </div>
         </section>
       )}
-
-      {/* 商用咖啡機推廣 */}
-      <MachinePromoSection onNavigate={navigate} />
 
       {/* Testimonials */}
       {testimonials.length > 0 && (
