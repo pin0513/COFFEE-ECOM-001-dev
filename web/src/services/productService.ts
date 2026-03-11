@@ -29,6 +29,7 @@ export interface Product {
   brand?: string | null;
   originalPrice?: number | null;
   hasGrindOption: boolean;
+  galleryImages?: string | null;
 }
 
 export interface ProductVariant {

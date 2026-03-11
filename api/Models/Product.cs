@@ -61,6 +61,11 @@ public class Product
     public string? ImageUrl { get; set; }
 
     /// <summary>
+    /// 商品圖庫（JSON 陣列，存多張圖片 URL）
+    /// </summary>
+    public string? GalleryImages { get; set; }
+
+    /// <summary>
     /// 是否啟用
     /// </summary>
     public bool IsActive { get; set; } = true;

@@ -327,7 +327,7 @@ app.MapGet("/api/products", async (
             p.Price, p.ImageUrl, p.IsActive, p.IsFeatured, p.IsOrderable, p.InventoryEnabled,
             p.StockQuantity, p.Unit, p.SpecData, p.SortOrder, p.CreatedAt,
             p.BulkOptions, p.SubscriptionOptions, p.ParentProductId, p.VariantLabel,
-            p.PromotionTag, p.RequirePrePayment, p.PromotionEndAt, p.Brand, p.OriginalPrice, p.HasGrindOption })
+            p.PromotionTag, p.RequirePrePayment, p.PromotionEndAt, p.Brand, p.OriginalPrice, p.HasGrindOption, p.GalleryImages })
         .ToListAsync();
     return Results.Ok(new { Data = products, Page = page, PageSize = pageSize, TotalCount = total,
         TotalPages = (int)Math.Ceiling((double)total / pageSize) });
@@ -342,7 +342,7 @@ app.MapGet("/api/products/{id:int}", async (int id, AppDbContext db) =>
         p.Price, p.ImageUrl, p.IsActive, p.IsFeatured,
         p.IsOrderable, p.InventoryEnabled, p.StockQuantity, p.Unit, p.SpecData, p.SortOrder, p.CreatedAt, p.UpdatedAt,
         p.BulkOptions, p.SubscriptionOptions, p.ParentProductId, p.VariantLabel,
-        p.PromotionTag, p.RequirePrePayment, p.PromotionEndAt, p.Brand, p.OriginalPrice, p.HasGrindOption });
+        p.PromotionTag, p.RequirePrePayment, p.PromotionEndAt, p.Brand, p.OriginalPrice, p.HasGrindOption, p.GalleryImages });
 }).WithName("GetProductById").WithTags("Products");
 
 app.MapPost("/api/products", [Authorize] async ([FromBody] UpsertProductRequest req, AppDbContext db) =>
@@ -399,6 +399,7 @@ app.MapPut("/api/products/{id:int}", [Authorize] async (int id, [FromBody] Upser
     if (req.Brand != null) product.Brand = req.Brand == "" ? null : req.Brand;
     if (req.OriginalPrice.HasValue) product.OriginalPrice = req.OriginalPrice;
     if (req.HasGrindOption.HasValue) product.HasGrindOption = req.HasGrindOption.Value;
+    if (req.GalleryImages != null) product.GalleryImages = req.GalleryImages == "" ? null : req.GalleryImages;
     product.UpdatedAt = DateTime.UtcNow;
     await db.SaveChangesAsync();
     return Results.Ok(new { product.Id });
@@ -2210,7 +2211,7 @@ public record UpsertProductRequest(
     string? SpecData, string? BulkOptions, string? SubscriptionOptions,
     int? ParentProductId, string? VariantLabel,
     string? PromotionTag, bool? RequirePrePayment, DateTime? PromotionEndAt,
-    string? Brand, decimal? OriginalPrice, bool? HasGrindOption);
+    string? Brand, decimal? OriginalPrice, bool? HasGrindOption, string? GalleryImages);
 public record UpdateCategoryRequest(string? Name, string? Description, string? SpecTemplate, string? Icon, int? SortOrder, int? ParentId);
 public record CreateCategoryRequest(string Name, string Code, string? Description, string? Icon, string? Color, int? ParentId, int SortOrder, string? SpecTemplate);
 public record ProductTogglesRequest(bool? IsOrderable, bool? InventoryEnabled, bool? IsActive, bool? HasGrindOption);

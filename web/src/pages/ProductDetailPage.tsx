@@ -27,6 +27,45 @@ interface BulkTier {
 const { Title, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
 
+function GalleryViewer({ images, alt }: { images: string[]; alt: string }) {
+  const [active, setActive] = useState(0);
+  const validImages = images.filter(Boolean);
+  if (validImages.length === 0) return (
+    <img src="https://placehold.co/600x500/f5ede3/d4a574/webp?text=Coffee" alt={alt}
+      style={{ width: '100%', borderRadius: 12, objectFit: 'cover', aspectRatio: '4/3' }} />
+  );
+  return (
+    <div className="gallery-viewer">
+      <div className="gallery-main-wrap">
+        <img
+          key={active}
+          src={validImages[active]}
+          alt={`${alt} ${active + 1}`}
+          onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/600x500/f5ede3/d4a574/webp?text=Coffee'; }}
+          className="gallery-main-img"
+        />
+        {validImages.length > 1 && (
+          <>
+            <button className="gallery-arrow gallery-arrow--prev" onClick={() => setActive(i => (i - 1 + validImages.length) % validImages.length)}>‹</button>
+            <button className="gallery-arrow gallery-arrow--next" onClick={() => setActive(i => (i + 1) % validImages.length)}>›</button>
+            <span className="gallery-counter">{active + 1} / {validImages.length}</span>
+          </>
+        )}
+      </div>
+      {validImages.length > 1 && (
+        <div className="gallery-thumbs">
+          {validImages.map((url, i) => (
+            <button key={i} className={`gallery-thumb${i === active ? ' active' : ''}`} onClick={() => setActive(i)}>
+              <img src={url} alt={`${alt} thumb ${i + 1}`}
+                onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/100x100/f5ede3/d4a574/webp?text=x'; }} />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ProductDetailPage() {
   const navigate = useNavigate();
   const screens = useBreakpoint();
@@ -222,15 +261,16 @@ export default function ProductDetailPage() {
               gap: screens.xs ? 24 : 48,
               alignItems: 'start',
             }}>
-              {/* 左：商品圖片 */}
-              <div>
-                <img
-                  src={getImageUrl(product.imageUrl) || 'https://placehold.co/600x500/f5ede3/d4a574/webp?text=Coffee'}
-                  alt={product.name}
-                  onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/600x500/f5ede3/d4a574/webp?text=Coffee'; }}
-                  style={{ width: '100%', borderRadius: 12, objectFit: 'cover', aspectRatio: '4/3' }}
-                />
-              </div>
+              {/* 左：商品圖片 + Gallery */}
+              {(() => {
+                const mainImg = getImageUrl(product.imageUrl) || 'https://placehold.co/600x500/f5ede3/d4a574/webp?text=Coffee';
+                let gallery: string[] = [];
+                try { gallery = JSON.parse(product.galleryImages || '[]'); } catch { gallery = []; }
+                const allImgs = [mainImg, ...gallery.map(u => getImageUrl(u) || u)];
+                return (
+                  <GalleryViewer images={allImgs} alt={product.name} />
+                );
+              })()}
 
               {/* 右：產品資訊 */}
               <div>
@@ -441,7 +481,7 @@ export default function ProductDetailPage() {
             {product.description && (
               <div className="description-section">
                 <div className="description-title">商品說明</div>
-                <div className="description-text">{product.description}</div>
+                <div className="description-text" dangerouslySetInnerHTML={{ __html: product.description || '' }} />
               </div>
             )}
           </>
