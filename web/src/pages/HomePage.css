@@ -1667,3 +1667,128 @@
   .bulk-card-name { font-size: 13px; }
   .bulk-card-price { font-size: 13px; }
 }
+
+/* ── 商用咖啡機推廣區塊 ─────────────────────────────────────────── */
+.machine-promo-section {
+  position: relative;
+  min-height: 480px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.machine-promo-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1400&h=600&fit=crop&q=85');
+  background-size: cover;
+  background-position: center 40%;
+  transform: scale(1);
+  transition: transform 0.6s ease;
+}
+
+.machine-promo-section:hover .machine-promo-bg {
+  transform: scale(1.03);
+}
+
+.machine-promo-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    rgba(10, 6, 4, 0.82) 0%,
+    rgba(20, 12, 6, 0.7) 55%,
+    rgba(30, 18, 8, 0.3) 100%
+  );
+}
+
+.machine-promo-content {
+  position: relative;
+  z-index: 1;
+  padding: 72px 40px;
+  max-width: 620px;
+}
+
+.machine-promo-eyebrow {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #d4a574;
+  margin: 0 0 16px;
+}
+
+.machine-promo-title {
+  font-size: 38px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.25;
+  margin: 0 0 16px;
+}
+
+.machine-promo-desc {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.7;
+  margin: 0 0 28px;
+}
+
+.machine-promo-scenes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+
+.machine-promo-scene-tag {
+  padding: 5px 14px;
+  border: 1px solid rgba(212, 165, 116, 0.6);
+  border-radius: 20px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(212, 165, 116, 0.12);
+  letter-spacing: 0.04em;
+}
+
+.machine-promo-cta {
+  display: inline-block;
+  padding: 14px 32px;
+  background: #d4a574;
+  color: #1a0f08;
+  font-size: 15px;
+  font-weight: 700;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.machine-promo-cta:hover {
+  background: #c4945f;
+  transform: translateX(3px);
+}
+
+/* Tablet */
+@media (max-width: 1023px) {
+  .machine-promo-title { font-size: 30px; }
+  .machine-promo-content { padding: 56px 32px; }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .machine-promo-section { min-height: 380px; }
+  .machine-promo-bg { background-position: 70% center; }
+  .machine-promo-overlay {
+    background: linear-gradient(
+      180deg,
+      rgba(10, 6, 4, 0.75) 0%,
+      rgba(10, 6, 4, 0.65) 100%
+    );
+  }
+  .machine-promo-content { padding: 48px 20px; max-width: 100%; }
+  .machine-promo-title { font-size: 24px; }
+  .machine-promo-desc { font-size: 14px; }
+  .machine-promo-cta { width: 100%; text-align: center; }
+}

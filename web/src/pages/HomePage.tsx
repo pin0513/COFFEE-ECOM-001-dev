@@ -164,6 +164,33 @@ function ScenarioSection({ onNavigate }: { onNavigate: (path: string) => void })
   );
 }
 
+/** 商用咖啡機 全幅推廣區塊 */
+function MachinePromoSection({ onNavigate }: { onNavigate: (path: string) => void }) {
+  const scenes = ['辦公室', '星級飯店', '餐廳吧台', '連鎖門市', '自助販賣'];
+  return (
+    <section className="machine-promo-section" onClick={() => onNavigate('/products?categoryId=10')}>
+      <div className="machine-promo-bg" />
+      <div className="machine-promo-overlay" />
+      <div className="machine-promo-content container">
+        <div className="machine-promo-text">
+          <p className="machine-promo-eyebrow">商用咖啡機 · 可租賃</p>
+          <h2 className="machine-promo-title">任何場合，都有匹配的機型</h2>
+          <p className="machine-promo-desc">
+            全自動義式咖啡機，從辦公室到星級飯店，從50杯到300杯日產量，
+            機器・豆源・維護一站搞定。
+          </p>
+          <div className="machine-promo-scenes">
+            {scenes.map(s => (
+              <span key={s} className="machine-promo-scene-tag">{s}</span>
+            ))}
+          </div>
+          <button className="machine-promo-cta">查看所有機型 →</button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /** 沖煮情境 全幅分隔橫幅 */
 function BrewBanner() {
   return (
@@ -577,6 +604,9 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      {/* 商用咖啡機推廣 */}
+      <MachinePromoSection onNavigate={navigate} />
 
       {/* Testimonials */}
       {testimonials.length > 0 && (
