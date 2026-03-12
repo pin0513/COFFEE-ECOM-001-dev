@@ -173,7 +173,7 @@ function MachinePromoSection({ onNavigate }: { onNavigate: (path: string) => voi
       <div className="machine-promo-overlay" />
       <div className="machine-promo-content container">
         <div className="machine-promo-text">
-          <p className="machine-promo-eyebrow">商用咖啡機 · 可租賃</p>
+          <p className="machine-promo-eyebrow">商用咖啡機 · 可分期</p>
           <h2 className="machine-promo-title">任何場合，都有匹配的機型</h2>
           <p className="machine-promo-desc">
             全自動義式咖啡機，從辦公室到星級飯店，從50杯到300杯日產量，
@@ -412,10 +412,11 @@ export default function HomePage() {
   return (
     <>
     <Helmet>
-      <title>品皇咖啡 | 咖啡豆批發・咖啡機租賃・代工加工 | 嘉義1989</title>
-      <meta name="description" content="品皇咖啡（后政企業，1989年創立）嘉義烘焙廠直售。提供咖啡豆批發零售、咖啡機租賃、食品代工加工、咖啡研發服務。ISO22000/HACCP/ISO9001認證，70款以上任選。" />
-      <meta property="og:title" content="品皇咖啡 | 咖啡豆批發・咖啡機租賃・代工加工" />
-      <meta property="og:description" content="品皇咖啡（后政企業，1989年創立）嘉義烘焙廠直售。提供咖啡豆批發零售、咖啡機租賃、食品代工加工、咖啡研發服務。ISO22000/HACCP/ISO9001認證。" />
+      <title>品皇咖啡 | 商用咖啡機租賃・企業採購・咖啡豆批發</title>
+      <meta name="description" content="品皇咖啡（1989年嘉義創立）提供商用咖啡機租賃、辦公室及飯店咖啡解決方案、企業批發採購咖啡豆。ISO22000/HACCP認證，機器・豆源・維護一站搞定。" />
+      <meta name="keywords" content="商用咖啡機,辦公室咖啡機,咖啡機租賃方案,企業採購咖啡,批發咖啡豆,飯店咖啡機,商業用全自動咖啡機,咖啡機分期,商業咖啡解決方案,咖啡豆,阿拉比卡,精品咖啡" />
+      <meta property="og:title" content="品皇咖啡 | 商用咖啡機租賃・企業採購・咖啡豆批發" />
+      <meta property="og:description" content="品皇咖啡提供商用咖啡機租賃、辦公室及飯店咖啡解決方案、企業批發採購咖啡豆。ISO22000/HACCP認證，機器・豆源・維護一站搞定。" />
       <meta property="og:url" content="https://pinhung.com/" />
       <meta property="og:type" content="website" />
     </Helmet>

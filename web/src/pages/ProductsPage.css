@@ -370,6 +370,12 @@
   transition: background 0.2s;
 }
 .bb-add-btn:hover:not(:disabled) { background: #111; }
+.bb-add-btn.machine-inquiry {
+  background: #e8293b;
+}
+.bb-add-btn.machine-inquiry:hover {
+  background: #c4202f;
+}
 .bb-add-btn.disabled,
 .bb-add-btn:disabled {
   background: #d0c8bc;

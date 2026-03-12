@@ -206,8 +206,13 @@ export default function BusinessPage() {
   return (
     <>
       <Helmet>
-        <title>商業合作方案 | 品皇咖啡</title>
-        <meta name="description" content="品皇咖啡提供辦公室、咖啡廳、餐廳、飯店的咖啡機租賃與大量採購方案，專業配置、免維護、直接起飛。" />
+        <title>商用咖啡機租賃・企業採購方案 | 品皇咖啡</title>
+        <meta name="description" content="品皇咖啡商業解決方案：商用全自動咖啡機租賃（辦公室、飯店、餐廳）、企業批發採購咖啡豆、飯店餐飲豆源長期合作。月租即享頂規設備，零維護零壓力。" />
+        <meta name="keywords" content="商用咖啡機租賃,辦公室咖啡機,飯店咖啡機,商業咖啡解決方案,企業採購咖啡,批發咖啡豆,商業用全自動咖啡機,咖啡機分期,餐廳咖啡機" />
+        <meta property="og:title" content="商用咖啡機租賃・企業採購方案 | 品皇咖啡" />
+        <meta property="og:description" content="品皇咖啡商業解決方案：商用全自動咖啡機租賃（辦公室、飯店、餐廳）、企業批發採購咖啡豆。月租即享頂規設備，機器・豆源・維護一站搞定。" />
+        <meta property="og:url" content="https://pinhung.com/business" />
+        <meta property="og:type" content="website" />
       </Helmet>
 
       <div className="biz-page">
@@ -423,7 +428,11 @@ export default function BusinessPage() {
                   </div>
                   <h3>詢問單已送出！</h3>
                   <p>我們將於 1 個工作日內透過電話與您聯繫，感謝您對品皇咖啡的信任。</p>
-                  <button className="biz-submit-btn" onClick={() => setSubmitted(false)}>
+                  <button className="biz-submit-btn" style={{ marginBottom: 12 }}
+                    onClick={() => navigate('/products?categoryId=10')}>
+                    立即瀏覽商用咖啡機
+                  </button>
+                  <button className="biz-back-btn" onClick={() => setSubmitted(false)}>
                     重新填寫
                   </button>
                 </div>

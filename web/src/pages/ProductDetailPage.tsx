@@ -214,7 +214,7 @@ export default function ProductDetailPage() {
 
   const ogImage = product ? (getImageUrl(product.imageUrl) || 'https://pinhung.com/uploads/og-cover.jpg') : 'https://pinhung.com/uploads/og-cover.jpg';
   const ogTitle = product ? `${product.name} | 品皇咖啡` : '商品詳情 | 品皇咖啡';
-  const ogDesc = product ? (product.shortDescription || product.description || '品皇咖啡精選優質咖啡豆，品質保證。') : '品皇咖啡精選優質咖啡豆，品質保證。';
+  const ogDesc = product ? (product.shortDescription || product.description || '品皇咖啡精選商品，涵蓋商用咖啡機（可分期租賃）與精品咖啡豆，ISO22000認證品質保證。') : '品皇咖啡精選商品，涵蓋商用咖啡機（可分期租賃）與精品咖啡豆，ISO22000認證品質保證。';
   const productJsonLd = product ? JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'Product',

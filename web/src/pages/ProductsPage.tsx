@@ -39,12 +39,23 @@ function useCountdown(endAt: string | null | undefined): string | null {
   return label;
 }
 
+const MACHINE_SCENARIOS = [
+  { label: '辦公室咖啡', keyword: '辦公室' },
+  { label: '早午餐店', keyword: '早午餐' },
+  { label: '飯店用機', keyword: '飯店' },
+  { label: '場館活動', keyword: '場館' },
+  { label: '烘焙坊', keyword: '烘焙坊' },
+];
+
+const MACHINE_CATEGORY_ID = 10;
+
 /** Blue Bottle 風格商品卡 */
-function ProductCard({ product, onAddToCart, onNavigate, checkoutEnabled }: {
+function ProductCard({ product, onAddToCart, onNavigate, checkoutEnabled, machineDirectCheckout }: {
   product: Product;
   onAddToCart: (p: Product) => void;
   onNavigate: (id: number) => void;
   checkoutEnabled: boolean;
+  machineDirectCheckout: boolean;
 }) {
   const countdown = useCountdown(product.promotionEndAt);
 
@@ -71,16 +82,19 @@ function ProductCard({ product, onAddToCart, onNavigate, checkoutEnabled }: {
 
   const showCountdown = !!countdown;
   const isUrgent = showCountdown && countdown !== null && !countdown.includes('天');
-  const canAddToCart = checkoutEnabled && product.isOrderable && product.price > 0;
+  const isMachine = product.categoryId === MACHINE_CATEGORY_ID && machineDirectCheckout;
+  const canAddToCart = !isMachine && checkoutEnabled && product.isOrderable && product.price > 0;
   const imgSrc = getImageUrl(product.imageUrl) || 'https://placehold.co/600x700/f0ece4/c5a882/webp?text=Coffee';
 
-  const addBtnLabel = !checkoutEnabled
-    ? '暫停接受訂單'
-    : product.price === 0
-      ? '未設定售價'
-      : !product.isOrderable
-        ? '暫停販售'
-        : '加入購物車';
+  const addBtnLabel = isMachine
+    ? '立即詢購'
+    : !checkoutEnabled
+      ? '暫停接受訂單'
+      : product.price === 0
+        ? '未設定售價'
+        : !product.isOrderable
+          ? '暫停販售'
+          : '加入購物車';
 
   return (
     <div className="bb-card">
@@ -119,9 +133,13 @@ function ProductCard({ product, onAddToCart, onNavigate, checkoutEnabled }: {
           </div>
         )}
         <button
-          className={`bb-add-btn${!canAddToCart ? ' disabled' : ''}`}
-          disabled={!canAddToCart}
-          onClick={(e) => { e.stopPropagation(); if (canAddToCart) onAddToCart(product); }}
+          className={`bb-add-btn${isMachine ? ' machine-inquiry' : !canAddToCart ? ' disabled' : ''}`}
+          disabled={!isMachine && !canAddToCart}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (isMachine) { onNavigate(product.id); return; }
+            if (canAddToCart) onAddToCart(product);
+          }}
         >
           {addBtnLabel}
         </button>
@@ -137,6 +155,7 @@ export default function ProductsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [checkoutEnabled, setCheckoutEnabled] = useState(true);
+  const [machineDirectCheckout, setMachineDirectCheckout] = useState(false);
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const pageTopRef = useRef<HTMLDivElement>(null);
@@ -159,9 +178,14 @@ export default function ProductsPage() {
 
   const categoryIdParam = searchParams.get('categoryId');
   const selectedCategoryId = categoryIdParam ? Number(categoryIdParam) : null;
+  // 情境 chip 設定的 URL keyword（與文字搜尋分開，debouncedKeyword 為空時使用）
+  const urlKeyword = searchParams.get('keyword') || '';
 
   useEffect(() => {
-    getSiteSettings().then(s => setCheckoutEnabled(s.checkout_enabled !== 'false')).catch(() => {});
+    getSiteSettings().then(s => {
+      setCheckoutEnabled(s.checkout_enabled !== 'false');
+      setMachineDirectCheckout(s.machine_direct_checkout_enabled === 'true');
+    }).catch(() => {});
   }, []);
 
   // 搜尋 debounce
@@ -189,7 +213,8 @@ export default function ProductsPage() {
       if (selectedCategoryId) params.categoryId = selectedCategoryId;
       if (filterBulk) params.hasBulk = true;
       if (filterPromo) params.hasPromo = true;
-      if (debouncedKeyword.trim()) params.keyword = debouncedKeyword.trim();
+      const kw = debouncedKeyword.trim() || urlKeyword.trim();
+      if (kw) params.keyword = kw;
       const response = await getProducts(params);
       setProducts(response.data);
     } catch {
@@ -197,7 +222,7 @@ export default function ProductsPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedCategoryId, filterBulk, filterPromo, debouncedKeyword]);
+  }, [selectedCategoryId, filterBulk, filterPromo, debouncedKeyword, urlKeyword]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
@@ -255,10 +280,10 @@ export default function ProductsPage() {
 
   const helmetTitle = currentCategory
     ? `${currentCategory.name} | 品皇咖啡`
-    : '所有商品 | 品皇咖啡';
+    : '商用咖啡機・咖啡豆選購 | 品皇咖啡';
   const helmetDesc = currentCategory
-    ? `瀏覽品皇咖啡${currentCategory.name}系列，精選優質咖啡豆，品質保證。`
-    : '瀏覽品皇咖啡所有商品，精選阿拉比卡單品、義式配方豆、即期特價品等。';
+    ? `瀏覽品皇咖啡${currentCategory.name}系列，精選優質商品，品質保證。`
+    : '品皇咖啡全系列商品：商用全自動咖啡機（可分期租賃）、精選阿拉比卡單品豆、義式配方豆、企業批發採購方案，ISO22000認證品質。';
 
   return (
     <>
@@ -342,6 +367,30 @@ export default function ProductsPage() {
 
       {/* 分類快速篩選 Pills — 第二層（子分類，僅當選中有 children 的父分類時顯示）*/}
       {(() => {
+        // 商用咖啡機專區：顯示使用情境 chips
+        if (selectedCategoryId === MACHINE_CATEGORY_ID) {
+          const currentKeyword = searchParams.get('keyword') || '';
+          return (
+            <div className="bb-subcategory-pills">
+              <button
+                className={`bb-subcat-pill${!currentKeyword ? ' active' : ''}`}
+                onClick={() => setSearchParams({ categoryId: String(MACHINE_CATEGORY_ID) })}
+              >
+                全部機型
+              </button>
+              {MACHINE_SCENARIOS.map(s => (
+                <button
+                  key={s.keyword}
+                  className={`bb-subcat-pill${currentKeyword === s.keyword ? ' active' : ''}`}
+                  onClick={() => setSearchParams({ categoryId: String(MACHINE_CATEGORY_ID), keyword: s.keyword })}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          );
+        }
+
         const activePar = categories.find(c =>
           selectedCategoryId === c.id || c.children?.some(sc => sc.id === selectedCategoryId)
         );
@@ -388,6 +437,7 @@ export default function ProductsPage() {
               onAddToCart={handleAddToCart}
               onNavigate={id => navigate(`/products/${id}`)}
               checkoutEnabled={checkoutEnabled}
+              machineDirectCheckout={machineDirectCheckout}
             />
           ))}
         </div>
