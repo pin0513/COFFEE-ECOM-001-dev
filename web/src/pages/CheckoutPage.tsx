@@ -29,6 +29,7 @@ export default function CheckoutPage() {
   const [ecpayEnabled, setEcpayEnabled] = useState(false);
   const [linepayEnabled, setLinepayEnabled] = useState(false);
   const [bankInfo, setBankInfo] = useState<BankAccountInfo | null>(null);
+  const [selectedInstallment, setSelectedInstallment] = useState<number | null>(null);
   const [form] = Form.useForm();
 
   // 購物車含需預付款商品 → 鎖定銀行轉帳
@@ -115,7 +116,7 @@ export default function CheckoutPage() {
       // 依付款方式分流
       if (paymentMethod === 'ecpay') {
         clearCart();
-        const { formHtml } = await createEcpayCheckout(order.id);
+        const { formHtml } = await createEcpayCheckout(order.id, selectedInstallment ?? undefined);
         const div = document.createElement('div');
         div.innerHTML = formHtml;
         document.body.appendChild(div);
@@ -214,6 +215,28 @@ export default function CheckoutPage() {
                   onChange={v => setPaymentMethod(v)}
                 />
               </Form.Item>
+
+              {/* 信用卡分期選項（≥ NT$25,000 才顯示） */}
+              {paymentMethod === 'ecpay' && getTotalPrice() >= 25000 && (
+                <Form.Item label="信用卡分期（選填）">
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {[null, 6, 12, 18].map(period => (
+                      <Button
+                        key={period ?? 0}
+                        size="small"
+                        style={{
+                          borderColor: selectedInstallment === period ? '#e8293b' : '#d9d9d9',
+                          color: selectedInstallment === period ? '#e8293b' : undefined,
+                          background: selectedInstallment === period ? '#fff0f0' : undefined,
+                        }}
+                        onClick={() => setSelectedInstallment(period)}
+                      >
+                        {period === null ? '不分期（一次付清）' : `${period}期（約 NT$${Math.ceil(getTotalPrice() / period).toLocaleString()}/期）`}
+                      </Button>
+                    ))}
+                  </div>
+                </Form.Item>
+              )}
 
               {/* 銀行轉帳說明 */}
               {paymentMethod === 'transfer' && (

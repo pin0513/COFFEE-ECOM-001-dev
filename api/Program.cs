@@ -783,6 +783,12 @@ app.MapPost("/api/orders", async ([FromBody] CreateOrderRequest req, AppDbContex
                 備註：{order.Notes ?? "無"}
                 """;
 
+            // 暫時方案：寫入 Docker log + 本地 log 檔
+            Console.WriteLine($"[NewOrder] {order.OrderNumber} | {order.RecipientName} | NT${order.TotalAmount:0} | {methodText}");
+            var logEntry = $"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}] {order.OrderNumber} | {order.RecipientName} | NT${order.TotalAmount:0} | {methodText}\n";
+            var logPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "data", "order_notify.log");
+            try { await File.AppendAllTextAsync(logPath, logEntry); } catch { /* ignore file log failure */ }
+
             using var client = new System.Net.Mail.SmtpClient(smtpHost, smtpPort)
             {
                 EnableSsl = true,
@@ -880,8 +886,8 @@ app.MapPatch("/api/orders/{id:int}/status", [Authorize] async (int id, [FromBody
 
 // ── Payment Gateway ──────────────────────────────────────────────────────────
 
-// POST /api/payment/ecpay/checkout?orderId=xxx — 回傳 ECPay 自動提交 HTML Form
-app.MapPost("/api/payment/ecpay/checkout", async (int orderId, AppDbContext db, IConfiguration config) =>
+// POST /api/payment/ecpay/checkout?orderId=xxx&installmentPeriod=6 — 回傳 ECPay 自動提交 HTML Form
+app.MapPost("/api/payment/ecpay/checkout", async (int orderId, int? installmentPeriod, AppDbContext db, IConfiguration config) =>
 {
     var order = await db.Orders.Include(o => o.Items).FirstOrDefaultAsync(o => o.Id == orderId);
     if (order == null) return Results.NotFound(new { error = "訂單不存在" });
@@ -917,9 +923,15 @@ app.MapPost("/api/payment/ecpay/checkout", async (int orderId, AppDbContext db, 
         ["ItemName"]          = itemName,
         ["ReturnURL"]         = returnUrl,
         ["OrderResultURL"]    = resultUrl,
-        ["ChoosePayment"]     = "ALL",
+        ["ChoosePayment"]     = installmentPeriod.HasValue && installmentPeriod.Value > 0 ? "Credit" : "ALL",
         ["EncryptType"]       = "1",
     };
+
+    if (installmentPeriod.HasValue && installmentPeriod.Value > 0)
+    {
+        parameters["CreditInstallment"] = installmentPeriod.Value.ToString();
+        parameters["InstallmentAmount"] = ((int)order.TotalAmount).ToString();
+    }
 
     parameters["CheckMacValue"] = EcpayCheckMacValue(parameters, hashKey, hashIV);
 

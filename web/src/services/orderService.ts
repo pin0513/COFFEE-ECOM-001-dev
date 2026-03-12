@@ -116,8 +116,10 @@ export const deleteOrder = async (id: number): Promise<void> => {
 /**
  * 建立 ECPay 結帳 Form HTML
  */
-export const createEcpayCheckout = async (orderId: number): Promise<{ formHtml: string }> => {
-  const response = await apiClient.post<{ formHtml: string }>(`/payment/ecpay/checkout?orderId=${orderId}`);
+export const createEcpayCheckout = async (orderId: number, installmentPeriod?: number): Promise<{ formHtml: string }> => {
+  let url = `/payment/ecpay/checkout?orderId=${orderId}`;
+  if (installmentPeriod && installmentPeriod > 0) url += `&installmentPeriod=${installmentPeriod}`;
+  const response = await apiClient.post<{ formHtml: string }>(url);
   return response.data;
 };
 
