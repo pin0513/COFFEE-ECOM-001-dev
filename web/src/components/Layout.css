@@ -412,6 +412,7 @@
 
   /* 行動版子選單 — 獨立 DOM，不繼承 flyout CSS */
   .mobile-submenu {
+    display: block;
     background: #f5f0eb;
     border-left: 3px solid #d4a574;
     padding: 4px 0 8px;
