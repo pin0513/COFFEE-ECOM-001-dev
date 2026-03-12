@@ -78,6 +78,7 @@ export default function ProductDetailPage() {
   const [lineUrl, setLineUrl] = useState('');
   const [contactPhone, setContactPhone] = useState('');
   const [showRentalModal, setShowRentalModal] = useState(false);
+  const [selectedInstallment, setSelectedInstallment] = useState<number | null>(null);
 
   // 購買模式
   const [purchaseMode, setPurchaseMode] = useState<PurchaseMode>('oneTime');
@@ -442,6 +443,28 @@ export default function ProductDetailPage() {
                     } catch { /* ignore */ }
                     return null;
                   })()}
+                  {/* 刷卡分期（價格 >= 25000 才顯示） */}
+                  {product.price >= 25000 && (
+                    <div className="installment-block">
+                      <span className="installment-label">刷卡分期</span>
+                      <div className="installment-btns">
+                        {[6, 12, 18].map(n => (
+                          <button
+                            key={n}
+                            className={`installment-btn${selectedInstallment === n ? ' selected' : ''}`}
+                            onClick={() => setSelectedInstallment(selectedInstallment === n ? null : n)}
+                          >
+                            {n}期
+                          </button>
+                        ))}
+                      </div>
+                      {selectedInstallment && (
+                        <span className="installment-calc">
+                          每期約 NT${Math.ceil(product.price / selectedInstallment).toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* 加入購物車按鈕 */}

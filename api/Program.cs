@@ -270,6 +270,7 @@ app.MapPut("/api/categories/{id:int}", [Authorize] async (int id, [FromBody] Upd
     if (req.Description != null) cat.Description = req.Description;
     if (req.SpecTemplate != null) cat.SpecTemplate = req.SpecTemplate;
     if (req.Icon != null) cat.Icon = req.Icon;
+    if (req.Color != null) cat.Color = req.Color;
     if (req.SortOrder.HasValue) cat.SortOrder = req.SortOrder.Value;
     if (req.ParentId.HasValue)
     {
@@ -282,7 +283,7 @@ app.MapPut("/api/categories/{id:int}", [Authorize] async (int id, [FromBody] Upd
     }
     cat.UpdatedAt = DateTime.UtcNow;
     await db.SaveChangesAsync();
-    return Results.Ok(new { cat.Id, cat.Name, cat.ParentId, cat.SpecTemplate });
+    return Results.Ok(new { cat.Id, cat.Name, cat.Color, cat.ParentId, cat.SpecTemplate });
 }).WithName("UpdateCategory").WithTags("Categories");
 
 // Products
@@ -2212,7 +2213,7 @@ public record UpsertProductRequest(
     int? ParentProductId, string? VariantLabel,
     string? PromotionTag, bool? RequirePrePayment, DateTime? PromotionEndAt,
     string? Brand, decimal? OriginalPrice, bool? HasGrindOption, string? GalleryImages);
-public record UpdateCategoryRequest(string? Name, string? Description, string? SpecTemplate, string? Icon, int? SortOrder, int? ParentId);
+public record UpdateCategoryRequest(string? Name, string? Description, string? SpecTemplate, string? Icon, string? Color, int? SortOrder, int? ParentId);
 public record CreateCategoryRequest(string Name, string Code, string? Description, string? Icon, string? Color, int? ParentId, int SortOrder, string? SpecTemplate);
 public record ProductTogglesRequest(bool? IsOrderable, bool? InventoryEnabled, bool? IsActive, bool? HasGrindOption);
 public record BatchProductRequest(List<int> Ids, bool? IsOrderable, bool? IsActive, bool? IsFeatured);

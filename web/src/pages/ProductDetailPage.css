@@ -1825,3 +1825,47 @@
 @media (max-width: 767px) {
   .gallery-thumb { width: 56px; height: 56px; }
 }
+
+/* ==================== 刷卡分期按鈕 ==================== */
+
+.installment-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.installment-label {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  min-width: 52px;
+}
+.installment-btns {
+  display: flex;
+  gap: 6px;
+}
+.installment-btn {
+  padding: 4px 12px;
+  border: 1.5px solid #e8293b;
+  border-radius: 4px;
+  color: #e8293b;
+  background: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.installment-btn:hover,
+.installment-btn.selected {
+  background: #e8293b;
+  color: white;
+}
+.installment-calc {
+  font-size: 13px;
+  color: #e8293b;
+  font-weight: 600;
+}
+@media (max-width: 767px) {
+  .installment-block { gap: 8px; }
+  .installment-btn { padding: 4px 10px; font-size: 12px; }
+}

@@ -3,9 +3,11 @@ import { Dropdown, Avatar, message } from 'antd';
 import { UserOutlined, LogoutOutlined, ProfileOutlined, OrderedListOutlined } from '@ant-design/icons';
 
 interface FooterLink { label: string; url: string; }
+interface NavCategory { id: number; name: string; isActive: boolean; sortOrder: number; }
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useCartStore } from '../stores/cartStore';
 import { useCustomerAuthStore } from '../stores/customerAuthStore';
+import { apiClient } from '../config/api';
 import { getSiteSettings } from '../services/siteSettingsService';
 import type { SiteSettings } from '../services/siteSettingsService';
 import BottomNavBar from './BottomNavBar';
@@ -26,6 +28,7 @@ export default function Layout({ children }: LayoutProps) {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [settings, setSettings] = useState<Partial<SiteSettings>>();
+  const [navCategories, setNavCategories] = useState<NavCategory[]>([]);
 
   const cartItemCount = items.reduce((sum: number, item: { quantity: number }) => sum + item.quantity, 0);
   const isActive = (path: string) => location.pathname === path;
@@ -39,6 +42,16 @@ export default function Layout({ children }: LayoutProps) {
 
   useEffect(() => {
     getSiteSettings().then(setSettings).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    apiClient.get<NavCategory[]>('/categories')
+      .then(res => {
+        const cats = res.data.filter(c => c.isActive !== false);
+        cats.sort((a, b) => a.sortOrder - b.sortOrder);
+        setNavCategories(cats);
+      })
+      .catch(() => {});
   }, []);
 
   const siteName = settings?.site_name || '品皇咖啡';
@@ -72,7 +85,45 @@ export default function Layout({ children }: LayoutProps) {
 
           <nav className={`main-nav ${mobileMenuOpen ? 'mobile-open' : ''}`}>
             <button className={`nav-link ${isActive('/') ? 'active' : ''}`} onClick={() => { navigate('/'); setMobileMenuOpen(false); }}>首頁</button>
-            <button className={`nav-link ${isActive('/products') ? 'active' : ''}`} onClick={() => { navigate('/products'); setMobileMenuOpen(false); }}>商品</button>
+
+            {/* 商品 — 桌面版 hover flyout，行動版直接跳轉 */}
+            <div className="nav-item-with-flyout">
+              <button
+                className={`nav-link ${isActive('/products') ? 'active' : ''}`}
+                onClick={() => { navigate('/products'); setMobileMenuOpen(false); }}
+              >
+                商品
+              </button>
+              <div className="nav-flyout">
+                <button className="nav-flyout-item" onClick={() => { navigate('/products'); setMobileMenuOpen(false); }}>全部商品</button>
+                {navCategories.map(c => (
+                  <button
+                    key={c.id}
+                    className="nav-flyout-item"
+                    onClick={() => { navigate(`/products?categoryId=${c.id}`); setMobileMenuOpen(false); }}
+                  >
+                    {c.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 服務 — hover/click 下拉選單 */}
+            <div className="nav-item-with-flyout">
+              <button
+                className={`nav-link ${location.pathname.startsWith('/pages/machine-service') || location.pathname.startsWith('/pages/rental-plan') || location.pathname.startsWith('/pages/bulk-order') || location.pathname.startsWith('/pages/used-machines') || location.pathname.startsWith('/pages/machine-repair') ? 'active' : ''}`}
+              >
+                服務
+              </button>
+              <div className="nav-flyout">
+                <button className="nav-flyout-item" onClick={() => { navigate('/pages/machine-service'); setMobileMenuOpen(false); }}>機器使用說明與服務</button>
+                <button className="nav-flyout-item" onClick={() => { navigate('/pages/rental-plan'); setMobileMenuOpen(false); }}>純租/租購機方案</button>
+                <button className="nav-flyout-item" onClick={() => { navigate('/pages/bulk-order'); setMobileMenuOpen(false); }}>商用/批發咖啡豆特惠方案</button>
+                <button className="nav-flyout-item" onClick={() => { navigate('/pages/used-machines'); setMobileMenuOpen(false); }}>中古展示機特惠</button>
+                <button className="nav-flyout-item" onClick={() => { navigate('/pages/machine-repair'); setMobileMenuOpen(false); }}>咖啡機維修服務</button>
+              </div>
+            </div>
+
             <button className={`nav-link ${location.pathname.startsWith('/pages/about') ? 'active' : ''}`} onClick={() => { navigate('/pages/about'); setMobileMenuOpen(false); }}>關於我們</button>
             <button className={`nav-link ${location.pathname.startsWith('/pages/faq') ? 'active' : ''}`} onClick={() => { navigate('/pages/faq'); setMobileMenuOpen(false); }}>常見問答</button>
             <button className={`nav-link ${location.pathname.startsWith('/pages/contact') ? 'active' : ''}`} onClick={() => { navigate('/pages/contact'); setMobileMenuOpen(false); }}>聯絡我們</button>
