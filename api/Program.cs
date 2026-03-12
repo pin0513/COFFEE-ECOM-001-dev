@@ -317,7 +317,8 @@ app.MapGet("/api/products", async (
         var kw = $"%{keyword}%";
         query = query.Where(p => EF.Functions.ILike(p.Name, kw) ||
             (p.Brand != null && EF.Functions.ILike(p.Brand, kw)) ||
-            EF.Functions.ILike(p.Sku, kw));
+            EF.Functions.ILike(p.Sku, kw) ||
+            (p.ShortDescription != null && EF.Functions.ILike(p.ShortDescription, kw)));
     }
     var total = await query.CountAsync();
     var products = await query.OrderBy(p => p.SortOrder).ThenBy(p => p.Id)
