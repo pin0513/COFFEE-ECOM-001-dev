@@ -50,12 +50,11 @@ const MACHINE_SCENARIOS = [
 const MACHINE_CATEGORY_ID = 10;
 
 /** Blue Bottle 風格商品卡 */
-function ProductCard({ product, onAddToCart, onNavigate, checkoutEnabled, machineDirectCheckout }: {
+function ProductCard({ product, onAddToCart, onNavigate, checkoutEnabled }: {
   product: Product;
   onAddToCart: (p: Product) => void;
   onNavigate: (id: number) => void;
   checkoutEnabled: boolean;
-  machineDirectCheckout: boolean;
 }) {
   const countdown = useCountdown(product.promotionEndAt);
 
@@ -82,12 +81,13 @@ function ProductCard({ product, onAddToCart, onNavigate, checkoutEnabled, machin
 
   const showCountdown = !!countdown;
   const isUrgent = showCountdown && countdown !== null && !countdown.includes('天');
-  const isMachine = product.categoryId === MACHINE_CATEGORY_ID && machineDirectCheckout;
+  // 商用咖啡機（cat 10）且標有「可分期」→ 永遠走詢購流程，不進購物車
+  const isMachine = product.categoryId === MACHINE_CATEGORY_ID && product.promotionTag === '可分期';
   const canAddToCart = !isMachine && checkoutEnabled && product.isOrderable && product.price > 0;
   const imgSrc = getImageUrl(product.imageUrl) || 'https://placehold.co/600x700/f0ece4/c5a882/webp?text=Coffee';
 
   const addBtnLabel = isMachine
-    ? '立即詢購'
+    ? '了解方案 / 立即詢購'
     : !checkoutEnabled
       ? '暫停接受訂單'
       : product.price === 0
@@ -155,7 +155,7 @@ export default function ProductsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [checkoutEnabled, setCheckoutEnabled] = useState(true);
-  const [machineDirectCheckout, setMachineDirectCheckout] = useState(false);
+
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const pageTopRef = useRef<HTMLDivElement>(null);
@@ -184,7 +184,6 @@ export default function ProductsPage() {
   useEffect(() => {
     getSiteSettings().then(s => {
       setCheckoutEnabled(s.checkout_enabled !== 'false');
-      setMachineDirectCheckout(s.machine_direct_checkout_enabled === 'true');
     }).catch(() => {});
   }, []);
 
@@ -437,7 +436,7 @@ export default function ProductsPage() {
               onAddToCart={handleAddToCart}
               onNavigate={id => navigate(`/products/${id}`)}
               checkoutEnabled={checkoutEnabled}
-              machineDirectCheckout={machineDirectCheckout}
+
             />
           ))}
         </div>
