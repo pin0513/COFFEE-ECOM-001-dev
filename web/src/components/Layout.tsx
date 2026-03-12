@@ -98,7 +98,7 @@ export default function Layout({ children }: LayoutProps) {
           <nav className={`main-nav ${mobileMenuOpen ? 'mobile-open' : ''}`}>
             <button className={`nav-link ${isActive('/') ? 'active' : ''}`} onClick={() => { navigate('/'); setMobileMenuOpen(false); }}>首頁</button>
 
-            {/* 咖啡機專區 — 桌面版 hover flyout，行動版展開子選單 */}
+            {/* 咖啡機專區 — 桌面版 hover flyout；行動版用 mobile-submenu */}
             <div className="nav-item-with-flyout">
               <button
                 className={`nav-link nav-link--expandable ${location.pathname === '/products' && new URLSearchParams(location.search).get('categoryId') === '10' ? 'active' : ''}`}
@@ -107,7 +107,8 @@ export default function Layout({ children }: LayoutProps) {
                 咖啡機專區
                 <span className={`nav-arrow${openMobileSubmenu === 'machine' ? ' nav-arrow--open' : ''}`}>›</span>
               </button>
-              <div className={`nav-flyout nav-flyout--machine${openMobileSubmenu === 'machine' && mobileMenuOpen ? ' mobile-visible' : ''}`}>
+              {/* 桌面版 flyout（CSS hover 控制，行動版 display:none） */}
+              <div className="nav-flyout nav-flyout--machine">
                 <button className="nav-flyout-item nav-flyout-item--all" onClick={() => { navigate('/products?categoryId=10'); closeMobileMenu(); }}>全部咖啡機</button>
                 <div className="nav-flyout-section-label">使用場景</div>
                 <button className="nav-flyout-item" onClick={() => { navigate('/products?categoryId=10&q=辦公室'); closeMobileMenu(); }}>辦公室 / 企業</button>
@@ -118,9 +119,22 @@ export default function Layout({ children }: LayoutProps) {
                 <div className="nav-flyout-divider" />
                 <button className="nav-flyout-item nav-flyout-item--cta" onClick={() => { navigate('/business'); closeMobileMenu(); }}>分期 / 租賃詢購 →</button>
               </div>
+              {/* 行動版子選單（JS 條件渲染，獨立 DOM 不繼承 flyout CSS） */}
+              {openMobileSubmenu === 'machine' && mobileMenuOpen && (
+                <div className="mobile-submenu">
+                  <button className="mobile-submenu-item mobile-submenu-item--bold" onClick={() => { navigate('/products?categoryId=10'); closeMobileMenu(); }}>全部咖啡機</button>
+                  <div className="mobile-submenu-label">使用場景</div>
+                  <button className="mobile-submenu-item" onClick={() => { navigate('/products?categoryId=10&q=辦公室'); closeMobileMenu(); }}>辦公室 / 企業</button>
+                  <button className="mobile-submenu-item" onClick={() => { navigate('/products?categoryId=10&q=早午餐'); closeMobileMenu(); }}>早午餐店 / 咖啡廳</button>
+                  <button className="mobile-submenu-item" onClick={() => { navigate('/products?categoryId=10&q=飯店'); closeMobileMenu(); }}>飯店 / 旅館</button>
+                  <button className="mobile-submenu-item" onClick={() => { navigate('/products?categoryId=10&q=場館'); closeMobileMenu(); }}>各式場館</button>
+                  <button className="mobile-submenu-item" onClick={() => { navigate('/products?categoryId=10&q=烘焙'); closeMobileMenu(); }}>烘焙坊 / 甜點店</button>
+                  <button className="mobile-submenu-item mobile-submenu-item--cta" onClick={() => { navigate('/business'); closeMobileMenu(); }}>分期 / 租賃詢購 →</button>
+                </div>
+              )}
             </div>
 
-            {/* 商品 — 桌面版 hover flyout，行動版展開子選單 */}
+            {/* 商品 — 桌面版 hover flyout；行動版用 mobile-submenu */}
             <div className="nav-item-with-flyout">
               <button
                 className={`nav-link nav-link--expandable ${isActive('/products') ? 'active' : ''}`}
@@ -129,21 +143,27 @@ export default function Layout({ children }: LayoutProps) {
                 商品
                 <span className={`nav-arrow${openMobileSubmenu === 'products' ? ' nav-arrow--open' : ''}`}>›</span>
               </button>
-              <div className={`nav-flyout${openMobileSubmenu === 'products' && mobileMenuOpen ? ' mobile-visible' : ''}`}>
+              <div className="nav-flyout">
                 <button className="nav-flyout-item" onClick={() => { navigate('/products'); closeMobileMenu(); }}>全部商品</button>
                 {navCategories.map(c => (
-                  <button
-                    key={c.id}
-                    className="nav-flyout-item"
-                    onClick={() => { navigate(`/products?categoryId=${c.id}`); closeMobileMenu(); }}
-                  >
+                  <button key={c.id} className="nav-flyout-item" onClick={() => { navigate(`/products?categoryId=${c.id}`); closeMobileMenu(); }}>
                     {c.name}
                   </button>
                 ))}
               </div>
+              {openMobileSubmenu === 'products' && mobileMenuOpen && (
+                <div className="mobile-submenu">
+                  <button className="mobile-submenu-item mobile-submenu-item--bold" onClick={() => { navigate('/products'); closeMobileMenu(); }}>全部商品</button>
+                  {navCategories.map(c => (
+                    <button key={c.id} className="mobile-submenu-item" onClick={() => { navigate(`/products?categoryId=${c.id}`); closeMobileMenu(); }}>
+                      {c.name}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* 服務 — 桌面版 hover flyout，行動版展開子選單 */}
+            {/* 服務 — 桌面版 hover flyout；行動版用 mobile-submenu */}
             <div className="nav-item-with-flyout">
               <button
                 className={`nav-link nav-link--expandable ${location.pathname.startsWith('/pages/machine-service') || location.pathname.startsWith('/pages/rental-plan') || location.pathname.startsWith('/pages/bulk-order') || location.pathname.startsWith('/pages/used-machines') || location.pathname.startsWith('/pages/machine-repair') ? 'active' : ''}`}
@@ -152,13 +172,22 @@ export default function Layout({ children }: LayoutProps) {
                 服務
                 <span className={`nav-arrow${openMobileSubmenu === 'service' ? ' nav-arrow--open' : ''}`}>›</span>
               </button>
-              <div className={`nav-flyout${openMobileSubmenu === 'service' && mobileMenuOpen ? ' mobile-visible' : ''}`}>
+              <div className="nav-flyout">
                 <button className="nav-flyout-item" onClick={() => { navigate('/pages/machine-service'); closeMobileMenu(); }}>機器使用說明與服務</button>
                 <button className="nav-flyout-item" onClick={() => { navigate('/pages/rental-plan'); closeMobileMenu(); }}>純租/租購機方案</button>
                 <button className="nav-flyout-item" onClick={() => { navigate('/pages/bulk-order'); closeMobileMenu(); }}>商用/批發咖啡豆特惠方案</button>
                 <button className="nav-flyout-item" onClick={() => { navigate('/pages/used-machines'); closeMobileMenu(); }}>中古展示機特惠</button>
                 <button className="nav-flyout-item" onClick={() => { navigate('/pages/machine-repair'); closeMobileMenu(); }}>咖啡機維修服務</button>
               </div>
+              {openMobileSubmenu === 'service' && mobileMenuOpen && (
+                <div className="mobile-submenu">
+                  <button className="mobile-submenu-item" onClick={() => { navigate('/pages/machine-service'); closeMobileMenu(); }}>機器使用說明與服務</button>
+                  <button className="mobile-submenu-item" onClick={() => { navigate('/pages/rental-plan'); closeMobileMenu(); }}>純租/租購機方案</button>
+                  <button className="mobile-submenu-item" onClick={() => { navigate('/pages/bulk-order'); closeMobileMenu(); }}>商用/批發咖啡豆特惠方案</button>
+                  <button className="mobile-submenu-item" onClick={() => { navigate('/pages/used-machines'); closeMobileMenu(); }}>中古展示機特惠</button>
+                  <button className="mobile-submenu-item" onClick={() => { navigate('/pages/machine-repair'); closeMobileMenu(); }}>咖啡機維修服務</button>
+                </div>
+              )}
             </div>
 
             <button className={`nav-link ${location.pathname.startsWith('/pages/about') ? 'active' : ''}`} onClick={() => { navigate('/pages/about'); setMobileMenuOpen(false); }}>關於我們</button>

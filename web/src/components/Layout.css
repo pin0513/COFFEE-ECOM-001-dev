@@ -111,8 +111,11 @@
   position: relative;
 }
 
-/* 桌面版：隱藏箭頭（只在 mobile 顯示） */
+/* 桌面版：隱藏箭頭與 mobile-submenu */
 .nav-arrow {
+  display: none;
+}
+.mobile-submenu {
   display: none;
 }
 
@@ -398,50 +401,65 @@
     background-color: #fff9f0;
   }
 
-  /* 行動版：flyout 預設隱藏，展開時以 mobile-visible class 顯示 */
+  /* 行動版：flyout 完全隱藏（由 mobile-submenu 取代） */
   .nav-flyout {
     display: none;
-  }
-  .nav-flyout.mobile-visible {
-    display: block;
-    position: static;
-    background: #f5f0eb;
-    box-shadow: none;
-    border-radius: 0;
-    padding: 4px 0 8px 0;
-    min-width: unset;
-    width: 100%;
-    opacity: 1;
-    visibility: visible;
-    transform: none;
-    border-left: 3px solid #d4a574;
-    margin: 0;
-  }
-  .nav-flyout.mobile-visible .nav-flyout-item {
-    padding: 10px 20px 10px 20px;
-    font-size: 14px;
-    text-align: left;
-    border-radius: 0;
-  }
-  .nav-flyout.mobile-visible .nav-flyout-section-label {
-    padding: 8px 20px 4px;
-  }
-  .nav-flyout.mobile-visible .nav-flyout-divider {
-    margin: 6px 16px;
   }
 
   .nav-item-with-flyout {
     width: 100%;
   }
 
+  /* 行動版子選單 — 獨立 DOM，不繼承 flyout CSS */
+  .mobile-submenu {
+    background: #f5f0eb;
+    border-left: 3px solid #d4a574;
+    padding: 4px 0 8px;
+  }
+  .mobile-submenu-item {
+    display: block;
+    width: 100%;
+    padding: 12px 24px 12px 28px;
+    background: none;
+    border: none;
+    border-bottom: 1px solid rgba(212, 165, 116, 0.2);
+    text-align: left;
+    cursor: pointer;
+    font-size: 15px;
+    color: #333;
+    line-height: 1.4;
+  }
+  .mobile-submenu-item:last-child {
+    border-bottom: none;
+  }
+  .mobile-submenu-item:active {
+    background: #ece6df;
+  }
+  .mobile-submenu-item--bold {
+    font-weight: 600;
+  }
+  .mobile-submenu-item--cta {
+    color: #e8293b;
+    font-weight: 600;
+  }
+  .mobile-submenu-label {
+    padding: 8px 28px 4px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #999;
+  }
+
   /* 行動版箭頭 */
   .nav-arrow {
     display: inline-block;
-    font-size: 14px;
+    font-size: 12px;
     margin-left: 4px;
     transition: transform 0.2s ease;
     line-height: 1;
     vertical-align: middle;
+    color: #aaa;
   }
   .nav-arrow--open {
     transform: rotate(90deg);
