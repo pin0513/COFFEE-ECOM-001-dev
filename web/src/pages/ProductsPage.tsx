@@ -278,7 +278,7 @@ export default function ProductsPage() {
       <div className="bb-page-header">
         <div className="bb-page-header-inner">
           <h1 className="bb-page-title">{pageTitle}</h1>
-          <button className="bb-filter-btn" onClick={openFilter}>
+          <button className="bb-filter-btn" onClick={openFilter} style={{ display: 'none' }}>
             FILTER
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <line x1="4" y1="6" x2="20" y2="6"/>

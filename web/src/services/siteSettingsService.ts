@@ -24,6 +24,10 @@ export interface SiteSettings {
   footer_links_service: string;
   footer_social_facebook: string;
   footer_social_instagram: string;
+  // 咖啡機直接詢購設定
+  machine_direct_checkout_enabled: string; // 'true' | 'false'
+  machine_installment_enabled: string;     // 'true' | 'false'
+  machine_onetime_enabled: string;         // 'true' | 'false'
 }
 
 export const getSiteSettings = async (): Promise<SiteSettings> => {

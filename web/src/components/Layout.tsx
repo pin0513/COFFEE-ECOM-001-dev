@@ -86,6 +86,27 @@ export default function Layout({ children }: LayoutProps) {
           <nav className={`main-nav ${mobileMenuOpen ? 'mobile-open' : ''}`}>
             <button className={`nav-link ${isActive('/') ? 'active' : ''}`} onClick={() => { navigate('/'); setMobileMenuOpen(false); }}>首頁</button>
 
+            {/* 咖啡機專區 — 桌面版 hover flyout */}
+            <div className="nav-item-with-flyout">
+              <button
+                className={`nav-link ${location.pathname === '/products' && new URLSearchParams(location.search).get('categoryId') === '10' ? 'active' : ''}`}
+                onClick={() => { navigate('/products?categoryId=10'); setMobileMenuOpen(false); }}
+              >
+                咖啡機專區
+              </button>
+              <div className="nav-flyout nav-flyout--machine">
+                <button className="nav-flyout-item nav-flyout-item--all" onClick={() => { navigate('/products?categoryId=10'); setMobileMenuOpen(false); }}>全部咖啡機</button>
+                <div className="nav-flyout-section-label">使用場景</div>
+                <button className="nav-flyout-item" onClick={() => { navigate('/products?categoryId=10&q=辦公室'); setMobileMenuOpen(false); }}>辦公室 / 企業</button>
+                <button className="nav-flyout-item" onClick={() => { navigate('/products?categoryId=10&q=早午餐'); setMobileMenuOpen(false); }}>早午餐店 / 咖啡廳</button>
+                <button className="nav-flyout-item" onClick={() => { navigate('/products?categoryId=10&q=飯店'); setMobileMenuOpen(false); }}>飯店 / 旅館</button>
+                <button className="nav-flyout-item" onClick={() => { navigate('/products?categoryId=10&q=場館'); setMobileMenuOpen(false); }}>各式場館</button>
+                <button className="nav-flyout-item" onClick={() => { navigate('/products?categoryId=10&q=烘焙'); setMobileMenuOpen(false); }}>烘焙坊 / 甜點店</button>
+                <div className="nav-flyout-divider" />
+                <button className="nav-flyout-item nav-flyout-item--cta" onClick={() => { navigate('/business'); setMobileMenuOpen(false); }}>分期 / 租賃詢購 →</button>
+              </div>
+            </div>
+
             {/* 商品 — 桌面版 hover flyout，行動版直接跳轉 */}
             <div className="nav-item-with-flyout">
               <button

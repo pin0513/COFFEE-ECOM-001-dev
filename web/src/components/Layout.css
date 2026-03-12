@@ -446,3 +446,25 @@
   transform: scale(1.1);
   box-shadow: 0 6px 18px rgba(0, 185, 0, 0.5);
 }
+
+/* 咖啡機專區 flyout extras */
+.nav-flyout-section-label {
+  padding: 8px 16px 4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #999;
+}
+.nav-flyout-divider {
+  height: 1px;
+  background: #f0f0f0;
+  margin: 6px 12px;
+}
+.nav-flyout-item--all {
+  font-weight: 600;
+}
+.nav-flyout-item--cta {
+  color: #e8293b;
+  font-weight: 600;
+}

@@ -9,6 +9,7 @@ import { useCartStore } from '../stores/cartStore';
 import type { PurchaseMode } from '../stores/cartStore';
 import { getImageUrl } from '../config/api';
 import { getSiteSettings } from '../services/siteSettingsService';
+import MachineInquiryModal from '../components/MachineInquiryModal';
 import './ProductDetailPage.css';
 
 interface SpecField {
@@ -79,6 +80,10 @@ export default function ProductDetailPage() {
   const [contactPhone, setContactPhone] = useState('');
   const [showRentalModal, setShowRentalModal] = useState(false);
   const [selectedInstallment, setSelectedInstallment] = useState<number | null>(null);
+  const [machineDirectCheckout, setMachineDirectCheckout] = useState(false);
+  const [machineInstallment, setMachineInstallment] = useState(true);
+  const [machineOnetime, setMachineOnetime] = useState(true);
+  const [showMachineModal, setShowMachineModal] = useState(false);
 
   // 購買模式
   const [purchaseMode, setPurchaseMode] = useState<PurchaseMode>('oneTime');
@@ -93,6 +98,9 @@ export default function ProductDetailPage() {
       setCheckoutEnabled(s.checkout_enabled !== 'false');
       setLineUrl(s.line_client_url || '');
       setContactPhone(s.contact_phone || '02-29821282');
+      setMachineDirectCheckout(s.machine_direct_checkout_enabled === 'true');
+      setMachineInstallment(s.machine_installment_enabled !== 'false');
+      setMachineOnetime(s.machine_onetime_enabled !== 'false');
     }).catch(() => {});
   }, []);
 
@@ -467,17 +475,37 @@ export default function ProductDetailPage() {
                   )}
                 </div>
 
-                {/* 加入購物車按鈕 */}
-                <Button
-                  type="primary"
-                  size="large"
-                  icon={<ShoppingCartOutlined />}
-                  onClick={handleAddToCart}
-                  disabled={!canOrder(product) || (purchaseMode === 'bulk' && !selectedTier)}
-                  style={{ width: '100%', marginBottom: 12 }}
-                >
-                  {getAddToCartLabel(product)}
-                </Button>
+                {/* 加入購物車按鈕（機器直接詢購模式時隱藏） */}
+                {!(machineDirectCheckout && product.categoryId === 10) && (
+                  <Button
+                    type="primary"
+                    size="large"
+                    icon={<ShoppingCartOutlined />}
+                    onClick={handleAddToCart}
+                    disabled={!canOrder(product) || (purchaseMode === 'bulk' && !selectedTier)}
+                    style={{ width: '100%', marginBottom: 12 }}
+                  >
+                    {getAddToCartLabel(product)}
+                  </Button>
+                )}
+
+                {/* 立即詢購按鈕（咖啡機 + 直接詢購模式） */}
+                {machineDirectCheckout && product.categoryId === 10 && (
+                  <Button
+                    size="large"
+                    onClick={() => setShowMachineModal(true)}
+                    style={{
+                      width: '100%',
+                      marginBottom: 12,
+                      background: '#e8293b',
+                      borderColor: '#e8293b',
+                      color: '#fff',
+                      fontWeight: 600,
+                    }}
+                  >
+                    立即詢購 / 分期申請
+                  </Button>
+                )}
 
               </div>
             </div>
@@ -562,6 +590,17 @@ export default function ProductDetailPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* 咖啡機詢購 Modal */}
+      {product && (
+        <MachineInquiryModal
+          open={showMachineModal}
+          onClose={() => setShowMachineModal(false)}
+          product={{ id: product.id, name: product.name, price: product.price, sku: product.sku }}
+          installmentEnabled={machineInstallment}
+          onetimeEnabled={machineOnetime}
+        />
       )}
     </div>
     </>

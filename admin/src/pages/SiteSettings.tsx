@@ -21,6 +21,9 @@ interface SettingsForm {
   payment_cash_enabled: boolean;
   payment_ecpay_enabled: boolean;
   payment_linepay_enabled: boolean;
+  machine_direct_checkout_enabled: boolean;
+  machine_installment_enabled: boolean;
+  machine_onetime_enabled: boolean;
   // bank account fields (stored as JSON under bank_account_info)
   bank_name: string;
   bank_branch: string;
@@ -75,6 +78,9 @@ export default function SiteSettings() {
           payment_cash_enabled: data.payment_cash_enabled !== 'false',
           payment_ecpay_enabled: data.payment_ecpay_enabled === 'true',
           payment_linepay_enabled: data.payment_linepay_enabled === 'true',
+          machine_direct_checkout_enabled: data.machine_direct_checkout_enabled === 'true',
+          machine_installment_enabled: data.machine_installment_enabled !== 'false',
+          machine_onetime_enabled: data.machine_onetime_enabled !== 'false',
           bank_name: bankInfo.bankName || '',
           bank_branch: bankInfo.branch || '',
           bank_account: bankInfo.accountNumber || '',
@@ -135,6 +141,9 @@ export default function SiteSettings() {
         { key: 'payment_cash_enabled', value: values.payment_cash_enabled ? 'true' : 'false' },
         { key: 'payment_ecpay_enabled', value: values.payment_ecpay_enabled ? 'true' : 'false' },
         { key: 'payment_linepay_enabled', value: values.payment_linepay_enabled ? 'true' : 'false' },
+        { key: 'machine_direct_checkout_enabled', value: values.machine_direct_checkout_enabled ? 'true' : 'false' },
+        { key: 'machine_installment_enabled', value: values.machine_installment_enabled ? 'true' : 'false' },
+        { key: 'machine_onetime_enabled', value: values.machine_onetime_enabled ? 'true' : 'false' },
         { key: 'bank_account_info', value: bankInfo },
         { key: 'brand_story_title', value: values.brand_story_title || '' },
         { key: 'brand_story_content', value: values.brand_story_content || '' },
@@ -240,6 +249,32 @@ export default function SiteSettings() {
         <div style={{ fontSize: 12, color: '#888', marginBottom: 16 }}>
           ⚠️ 綠界／LINE Pay API 金鑰請在 VM 的 <code>appsettings.Production.json</code> 設定，不在後台 UI 設定
         </div>
+
+        <Divider>咖啡機詢購設定</Divider>
+        <Form.Item label="咖啡機直接詢購模式" style={{ marginBottom: 0 }}>
+          <Row gutter={24}>
+            <Col>
+              <Form.Item
+                label="啟用直接詢購（不走購物車）"
+                name="machine_direct_checkout_enabled"
+                valuePropName="checked"
+                extra="開啟後，商用咖啡機頁面顯示「立即詢購」按鈕，不需加入購物車"
+              >
+                <Switch checkedChildren="開啟" unCheckedChildren="關閉" />
+              </Form.Item>
+            </Col>
+            <Col>
+              <Form.Item label="開放一次買斷" name="machine_onetime_enabled" valuePropName="checked">
+                <Switch checkedChildren="開放" unCheckedChildren="關閉" />
+              </Form.Item>
+            </Col>
+            <Col>
+              <Form.Item label="開放信用卡分期（6/12/18期）" name="machine_installment_enabled" valuePropName="checked">
+                <Switch checkedChildren="開放" unCheckedChildren="關閉" />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form.Item>
 
         <Divider dashed>銀行轉帳帳號</Divider>
         <Row gutter={16}>
