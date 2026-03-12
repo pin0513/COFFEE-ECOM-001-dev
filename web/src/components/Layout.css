@@ -111,6 +111,11 @@
   position: relative;
 }
 
+/* 桌面版：隱藏箭頭（只在 mobile 顯示） */
+.nav-arrow {
+  display: none;
+}
+
 .nav-flyout {
   position: absolute;
   top: 100%;
@@ -393,13 +398,53 @@
     background-color: #fff9f0;
   }
 
-  /* 行動版：隱藏 flyout，維持直接跳轉行為 */
+  /* 行動版：flyout 預設隱藏，展開時以 mobile-visible class 顯示 */
   .nav-flyout {
     display: none;
+  }
+  .nav-flyout.mobile-visible {
+    display: block;
+    position: static;
+    background: #f5f0eb;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 4px 0 8px 0;
+    min-width: unset;
+    width: 100%;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    border-left: 3px solid #d4a574;
+    margin: 0;
+  }
+  .nav-flyout.mobile-visible .nav-flyout-item {
+    padding: 10px 20px 10px 20px;
+    font-size: 14px;
+    text-align: left;
+    border-radius: 0;
+  }
+  .nav-flyout.mobile-visible .nav-flyout-section-label {
+    padding: 8px 20px 4px;
+  }
+  .nav-flyout.mobile-visible .nav-flyout-divider {
+    margin: 6px 16px;
   }
 
   .nav-item-with-flyout {
     width: 100%;
+  }
+
+  /* 行動版箭頭 */
+  .nav-arrow {
+    display: inline-block;
+    font-size: 14px;
+    margin-left: 4px;
+    transition: transform 0.2s ease;
+    line-height: 1;
+    vertical-align: middle;
+  }
+  .nav-arrow--open {
+    transform: rotate(90deg);
   }
 
   .mobile-menu-overlay {
