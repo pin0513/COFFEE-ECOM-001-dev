@@ -456,7 +456,7 @@ export default function ProductDetailPage() {
                     <div className="installment-block">
                       <span className="installment-label">刷卡分期</span>
                       <div className="installment-btns">
-                        {[6, 12, 18].map(n => (
+                        {[6, 12, 18, 24].map(n => (
                           <button
                             key={n}
                             className={`installment-btn${selectedInstallment === n ? ' selected' : ''}`}

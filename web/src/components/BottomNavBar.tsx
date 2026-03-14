@@ -65,7 +65,13 @@ export default function BottomNavBar() {
         onClick={() => navigate('/products')}
         aria-label="更多"
       >
-        <span className="bottom-nav-icon">☰</span>
+        <span className="bottom-nav-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="1.5"
+            strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>
+          </svg>
+        </span>
         <span className="bottom-nav-label">更多</span>
       </button>
     </nav>

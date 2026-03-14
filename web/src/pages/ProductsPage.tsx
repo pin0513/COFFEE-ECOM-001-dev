@@ -102,7 +102,17 @@ function ProductCard({ product, onAddToCart, onNavigate, checkoutEnabled }: {
       <div className="bb-card-image" onClick={() => onNavigate(product.id)}>
         <img src={imgSrc} alt={product.name} loading="lazy" />
         {badgeText && <span className={badgeClass}>{badgeText}</span>}
-        {showCountdown && <span className={`bb-countdown${isUrgent ? ' urgent' : ''}`}>⏱ {countdown}</span>}
+        {showCountdown && (
+          <span className={`bb-countdown${isUrgent ? ' urgent' : ''}`}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="1.5"
+              strokeLinecap="round" strokeLinejoin="round"
+              style={{ display: 'inline', verticalAlign: 'middle', marginRight: 3 }}
+              aria-hidden="true">
+              <path d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>{countdown}
+          </span>
+        )}
       </div>
 
       {/* 文字區 */}
@@ -302,7 +312,7 @@ export default function ProductsPage() {
       <div className="bb-page-header">
         <div className="bb-page-header-inner">
           <h1 className="bb-page-title">{pageTitle}</h1>
-          <button className="bb-filter-btn" onClick={openFilter} style={{ display: 'none' }}>
+          <button className="bb-filter-btn" onClick={openFilter}>
             FILTER
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <line x1="4" y1="6" x2="20" y2="6"/>
