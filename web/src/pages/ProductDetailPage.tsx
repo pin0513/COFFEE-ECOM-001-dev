@@ -439,7 +439,7 @@ export default function ProductDetailPage() {
                         <div className="price-rental-block">
                           <span className="price-rental-label">長期租賃方案</span>
                           <span className="price-rental-value">{spec.monthlyRental}</span>
-                          <span className="price-rental-note">60 個月・含設備維護・到期可買斷</span>
+                          <span className="price-rental-note">含設備維護・到期可買斷</span>
                           <button
                             className="rental-inquiry-btn"
                             onClick={() => setShowRentalModal(true)}
