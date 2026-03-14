@@ -172,25 +172,24 @@ function ScenarioSection({ onNavigate }: { onNavigate: (path: string) => void })
 
 /** 商用咖啡機 全幅推廣區塊 */
 function MachinePromoSection({ onNavigate }: { onNavigate: (path: string) => void }) {
-  const scenes = ['辦公室', '星級飯店', '餐廳吧台', '連鎖門市', '自助販賣'];
   return (
-    <section className="machine-promo-section" onClick={() => onNavigate('/products?categoryId=10')}>
+    <section className="machine-promo-section" onClick={() => onNavigate('/machine-plan')}>
       <div className="machine-promo-bg" />
       <div className="machine-promo-overlay" />
       <div className="machine-promo-content container">
         <div className="machine-promo-text">
-          <p className="machine-promo-eyebrow">商用咖啡機 · 可分期</p>
-          <h2 className="machine-promo-title">任何場合，都有匹配的機型</h2>
+          <p className="machine-promo-eyebrow">商用咖啡機方案</p>
+          <h2 className="machine-promo-title">免費使用商用咖啡機</h2>
           <p className="machine-promo-desc">
-            全自動義式咖啡機，從辦公室到星級飯店，從50杯到300杯日產量，
-            機器・豆源・維護一站搞定。
+            低價租售・免費借機・分期買斷<br/>
+            <strong style={{ color: '#d4a574' }}>唯一條件：咖啡豆原物料跟我們買</strong>
           </p>
           <div className="machine-promo-scenes">
-            {scenes.map(s => (
+            {['咖啡廳', '餐廳', '飲料店', '辦公室', '飯店'].map(s => (
               <span key={s} className="machine-promo-scene-tag">{s}</span>
             ))}
           </div>
-          <button className="machine-promo-cta">查看所有機型 →</button>
+          <button className="machine-promo-cta">了解方案 →</button>
         </div>
       </div>
     </section>

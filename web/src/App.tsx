@@ -15,6 +15,7 @@ import AuthCallbackPage from './pages/AuthCallbackPage';
 import MyOrdersPage from './pages/MyOrdersPage';
 import OrderLookupPage from './pages/OrderLookupPage';
 import BusinessPage from './pages/BusinessPage';
+import MachinePlanPage from './pages/MachinePlanPage';
 
 /** 所有頁面共用的 Layout wrapper（Header + Footer + LINE 浮動按鈕） */
 function AppLayout() {
@@ -41,6 +42,7 @@ function App() {
               <Route path="/my-orders" element={<MyOrdersPage />} />
               <Route path="/order-lookup" element={<OrderLookupPage />} />
               <Route path="/business" element={<BusinessPage />} />
+              <Route path="/machine-plan" element={<MachinePlanPage />} />
             </Route>
           </Routes>
         </Router>

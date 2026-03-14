@@ -459,17 +459,26 @@ export default function ProductDetailPage() {
                       )}
                     </div>
                   )}
-                  {/* 特殊方案詢問入口（咖啡機分類） */}
+                  {/* 咖啡機方案入口（免費借機說明） */}
                   {product.categoryId === 10 && (
                     <div className="price-rental-block">
-                      <span className="price-rental-label">特殊方案詢問</span>
-                      <span className="price-rental-note">不同台數・期數・客製方案</span>
-                      <button
-                        className="rental-inquiry-btn"
-                        onClick={() => { setShowRentalModal(true); setInquirySuccess(false); setInquiryError(''); }}
-                      >
-                        填寫詢問表單 →
-                      </button>
+                      <span className="price-rental-label">咖啡機方案</span>
+                      <span className="price-rental-note">免費借機・低價租售・唯一條件：跟我們買咖啡豆</span>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+                        <button
+                          className="rental-inquiry-btn"
+                          onClick={() => { setShowRentalModal(true); setInquirySuccess(false); setInquiryError(''); }}
+                        >
+                          申請方案 →
+                        </button>
+                        <button
+                          className="rental-inquiry-btn"
+                          style={{ background: 'transparent', color: '#1a1a2e', border: '1px solid #1a1a2e' }}
+                          onClick={() => window.location.href = '/machine-plan'}
+                        >
+                          了解詳情
+                        </button>
+                      </div>
                     </div>
                   )}
                   {/* 刷卡分期（價格 >= 25000 才顯示） */}

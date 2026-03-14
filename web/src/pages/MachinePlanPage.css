@@ -1,0 +1,73 @@
+/* Hero */
+.mp-hero { position: relative; min-height: 60vh; display: flex; align-items: center; overflow: hidden; }
+.mp-hero-bg { position: absolute; inset: 0; background: #1a1a2e; }
+.mp-hero-overlay { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(26,26,46,0.95) 0%, rgba(44,24,16,0.85) 100%); }
+.mp-hero-content { position: relative; z-index: 1; padding: 80px 0; }
+.mp-hero-eyebrow { color: #d4a574; font-size: 14px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 16px; }
+.mp-hero-title { color: #fff; font-size: clamp(36px, 6vw, 64px); font-weight: 800; line-height: 1.1; margin-bottom: 20px; }
+.mp-hero-subtitle { color: rgba(255,255,255,0.75); font-size: clamp(16px, 2.5vw, 20px); line-height: 1.6; margin-bottom: 36px; }
+.mp-hero-cta { background: #d4a574; color: #1a1a2e; border: none; padding: 16px 40px; font-size: 17px; font-weight: 700; border-radius: 4px; cursor: pointer; transition: background 0.2s; }
+.mp-hero-cta:hover { background: #c4945a; }
+
+/* Section layout */
+.mp-section-title { font-size: clamp(24px, 4vw, 36px); font-weight: 700; text-align: center; margin-bottom: 48px; color: #1a1a2e; }
+
+/* How it works */
+.mp-how { padding: 80px 0; }
+.mp-how-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 40px; }
+.mp-how-step { text-align: center; }
+.mp-how-num { display: inline-block; width: 56px; height: 56px; background: #1a1a2e; color: #d4a574; border-radius: 50%; font-size: 18px; font-weight: 700; line-height: 56px; margin-bottom: 16px; }
+.mp-how-step h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.mp-how-step p { color: #666; line-height: 1.6; }
+
+/* Plan cards */
+.mp-plans { padding: 0 0 80px; }
+.mp-plan-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+.mp-plan-card { background: #fff; border: 2px solid #e8e8e8; border-radius: 12px; padding: 32px 24px; position: relative; transition: box-shadow 0.2s; }
+.mp-plan-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.10); }
+.mp-plan-card--highlight { border-color: #d4a574; }
+.mp-plan-tag { position: absolute; top: -12px; left: 24px; background: #d4a574; color: #fff; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+.mp-plan-title { font-size: 22px; font-weight: 800; margin-bottom: 8px; color: #1a1a2e; }
+.mp-plan-price { font-size: 28px; font-weight: 800; color: #e8293b; }
+.mp-plan-unit { font-size: 13px; color: #888; margin-bottom: 16px; }
+.mp-plan-desc { color: #555; font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
+.mp-plan-items { list-style: none; padding: 0; margin: 0 0 24px; }
+.mp-plan-items li { padding: 6px 0; font-size: 14px; color: #444; border-bottom: 1px solid #f0f0f0; }
+.mp-plan-items li::before { content: '✓ '; color: #52c41a; font-weight: 700; }
+.mp-plan-btn { width: 100%; padding: 12px; background: #1a1a2e; color: #fff; border: none; border-radius: 6px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+.mp-plan-btn:hover { background: #2d2d4e; }
+.mp-plan-card--highlight .mp-plan-btn { background: #d4a574; color: #1a1a2e; }
+.mp-plan-card--highlight .mp-plan-btn:hover { background: #c4945a; }
+
+/* Condition */
+.mp-condition { background: #1a1a2e; padding: 64px 0; text-align: center; }
+.mp-condition-title { color: #fff; font-size: clamp(24px, 4vw, 36px); font-weight: 700; margin-bottom: 16px; }
+.mp-condition-desc { color: rgba(255,255,255,0.75); font-size: clamp(15px, 2vw, 18px); line-height: 1.8; margin-bottom: 32px; }
+.mp-condition-items { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.mp-condition-tag { background: rgba(212,165,116,0.2); color: #d4a574; border: 1px solid rgba(212,165,116,0.4); padding: 8px 20px; border-radius: 24px; font-size: 14px; }
+
+/* Form */
+.mp-form-section { padding: 80px 0; background: #faf7f4; }
+.mp-form-wrap { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 48px 40px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+.mp-form-title { font-size: 24px; font-weight: 700; margin-bottom: 6px; color: #1a1a2e; }
+.mp-form-subtitle { color: #888; font-size: 14px; margin-bottom: 32px; }
+.mp-field { margin-bottom: 16px; }
+.mp-field label { display: block; font-size: 13px; color: #555; margin-bottom: 6px; font-weight: 500; }
+.mp-field input, .mp-field select, .mp-field textarea { width: 100%; padding: 10px 12px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
+.mp-field textarea { resize: none; }
+.mp-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.mp-submit { width: 100%; padding: 14px; background: #1a1a2e; color: #fff; border: none; border-radius: 6px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 8px; transition: background 0.2s; }
+.mp-submit:hover:not(:disabled) { background: #2d2d4e; }
+.mp-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+.mp-success { text-align: center; padding: 40px 0; }
+.mp-success-icon { font-size: 48px; color: #52c41a; margin-bottom: 12px; }
+.mp-success-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.mp-success-sub { color: #888; font-size: 14px; }
+
+@media (max-width: 767px) {
+  .mp-hero-content { padding: 60px 0; }
+  .mp-form-wrap { padding: 32px 20px; }
+  .mp-field-row { grid-template-columns: 1fr; }
+  .mp-plans { padding: 0 0 48px; }
+  .mp-how { padding: 48px 0; }
+}
