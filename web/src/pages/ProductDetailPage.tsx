@@ -79,6 +79,9 @@ export default function ProductDetailPage() {
   const [lineUrl, setLineUrl] = useState('');
   const [contactPhone, setContactPhone] = useState('');
   const [showRentalModal, setShowRentalModal] = useState(false);
+  const [inquirySuccess, setInquirySuccess] = useState(false);
+  const [inquirySubmitting, setInquirySubmitting] = useState(false);
+  const [inquiryError, setInquiryError] = useState('');
   const [selectedInstallment, setSelectedInstallment] = useState<number | null>(null);
   const [machineDirectCheckout, setMachineDirectCheckout] = useState(false);
   const [machineInstallment, setMachineInstallment] = useState(true);
@@ -192,6 +195,35 @@ export default function ProductDetailPage() {
   };
 
   const canOrder = (p: Product) => checkoutEnabled && p.isOrderable && p.price > 0;
+
+  const handleInquirySubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    setInquirySubmitting(true);
+    setInquiryError('');
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/inquiries`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contactName: fd.get('contactName') as string,
+          phone: fd.get('phone') as string,
+          company: fd.get('company') as string || undefined,
+          message: fd.get('message') as string || undefined,
+          inquiryType: 'machine-rental',
+          productName: product?.name,
+          quantity: parseInt(fd.get('quantity') as string) || 1,
+          preferredPeriod: fd.get('preferredPeriod') as string || undefined,
+        }),
+      });
+      if (!res.ok) throw new Error('送出失敗');
+      setInquirySuccess(true);
+    } catch {
+      setInquiryError('送出失敗，請稍後再試或直接來電');
+    } finally {
+      setInquirySubmitting(false);
+    }
+  };
 
   // 解析規格 chips
   const parseSpecChips = (p: Product) => {
@@ -431,26 +463,19 @@ export default function ProductDetailPage() {
                       )}
                     </div>
                   )}
-                  {/* 月租方案（從 specData 讀取） */}
-                  {(() => {
-                    try {
-                      const spec = JSON.parse(product.specData || '{}') as Record<string, string>;
-                      if (spec.monthlyRental) return (
-                        <div className="price-rental-block">
-                          <span className="price-rental-label">長期租賃方案</span>
-                          <span className="price-rental-value">{spec.monthlyRental}</span>
-                          <span className="price-rental-note">含設備維護・到期可買斷</span>
-                          <button
-                            className="rental-inquiry-btn"
-                            onClick={() => setShowRentalModal(true)}
-                          >
-                            詢問租賃方案 →
-                          </button>
-                        </div>
-                      );
-                    } catch { /* ignore */ }
-                    return null;
-                  })()}
+                  {/* 特殊方案詢問入口（咖啡機分類） */}
+                  {product.categoryId === 10 && (
+                    <div className="price-rental-block">
+                      <span className="price-rental-label">特殊方案詢問</span>
+                      <span className="price-rental-note">不同台數・期數・客製方案</span>
+                      <button
+                        className="rental-inquiry-btn"
+                        onClick={() => { setShowRentalModal(true); setInquirySuccess(false); setInquiryError(''); }}
+                      >
+                        填寫詢問表單 →
+                      </button>
+                    </div>
+                  )}
                   {/* 刷卡分期（價格 >= 25000 才顯示） */}
                   {product.price >= 25000 && (
                     <div className="installment-block">
@@ -547,47 +572,65 @@ export default function ProductDetailPage() {
         </div>
       </BackTop>
 
-      {/* 租賃詢問 Modal */}
+      {/* 特殊方案詢問 Modal */}
       {showRentalModal && product && (
-        <div className="rental-modal-backdrop" onClick={() => setShowRentalModal(false)}>
+        <div className="rental-modal-backdrop" onClick={() => { setShowRentalModal(false); setInquirySuccess(false); setInquiryError(''); }}>
           <div className="rental-modal" onClick={e => e.stopPropagation()}>
-            <button className="rental-modal-close" onClick={() => setShowRentalModal(false)}>✕</button>
-            <h3 className="rental-modal-title">租賃方案詢問</h3>
+            <button className="rental-modal-close" onClick={() => { setShowRentalModal(false); setInquirySuccess(false); setInquiryError(''); }}>✕</button>
+            <h3 className="rental-modal-title">特殊方案詢問</h3>
             <p className="rental-modal-product">{product.name}</p>
-            <div className="rental-modal-spec">
-              {(() => {
-                try {
-                  const spec = JSON.parse(product.specData || '{}') as Record<string, string>;
-                  return spec.monthlyRental ? <span>{spec.monthlyRental}・含設備維護・到期可買斷</span> : null;
-                } catch { return null; }
-              })()}
-            </div>
-            <p className="rental-modal-desc">請透過以下方式聯繫我們，業務將於 1 個工作日內回覆報價與合約說明。</p>
-            <div className="rental-modal-actions">
-              {lineUrl && (
-                <a
-                  href={lineUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rental-modal-btn rental-modal-btn--line"
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
-                  LINE 立即詢問
-                </a>
-              )}
-              <a
-                href={`tel:${contactPhone.replace(/-/g, '')}`}
-                className="rental-modal-btn rental-modal-btn--phone"
-              >
-                📞 {contactPhone}
-              </a>
-              <a
-                href={`mailto:service@pinhung.com?subject=${encodeURIComponent(`租賃詢問：${product.name}`)}&body=${encodeURIComponent(`您好，我想詢問以下機型的租賃方案：\n\n機型：${product.name}\n\n請問月租費用、合約條款及安裝服務等細節，謝謝。`)}`}
-                className="rental-modal-btn rental-modal-btn--email"
-              >
-                ✉ Email 詢問
-              </a>
-            </div>
+            <p style={{ fontSize: 13, color: '#888', marginBottom: 16 }}>
+              如需不同台數、期數或其他客製方案，請填寫以下資料，業務將於 1 個工作日內聯繫。
+            </p>
+            {inquirySuccess ? (
+              <div style={{ textAlign: 'center', padding: '24px 0', color: '#52c41a' }}>
+                <div style={{ fontSize: 32 }}>✓</div>
+                <div style={{ marginTop: 8, fontWeight: 600 }}>詢問單已送出</div>
+                <div style={{ fontSize: 13, color: '#888', marginTop: 4 }}>我們將於 1 個工作日內與您聯繫</div>
+                <button className="rental-modal-btn rental-modal-btn--line" style={{ marginTop: 16 }}
+                  onClick={() => { setShowRentalModal(false); setInquirySuccess(false); }}>關閉</button>
+              </div>
+            ) : (
+              <form onSubmit={handleInquirySubmit}>
+                <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}>台數</label>
+                    <input type="number" min={1} defaultValue={1} name="quantity" style={{ width: '100%', padding: '8px 10px', border: '1px solid #d9d9d9', borderRadius: 6, fontSize: 14 }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}>偏好期數（月）</label>
+                    <select name="preferredPeriod" style={{ width: '100%', padding: '8px 10px', border: '1px solid #d9d9d9', borderRadius: 6, fontSize: 14 }}>
+                      <option value="">不限</option>
+                      <option value="12">12 期</option>
+                      <option value="24">24 期</option>
+                      <option value="36">36 期</option>
+                      <option value="48">48 期</option>
+                      <option value="60">60 期</option>
+                    </select>
+                  </div>
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}>姓名 <span style={{ color: '#e8293b' }}>*</span></label>
+                  <input required name="contactName" placeholder="請輸入姓名" style={{ width: '100%', padding: '8px 10px', border: '1px solid #d9d9d9', borderRadius: 6, fontSize: 14 }} />
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}>聯絡電話 <span style={{ color: '#e8293b' }}>*</span></label>
+                  <input required name="phone" type="tel" placeholder="請輸入電話" style={{ width: '100%', padding: '8px 10px', border: '1px solid #d9d9d9', borderRadius: 6, fontSize: 14 }} />
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}>店名 / 公司</label>
+                  <input name="company" placeholder="（選填）" style={{ width: '100%', padding: '8px 10px', border: '1px solid #d9d9d9', borderRadius: 6, fontSize: 14 }} />
+                </div>
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}>備註</label>
+                  <textarea name="message" placeholder="其他需求或問題" rows={3} style={{ width: '100%', padding: '8px 10px', border: '1px solid #d9d9d9', borderRadius: 6, fontSize: 14, resize: 'none' }} />
+                </div>
+                {inquiryError && <p style={{ color: '#e8293b', fontSize: 13, marginBottom: 8 }}>{inquiryError}</p>}
+                <button type="submit" disabled={inquirySubmitting} style={{ width: '100%', padding: '10px', background: '#1a1a2e', color: '#fff', border: 'none', borderRadius: 6, fontSize: 15, fontWeight: 600, cursor: inquirySubmitting ? 'not-allowed' : 'pointer' }}>
+                  {inquirySubmitting ? '送出中...' : '送出詢問'}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       )}

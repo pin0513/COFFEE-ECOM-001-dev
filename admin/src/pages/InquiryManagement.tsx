@@ -17,6 +17,9 @@ interface Inquiry {
   adminNote?: string;
   createdAt: string;
   updatedAt?: string;
+  productName?: string;
+  quantity?: number;
+  preferredPeriod?: string;
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -134,6 +137,24 @@ export default function InquiryManagement() {
       render: (v?: string) => v || '—',
     },
     {
+      title: '商品',
+      dataIndex: 'productName',
+      width: 160,
+      render: (v: string) => v || '-',
+    },
+    {
+      title: '台數',
+      dataIndex: 'quantity',
+      width: 60,
+      render: (v: number) => v || 1,
+    },
+    {
+      title: '偏好期數',
+      dataIndex: 'preferredPeriod',
+      width: 80,
+      render: (v: string) => v || '-',
+    },
+    {
       title: '需求說明',
       dataIndex: 'message',
       ellipsis: true,
@@ -213,6 +234,9 @@ export default function InquiryManagement() {
             <div><strong>電話：</strong><a href={`tel:${editModal.record.phone}`}>{editModal.record.phone}</a></div>
             {editModal.record.email && <div><strong>Email：</strong>{editModal.record.email}</div>}
             {editModal.record.company && <div><strong>公司：</strong>{editModal.record.company}</div>}
+            {editModal.record.productName && <div><strong>商品：</strong>{editModal.record.productName}</div>}
+            {editModal.record.quantity && <div><strong>台數：</strong>{editModal.record.quantity}</div>}
+            {editModal.record.preferredPeriod && <div><strong>偏好期數：</strong>{editModal.record.preferredPeriod} 個月</div>}
             {editModal.record.selectedPlan && <div><strong>有興趣方案：</strong>{editModal.record.selectedPlan}</div>}
             {editModal.record.message && (
               <div><strong>需求說明：</strong>

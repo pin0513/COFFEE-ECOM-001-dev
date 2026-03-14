@@ -2156,6 +2156,9 @@ app.MapPost("/api/inquiries", async ([FromBody] CreateInquiryRequest req, AppDbC
         InquiryType = req.InquiryType ?? "general",
         SelectedPlan = req.SelectedPlan?.Trim(),
         Message = req.Message?.Trim(),
+        ProductName = req.ProductName?.Trim(),
+        Quantity = req.Quantity,
+        PreferredPeriod = req.PreferredPeriod?.Trim(),
         Status = "new",
         CreatedAt = DateTime.UtcNow,
     };
@@ -2182,7 +2185,8 @@ app.MapGet("/api/admin/inquiries", [Authorize] async (
         {
             i.Id, i.ContactName, i.Phone, i.Email, i.Company,
             i.InquiryType, i.SelectedPlan, i.Message,
-            i.Status, i.AdminNote, i.CreatedAt, i.UpdatedAt
+            i.Status, i.AdminNote, i.CreatedAt, i.UpdatedAt,
+            i.ProductName, i.Quantity, i.PreferredPeriod
         }).ToListAsync();
     return Results.Ok(new { data = items, totalCount = total, page, pageSize });
 }).WithName("GetInquiries").WithTags("Inquiries");
@@ -2251,7 +2255,8 @@ public record CustomerUpdateProfileRequest(string? Name, string? Phone, string? 
 public record OrderLookupCancelRequest(string OrderNumber, string Email);
 public record CreateInquiryRequest(
     string ContactName, string Phone, string? Email, string? Company,
-    string? InquiryType, string? SelectedPlan, string? Message);
+    string? InquiryType, string? SelectedPlan, string? Message,
+    string? ProductName, int? Quantity, string? PreferredPeriod);
 public record UpdateInquiryRequest(string? Status, string? AdminNote);
 public record UpsertMachinePlanRequest(
     string Name, string? Category, string? Description,
