@@ -76,8 +76,6 @@ export default function ProductDetailPage() {
   const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [loading, setLoading] = useState(true);
   const [checkoutEnabled, setCheckoutEnabled] = useState(true);
-  const [lineUrl, setLineUrl] = useState('');
-  const [contactPhone, setContactPhone] = useState('');
   const [showRentalModal, setShowRentalModal] = useState(false);
   const [inquirySuccess, setInquirySuccess] = useState(false);
   const [inquirySubmitting, setInquirySubmitting] = useState(false);
@@ -99,8 +97,6 @@ export default function ProductDetailPage() {
   useEffect(() => {
     getSiteSettings().then(s => {
       setCheckoutEnabled(s.checkout_enabled !== 'false');
-      setLineUrl(s.line_client_url || '');
-      setContactPhone(s.contact_phone || '02-29821282');
       setMachineDirectCheckout(s.machine_direct_checkout_enabled === 'true');
       setMachineInstallment(s.machine_installment_enabled !== 'false');
       setMachineOnetime(s.machine_onetime_enabled !== 'false');
