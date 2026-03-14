@@ -51,6 +51,8 @@
     display: inline-block;
   }
 
+  .bottom-nav-icon svg { display: block; }
+
   .bottom-nav-label {
     font-size: 11px;
     line-height: 1;

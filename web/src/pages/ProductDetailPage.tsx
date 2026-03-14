@@ -437,9 +437,9 @@ export default function ProductDetailPage() {
                       const spec = JSON.parse(product.specData || '{}') as Record<string, string>;
                       if (spec.monthlyRental) return (
                         <div className="price-rental-block">
-                          <span className="price-rental-label">月租方案</span>
+                          <span className="price-rental-label">長期租賃方案</span>
                           <span className="price-rental-value">{spec.monthlyRental}</span>
-                          <span className="price-rental-note">含設備維護・到期可買斷</span>
+                          <span className="price-rental-note">60 個月・含設備維護・到期可買斷</span>
                           <button
                             className="rental-inquiry-btn"
                             onClick={() => setShowRentalModal(true)}

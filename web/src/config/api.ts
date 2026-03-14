@@ -16,11 +16,11 @@ export const apiClient = axios.create({
 });
 
 // 圖片 URL 轉換（/uploads/... → 帶有 API host 的完整 URL）
+const IMAGE_BASE_URL = import.meta.env.VITE_IMAGE_BASE_URL || API_BASE_URL.replace(/\/api$/, '');
 export const getImageUrl = (url: string | null | undefined): string | null => {
   if (!url) return null;
   if (url.startsWith('http')) return url;
-  const base = API_BASE_URL.replace(/\/api$/, '');
-  return `${base}${url}`;
+  return `${IMAGE_BASE_URL}${url}`;
 };
 
 // Demo 模式：安裝 Mock API Adapter（需要等待頁面載入完成）

@@ -1062,6 +1062,9 @@
   color: var(--color-text-secondary);
   margin: 0 0 var(--spacing-2);
   line-height: 1.6;
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
 }
 
 .store-map-link {
@@ -1792,3 +1795,5 @@
   .machine-promo-desc { font-size: 14px; }
   .machine-promo-cta { width: 100%; text-align: center; }
 }
+
+.star-rating { color: #f59e0b; letter-spacing: 2px; }

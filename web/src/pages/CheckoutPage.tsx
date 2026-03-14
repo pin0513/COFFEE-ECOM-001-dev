@@ -184,19 +184,19 @@ export default function CheckoutPage() {
             )}
             <Form layout="vertical" form={form} onFinish={onFinish}>
               <Form.Item label="收件人姓名" name="name" rules={[{ required: true, message: '請輸入收件人姓名' }]}>
-                <Input placeholder="請輸入姓名" />
+                <Input placeholder="請輸入姓名" autoComplete="name" />
               </Form.Item>
 
               <Form.Item label="聯絡電話" name="phone" rules={[{ required: true, message: '請輸入聯絡電話' }]}>
-                <Input placeholder="請輸入電話" />
+                <Input placeholder="請輸入電話" inputMode="tel" autoComplete="tel" />
               </Form.Item>
 
               <Form.Item label="Email" name="email" rules={[{ required: true, type: 'email', message: '請輸入正確的 Email' }]}>
-                <Input placeholder="請輸入 Email" />
+                <Input placeholder="請輸入 Email" inputMode="email" autoComplete="email" />
               </Form.Item>
 
               <Form.Item label="收件地址" name="address" rules={[{ required: true, message: '請輸入收件地址' }]}>
-                <Input.TextArea placeholder="請輸入完整地址" rows={3} />
+                <Input.TextArea placeholder="請輸入完整地址" rows={3} autoComplete="street-address" />
               </Form.Item>
 
               {hasPrePayRequired && (
@@ -220,7 +220,7 @@ export default function CheckoutPage() {
               {paymentMethod === 'ecpay' && getTotalPrice() >= 25000 && (
                 <Form.Item label="信用卡分期（選填）">
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    {[null, 6, 12, 18].map(period => (
+                    {[null, 6, 12, 18, 24].map(period => (
                       <Button
                         key={period ?? 0}
                         size="small"
@@ -269,7 +269,7 @@ export default function CheckoutPage() {
                       { pattern: /^\d{5}$/, message: '請輸入5碼數字' },
                     ]}
                   >
-                    <Input placeholder="例：12345" maxLength={5} style={{ width: 160 }} />
+                    <Input placeholder="例：12345" maxLength={5} style={{ width: 160 }} inputMode="numeric" />
                   </Form.Item>
                 </>
               )}

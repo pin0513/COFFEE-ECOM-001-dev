@@ -99,21 +99,20 @@ export default function CartPage() {
                           <div>{renderPurchaseModeBadge(item)}</div>
                           {item.grindOption && (
                             <div style={{ fontSize: 12, color: '#8b5e3c', marginTop: 2 }}>
-                              ☕ {item.grindOption}
+                              研磨：{item.grindOption}
                             </div>
                           )}
                           {screens.xs && (
                             <div style={{ marginTop: 8, display: 'flex', gap: 8, alignItems: 'center' }}>
                               <InputNumber
-                                size="small"
+                                size="large"
                                 min={1}
                                 max={99}
                                 value={item.quantity}
                                 onChange={(val) => updateQuantity(item.id, val || 1)}
-                                style={{ width: 70 }}
+                                style={{ width: 90 }}
                               />
                               <Button
-                                size="small"
                                 danger
                                 icon={<DeleteOutlined />}
                                 onClick={() => removeFromCart(item.id)}
@@ -157,6 +156,17 @@ export default function CartPage() {
             </Card>
           </>
         )}
+      {screens.xs && items.length > 0 && (
+        <div className="cart-sticky-checkout">
+          <div className="cart-sticky-total">
+            總計：<strong style={{ color: '#ff4d4f' }}>NT$ {getTotalPrice()}</strong>
+          </div>
+          <Button type="primary" size="large" onClick={handleCheckout}
+            disabled={!checkoutEnabled} className="cart-sticky-btn">
+            {checkoutEnabled ? '前往結帳' : '暫停接受訂單'}
+          </Button>
+        </div>
+      )}
       <BackTop visibilityHeight={300}>
         <div style={{
           height: 40, width: 40, lineHeight: '40px', borderRadius: '50%',

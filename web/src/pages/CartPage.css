@@ -919,3 +919,22 @@
     gap: var(--spacing-2);
   }
 }
+
+@media (max-width: 767px) {
+  .cart-sticky-checkout {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: fixed;
+    bottom: 60px;
+    left: 0; right: 0;
+    z-index: 900;
+    background: #fff;
+    border-top: 1px solid #e8e8e8;
+    box-shadow: 0 -2px 8px rgba(0,0,0,.10);
+    padding: 10px 16px;
+    gap: 12px;
+  }
+  .cart-sticky-total { font-size: 15px; flex: 1; }
+  .cart-sticky-btn { min-width: 120px; height: 44px; flex-shrink: 0; }
+}
